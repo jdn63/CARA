@@ -6,22 +6,22 @@
 
 A comprehensive geospatial health and emergency preparedness risk assessment platform designed for Wisconsin public health departments, serving 95 jurisdictions including 11 tribal nations.
 
-## Overview
+## 🎯 Overview
 
 CARA provides multi-domain risk scoring, scheduled data integration from authoritative sources, and actionable preparedness guidance to public health officials across Wisconsin. The platform enhances public health emergency response and strategic planning capabilities with data-driven insights aligned with CDC Public Health Emergency Preparedness (PHEP) capabilities.
 
 ### Key Features
 
-- ** Comprehensive Coverage**: All 95 Wisconsin public health jurisdictions (84 local health departments + 11 tribal nations) with 101 county-level entries for risk mapping across 7 HERC regions
-- ** Multi-Domain Risk Assessment**: 5 primary domains (natural hazards, infectious disease, active shooter, extreme heat, air quality) plus supplementary assessments modeled from proxy indicators (cybersecurity, utilities)
-- ** Real Data Integration**: Pre-cached data from OpenFEMA APIs, NOAA Storm Events Database, Wisconsin DHS, EPA AirNow, and local Census/FEMA NRI CSV files no modeled placeholders
-- ** Performance-Optimized**: Full dashboard context caching delivers near-instant load times after initial cache build
-- ** Strategic Planning Mode**: Long-term risk assessment optimized for annual preparedness planning cycles
-- ** PHEP Alignment**: Full integration with CDC Public Health Emergency Preparedness capabilities
-- ** Automated Action Plans**: Customized preparedness recommendations with implementation timelines
-- ** Interactive Visualization**: Geospatial mapping, risk distribution charts, and trend analysis
+- **🗺️ Comprehensive Coverage**: All 95 Wisconsin public health jurisdictions (84 local health departments + 11 tribal nations) with 101 county-level entries for risk mapping across 7 HERC regions
+- **📊 Multi-Domain Risk Assessment**: 5 primary domains (natural hazards, infectious disease, active shooter, extreme heat, air quality) plus supplementary assessments modeled from proxy indicators (cybersecurity, utilities)
+- **🔄 Real Data Integration**: Pre-cached data from OpenFEMA APIs, NOAA Storm Events Database, Wisconsin DHS, EPA AirNow, and local Census/FEMA NRI CSV files — no modeled placeholders
+- **⚡ Performance-Optimized**: Full dashboard context caching delivers near-instant load times after initial cache build
+- **📈 Strategic Planning Mode**: Long-term risk assessment optimized for annual preparedness planning cycles
+- **🎯 PHEP Alignment**: Full integration with CDC Public Health Emergency Preparedness capabilities
+- **📋 Automated Action Plans**: Customized preparedness recommendations with implementation timelines
+- **📊 Interactive Visualization**: Geospatial mapping, risk distribution charts, and trend analysis
 
-## Architecture
+## 🏗️ Architecture
 
 ### Backend
 - **Framework**: Flask (Python) with Blueprint architecture and application factory pattern
@@ -36,7 +36,7 @@ CARA provides multi-domain risk scoring, scheduled data integration from authori
 - **Accessibility**: WCAG 2.1 AA compliant design with screen reader support
 - **Performance**: Lazy loading, caching, and optimized asset delivery
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -47,43 +47,43 @@ CARA provides multi-domain risk scoring, scheduled data integration from authori
 ### Installation
 
 1. **Clone the repository**
-```bash
-git clone https://github.com/your-org/cara-wisconsin.git
-cd cara-wisconsin
-```
+   ```bash
+   git clone https://github.com/your-org/cara-wisconsin.git
+   cd cara-wisconsin
+   ```
 
 2. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. **Set up environment variables**
-```bash
-export DATABASE_URL="postgresql://username:password@localhost/cara_db"
-export SESSION_SECRET="your-secret-key-here"
-export AIRNOW_API_KEY="your-airnow-api-key"
-# Add other required API keys
-```
+   ```bash
+   export DATABASE_URL="postgresql://username:password@localhost/cara_db"
+   export SESSION_SECRET="your-secret-key-here"
+   export AIRNOW_API_KEY="your-airnow-api-key"
+   # Add other required API keys
+   ```
 
 4. **Configure environment variables** (see .env.example)
-```bash
-cp .env.example .env
-# Edit .env with your actual values
-```
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual values
+   ```
 
 5. **Initialize the database**
-```bash
-python -c "from core import create_app; app = create_app(); app.app_context().push(); from core import db; db.create_all()"
-```
+   ```bash
+   python -c "from core import create_app; app = create_app(); app.app_context().push(); from core import db; db.create_all()"
+   ```
 
 6. **Run the application**
-```bash
-python main.py
-```
+   ```bash
+   python main.py
+   ```
 
 The application will be available at `http://localhost:5000`
 
-## Deployment
+## 🚀 Deployment
 
 ### Render Deployment
 
@@ -91,15 +91,15 @@ The project includes a `render.yaml` configuration file for easy deployment to R
 
 1. **Connect to GitHub**: Link your Render account to your GitHub repository
 2. **Environment Variables**: Set the following in Render dashboard:
-- `DATABASE_URL`: Your PostgreSQL connection string
-- `SESSION_SECRET`: Secure random string (auto-generated)
-- `AIRNOW_API_KEY`: Your EPA AirNow API key
+   - `DATABASE_URL`: Your PostgreSQL connection string
+   - `SESSION_SECRET`: Secure random string (auto-generated)
+   - `AIRNOW_API_KEY`: Your EPA AirNow API key
 
 3. **Deploy**: Render will automatically deploy using the configuration in `render.yaml`
 
 The application uses Gunicorn with 2 workers and 120-second timeout for production-ready performance.
 
-## Risk Assessment Framework
+## 📊 Risk Assessment Framework
 
 CARA employs a sophisticated multi-dimensional risk assessment methodology using 5 primary risk domains:
 
@@ -121,7 +121,7 @@ The 5 primary domains are aggregated using the **PHRAT quadratic mean formula** 
 
 - **Baseline (60%)**: Long-term structural risk factors
 - **Seasonal (25%)**: Predictable cyclical variations
-- **Trend (15%)**: Medium-term directional changes
+- **Trend (15%)**: Medium-term directional changes  
 - **Acute (0%)**: Short-term event-driven spikes (Strategic Planning Mode)
 
 ### Social Vulnerability Integration
@@ -132,7 +132,7 @@ All risk calculations incorporate CDC Social Vulnerability Index (SVI) factors:
 - Minority status & language
 - Housing type & transportation
 
-## Configuration
+## 🔧 Configuration
 
 ### Required API Keys
 
@@ -156,8 +156,8 @@ SESSION_SECRET=your_secure_session_secret
 
 CARA integrates with multiple authoritative data sources, all pre-fetched by scheduled background jobs and cached locally (no external API calls during user assessments):
 
-- **OpenFEMA APIs (keyless)**: Disaster Declarations Summaries v2, NFIP Redacted Claims v2, Hazard Mitigation Assistance Projects v4 weekly refresh, PostgreSQL cache
-- **NOAA NCEI Storm Events Database**: Bulk CSV downloads of Wisconsin storm events (tornado, flood, thunderstorm, winter storm) with property damage, injuries, fatalities weekly refresh, local file cache
+- **OpenFEMA APIs (keyless)**: Disaster Declarations Summaries v2, NFIP Redacted Claims v2, Hazard Mitigation Assistance Projects v4 — weekly refresh, PostgreSQL cache
+- **NOAA NCEI Storm Events Database**: Bulk CSV downloads of Wisconsin storm events (tornado, flood, thunderstorm, winter storm) with property damage, injuries, fatalities — weekly refresh, local file cache
 - **Wisconsin DHS**: Disease surveillance and health metrics (cached PDF extraction)
 - **CDC**: Social Vulnerability Index and PHEP guidelines
 - **FEMA NRI**: National Risk Index data (local CSV files)
@@ -165,7 +165,7 @@ CARA integrates with multiple authoritative data sources, all pre-fetched by sch
 - **NOAA/NWS**: Heat forecasting and weather alerts
 - **Census Bureau**: Demographic and housing data (local CSV files)
 
-## Usage
+## 📖 Usage
 
 ### Web Interface
 
@@ -201,7 +201,7 @@ GET /api/scheduler-status
 POST /api/refresh-data/{source}
 ```
 
-## Enhanced Infectious Disease Framework
+## 🧪 Enhanced Infectious Disease Framework
 
 Version 2.0.0 introduces comprehensive infectious disease risk assessment:
 
@@ -210,7 +210,7 @@ Version 2.0.0 introduces comprehensive infectious disease risk assessment:
 - **Outbreak Multipliers**: Dynamic risk adjustments for active disease outbreaks
 - **Enhanced Metrics**: Detailed breakdown of infectious disease risk components
 
-## Security
+## 🔒 Security
 
 CARA implements comprehensive security measures:
 
@@ -220,7 +220,7 @@ CARA implements comprehensive security measures:
 - **Database Security**: Parameterized queries and connection pooling
 - **Error Handling**: Graceful degradation without information disclosure
 
-## Data Scraping & Ethics
+## 🕷️ Data Scraping & Ethics
 
 CARA includes a scraper for publicly accessible Wisconsin DHS respiratory surveillance reports. The scraper is designed to be respectful and transparent:
 
@@ -238,7 +238,7 @@ CARA includes a scraper for publicly accessible Wisconsin DHS respiratory survei
 | `REQUEST_MAX_RETRIES` | `3` | Max retry attempts on transient errors |
 | `SCRAPER_USER_AGENT` | `CARA-WI-DHS-Scraper/1.0 (...)` | User-Agent header for requests |
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions from the public health and emergency management community!
 
@@ -258,14 +258,14 @@ We welcome contributions from the public health and emergency management communi
 - Add docstrings for all functions and classes
 - Include unit tests for new features
 
-## Documentation
+## 📚 Documentation
 
 - **[Risk Assessment Methodology](docs/risk_assessment_methodology.md)**: Detailed calculation methods
 - **[API Management Guide](docs/api_management_guide.md)**: API integration best practices
 - **[Data Sources Analysis](docs/data_sources_comprehensive_analysis.md)**: Complete data source documentation
 - **[Temporal Framework](docs/temporal_framework_usage_strategy.md)**: Strategic planning implementation
 
-## Version History
+## 🆔 Version History
 
 ### Version 2.4 - Real Data Integration & Performance (February 2026)
 - **REAL DATA**: Replaced modeled metrics with real cached data from OpenFEMA APIs (Disaster Declarations, NFIP Claims, Hazard Mitigation Projects) and NOAA NCEI Storm Events Database
@@ -291,7 +291,7 @@ We welcome contributions from the public health and emergency management communi
 
 [View Complete Version History](docs/version_history.md)
 
-## PHEP Capabilities Integration
+## 🏥 PHEP Capabilities Integration
 
 CARA fully aligns with CDC Public Health Emergency Preparedness Cooperative Agreement 2024-2028:
 
@@ -307,11 +307,11 @@ CARA fully aligns with CDC Public Health Emergency Preparedness Cooperative Agre
 - Medical Surge
 - Nonpharmaceutical Interventions
 
-## Research Context
+## 📄 Research Context
 
 CARA is a research project developed at Georgetown University to support Wisconsin public health preparedness. Users should verify critical information with authoritative sources before making major operational decisions.
 
-## How to Cite CARA
+## 📚 How to Cite CARA
 
 If you use CARA in academic research, policy analysis, reports, or operational planning documents, please cite it as software.
 
@@ -323,11 +323,11 @@ If you use CARA in academic research, policy analysis, reports, or operational p
 
 ```bibtex
 @software{cara_2026,
-author = {Niedermeier, Jaime},
-title = {CARA: Comprehensive Automated Risk Assessment},
-year = {2026},
-version = {2.4},
-url = {https://github.com/jdn63/CARA}
+  author  = {Niedermeier, Jaime},
+  title   = {CARA: Comprehensive Automated Risk Assessment},
+  year    = {2026},
+  version = {2.4},
+  url     = {https://github.com/jdn63/CARA}
 }
 ```
 
@@ -337,20 +337,20 @@ When used in operational or policy contexts, users are encouraged to acknowledge
 
 > "An open-source public health preparedness risk assessment tool developed for jurisdiction-level strategic planning."
 
-CARA is intended to support preparedness planning, risk awareness, and policy analysis. It should not be used as the sole basis for emergency response or enforcement decisions without corroborating authoritative sources. All data is pre-cached by scheduled background jobs scores reflect the most recent cache refresh, not live conditions.
+CARA is intended to support preparedness planning, risk awareness, and policy analysis. It should not be used as the sole basis for emergency response or enforcement decisions without corroborating authoritative sources. All data is pre-cached by scheduled background jobs — scores reflect the most recent cache refresh, not live conditions.
 
-## Support
+## 📞 Support
 
 For technical support or questions:
 - **Issues**: Create a GitHub issue with detailed description
 - **Documentation**: Check the [docs/](docs/) directory
 - **Community**: Join our discussions for best practices sharing
 
-## License
+## 📜 License
 
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** - see the [LICENSE](LICENSE) file for details. This ensures that CARA remains free and open-source, and that any modifications or network deployments must also share their source code.
 
-## Acknowledgments
+## 🏛️ Acknowledgments
 
 - **Wisconsin Department of Health Services** for surveillance data and guidance
 - **CDC** for Public Health Emergency Preparedness framework
@@ -360,4 +360,4 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 
 ---
 
-**Built for Wisconsin Public Health Preparedness**
+**Built with ❤️ for Wisconsin Public Health Preparedness**
