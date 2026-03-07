@@ -2183,13 +2183,13 @@
                             '<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
                             ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ')</div>'
                             ~ '<ul class="component-list">'
-                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' (case rate history, land cover, climate trend)</li>'
+                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' (Lyme/WNV incidence rates, land cover, climate trend)</li>'
                             ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ' (outdoor workforce, elderly, rural, SVI)</li>'
                             ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ' (surveillance programs, public awareness)</li>'
                             ~ '<li>Climate Multiplier: ' ~ "%.2f"|format(risk_data.vbd_components.climate_multiplier|default(1.0)) ~ '</li>'
                             ~ '<li>Seasonal Factor: ' ~ "%.2f"|format(risk_data.vbd_components.seasonal_factor|default(1.0)) ~ '</li>'
                             ~ '</ul>'
-                            ~ '<div class="data-source">Sources: WI DHS Tick-Borne Surveillance, CDC ArboNET, USDA NLCD, WI DNR, CDC SVI</div>'
+                            ~ '<div class="data-source">Sources: WI DHS EPHT Surveillance, WI DHS Vectorborne Disease Program, USDA NLCD, WI DNR, CDC SVI</div>'
                             ) }}
                             {% endif %}
                             </h3>
@@ -2249,13 +2249,35 @@
                                 {% if risk_data.vbd_metrics is defined %}
                                 {% set vbm = risk_data.vbd_metrics %}
                                 <tr>
-                                    <td>Lyme Disease Tier</td>
-                                    <td><span class="badge bg-{{ 'danger' if vbm.lyme_disease_tier == 'very_high' else 'warning' if vbm.lyme_disease_tier == 'high' else 'info' if vbm.lyme_disease_tier == 'moderate' else 'success' }}">{{ vbm.lyme_disease_tier|default('unknown')|replace('_', ' ')|title }}</span></td>
+                                    <td>Lyme Disease Risk</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if vbm.lyme_disease_tier == 'very_high' else 'warning' if vbm.lyme_disease_tier == 'high' else 'info' if vbm.lyme_disease_tier == 'moderate' else 'success' }}">{{ vbm.lyme_disease_tier|default('unknown')|replace('_', ' ')|title }}</span>
+                                        {% if vbm.lyme_incidence_rate is defined and vbm.lyme_incidence_rate is not none %}
+                                        <br><small class="text-muted">{{ "%.1f"|format(vbm.lyme_incidence_rate) }}/100k avg annual rate</small>
+                                        {% endif %}
+                                    </td>
                                 </tr>
+                                {% if vbm.lyme_avg_annual_cases is defined and vbm.lyme_avg_annual_cases is not none %}
                                 <tr>
-                                    <td>West Nile Virus Tier</td>
-                                    <td><span class="badge bg-{{ 'danger' if vbm.west_nile_virus_tier == 'high' else 'warning' if vbm.west_nile_virus_tier == 'moderate' else 'success' }}">{{ vbm.west_nile_virus_tier|default('unknown')|replace('_', ' ')|title }}</span></td>
+                                    <td>Lyme Avg Annual Cases</td>
+                                    <td>{{ vbm.lyme_avg_annual_cases }} cases/yr</td>
                                 </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>West Nile Virus Risk</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if vbm.west_nile_virus_tier == 'high' else 'warning' if vbm.west_nile_virus_tier == 'moderate' else 'success' }}">{{ vbm.west_nile_virus_tier|default('unknown')|replace('_', ' ')|title }}</span>
+                                        {% if vbm.wnv_incidence_rate is defined and vbm.wnv_incidence_rate is not none %}
+                                        <br><small class="text-muted">{{ "%.1f"|format(vbm.wnv_incidence_rate) }}/100k avg annual rate</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if vbm.wnv_total_cases_5yr is defined and vbm.wnv_total_cases_5yr is not none %}
+                                <tr>
+                                    <td>WNV Cases (5-yr total)</td>
+                                    <td>{{ vbm.wnv_total_cases_5yr }} cases</td>
+                                </tr>
+                                {% endif %}
                                 <tr>
                                     <td>Forest Cover</td>
                                     <td>{{ vbm.forest_cover_pct|default(0) }}%</td>
@@ -2276,10 +2298,23 @@
                                     <td>Climate Trend Impact</td>
                                     <td>{{ vbm.climate_trend_impact|default('N/A') }}</td>
                                 </tr>
+                                {% if vbm.data_period is defined %}
+                                <tr>
+                                    <td>Data Period</td>
+                                    <td>{{ vbm.data_period }}</td>
+                                </tr>
+                                {% endif %}
                                 <tr>
                                     <td>Diseases Assessed</td>
                                     <td><small>{{ vbm.diseases_assessed|default([])|join(', ') }}</small></td>
                                 </tr>
+                                {% if vbm.using_real_data is defined and vbm.using_real_data %}
+                                <tr>
+                                    <td colspan="2">
+                                        <span class="badge bg-primary">WI DHS Surveillance Data</span>
+                                    </td>
+                                </tr>
+                                {% endif %}
                                 {% else %}
                                 <tr>
                                     <td colspan="2" class="text-muted">Data loading...</td>
@@ -2302,7 +2337,7 @@
                     </div>
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: WI DHS Tick-Borne Surveillance, CDC ArboNET, USDA Forest Service, WI DNR, CDC SVI
+                            Sources: WI DHS EPHT Surveillance, WI DHS Vectorborne Disease Program, USDA NLCD 2021, WI DNR, CDC SVI
                         </small>
                     </div>
                 </div>

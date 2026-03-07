@@ -1470,8 +1470,8 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
                 'final_score': round(float(vbd_risk), 4),
                 'weighted_contribution': round(weights.get('vector_borne_disease', 0.07) * (float(vbd_risk) ** p), 4),
                 'svi_adjustment': f'Multiplier: socioeconomic={round(vbd_svi_multiplier, 3)}',
-                'data_sources': ['WI DHS tick-borne disease surveillance (annual)', 'CDC ArboNET (annual)', 'USDA forest cover data (static)', 'Climate projections (WICCI)'],
-                'aggregation': 'EVR framework (case rate × land cover × climate × seasonal)'
+                'data_sources': ['WI DHS EPHT Lyme incidence rates (county-level, 2019-2024)', 'WI DHS Vectorborne Disease Program WNV (county-level, 2019-2024)', 'USDA NLCD 2021 forest cover (static)', 'WI DNR deer density (static)', 'WICCI/NOAA climate projections (static)'],
+                'aggregation': 'EVR framework (incidence rate × land cover × climate × seasonal)'
             }
         ],
         'supplementary_domains': [
