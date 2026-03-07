@@ -106,7 +106,7 @@
                         <tr>
                             <td><strong>Census ACS Demographics</strong></td>
                             <td><span class="badge bg-success">Annual</span></td>
-                            <td>Elderly %, mobile home %, population density for vulnerability calculations</td>
+                            <td>Population aged 65+ (%), mobile home %, population density for vulnerability calculations</td>
                         </tr>
                         <tr>
                             <td><strong>Climate Projection Data</strong> (NOAA/IPCC AR6/WICCI/EPA)</td>
@@ -254,7 +254,7 @@
             <h6>EVR Components by Hazard</h6>
             <ul>
                 <li><strong>Exposure:</strong> FEMA NRI hazard scores with climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code></li>
-                <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (elderly %, mobile home %, population density)</li>
+                <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (population aged 65+ (%), mobile home %, population density)</li>
                 <li><strong>Resilience:</strong> Socioeconomic capacity and infrastructure factors</li>
             </ul>
 
@@ -300,7 +300,7 @@
                             <td>5%</td>
                         </tr>
                         <tr>
-                            <td>Census: Elderly Population %</td>
+                            <td>Census: Population Aged 65+ (%)</td>
                             <td>15%</td>
                             <td>10%</td>
                             <td>20%</td>
@@ -451,7 +451,7 @@
             <h6>Five Components</h6>
             <ol>
                 <li><strong>Exposure:</strong> Historical heat event frequency and geographic heat island factors</li>
-                <li><strong>Vulnerability:</strong> CDC SVI themes, elderly population %, outdoor worker density</li>
+                <li><strong>Vulnerability:</strong> CDC SVI themes, population aged 65+ (%), outdoor worker density</li>
                 <li><strong>Resilience:</strong> Cooling center access, healthcare capacity, community preparedness</li>
                 <li><strong>Wet Bulb Temperature:</strong> Humidity-adjusted temperature danger thresholds</li>
                 <li><strong>Climate Trend:</strong> Long-term warming trajectory for the jurisdiction</li>
@@ -479,7 +479,7 @@
                 <strong>Transparency Note:</strong> This domain is <strong>modeled from proxy indicators</strong> derived from county characteristics and CDC SVI data. It does not rely on real-time external utility monitoring APIs.
                 <ul class="mb-0 mt-2 small">
                     <li><strong>Exposure proxies:</strong> County geographic position, population density (Census ACS 2022), and utility service territory maps (WI PSC)</li>
-                    <li><strong>Vulnerability proxies:</strong> CDC SVI housing/transportation and socioeconomic themes; Census ACS poverty rate and elderly percentage</li>
+                    <li><strong>Vulnerability proxies:</strong> CDC SVI housing/transportation and socioeconomic themes; Census ACS poverty rate and percentage of population aged 65+</li>
                     <li><strong>Resilience proxies:</strong> County urbanization level (Census) as proxy for redundant infrastructure and restoration capacity</li>
                 </ul>
             </div>
@@ -613,12 +613,12 @@
                         <tr>
                             <td><strong>Trend</strong></td>
                             <td><strong>15%</strong></td>
-                            <td>Medium-term directional changes</td>
+                            <td>Medium-term directional changes calculated from real data: NOAA Storm Events (event frequency trends over 10-20 years), OpenFEMA NFIP claims, NOAA/WICCI/IPCC climate projections, and Census ACS demographic aging trends. Not applicable to infectious disease (see Acute).</td>
                         </tr>
                         <tr>
                             <td><strong>Acute</strong></td>
-                            <td><strong>0%</strong></td>
-                            <td>Short-term events (displayed for context but not weighted in strategic planning mode)</td>
+                            <td><strong>0% / 15%</strong></td>
+                            <td>0% weight for most domains in strategic planning mode. Exception: Infectious disease uses 15% acute weight based on WI DHS respiratory surveillance data (flu, COVID-19, RSV activity levels and vaccination coverage).</td>
                         </tr>
                     </tbody>
                 </table>

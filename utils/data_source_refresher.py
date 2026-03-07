@@ -23,15 +23,11 @@ logger = logging.getLogger(__name__)
 def _get_app():
     """Get Flask app instance for creating app context in background threads."""
     try:
-        from app import app
+        from main import app
         return app
     except ImportError:
-        try:
-            from core import app
-            return app
-        except ImportError:
-            logger.error("Could not import Flask app for context")
-            return None
+        logger.error("Could not import Flask app from main")
+        return None
 
 
 def refresh_all_cdc_svi() -> Dict[str, Any]:
