@@ -98,7 +98,7 @@ Risk Domains (7 Primary + 2 Supplementary):
 | Active Shooter | 18% | Community violence risk assessment |
 | Extreme Heat | 11% | Heat vulnerability and climate-adjusted risk |
 | Air Quality | 12% | Environmental health and AQI assessment |
-| Dam Failure | 7% | Dam infrastructure risk using NID inventory and flood zone analysis |
+| Dam Failure | 7% | Dam infrastructure risk using WI DNR Dam Safety Database (~4,100 active dams) with NFIP flood zone analysis |
 | Vector-Borne Disease | 7% | Lyme disease, West Nile Virus, tick-borne illness surveillance |
 | Cybersecurity | Supplementary | Critical infrastructure cyber threats (proxy indicators) |
 | Utilities Risk | Supplementary | Electrical, water/sewer, supply chain, fuel shortage (proxy indicators) |
@@ -144,7 +144,7 @@ CARA integrates with multiple authoritative data sources, all pre-fetched by sch
 - EPA AirNow: Air quality monitoring (daily scheduler cache, requires API key).
 - NOAA/NWS: Heat forecasting and weather alerts.
 - Census Bureau: Demographic and housing data (local CSV files).
-- NID: National Inventory of Dams for dam failure risk assessment (static data).
+- WI DNR Dam Safety Database: Wisconsin Repository of Dams (~4,100 active dams, weekly cache). USACE NID as fallback.
 
 ## Usage
 
@@ -226,7 +226,7 @@ Code Style:
 ## Version History
 
 Version 2.5 - Dam Failure, Vector-Borne Disease, and Audit Fixes (March 2026)
-- Added Dam Failure as standalone risk domain using NID dam inventory, WI DNR classifications, flood zone overlap, and downstream population exposure
+- Added Dam Failure as standalone risk domain using real WI DNR Dam Safety Database (~4,100 active dams, weekly cache), USACE NID fallback, NFIP flood zone overlap, and estimated % population in inundation zones
 - Added Vector-Borne Disease as standalone risk domain covering Lyme disease, West Nile Virus, Anaplasmosis with climate-adjusted seasonal exposure
 - Updated PHRAT from 5 to 7 primary domains with rebalanced weights
 - Fixed debug=True hardcoded in main.py (now uses FLASK_DEBUG env var)
@@ -278,13 +278,13 @@ If you use CARA in academic research, policy analysis, reports, or operational p
 
 Recommended citation (APA-style):
 
-Niedermeier, J. (2026). CARA: Comprehensive Automated Risk Assessment (Version 2.5) [Software]. https://github.com/jdn63/CARA
+Niedermeier, J., & Frazier, T. (2026). CARA: Comprehensive Automated Risk Assessment (Version 2.5) [Software]. https://github.com/jdn63/CARA
 
 BibTeX:
 
 ```bibtex
 @software{cara_2026,
-  author = {Niedermeier, Jaime},
+  author = {Niedermeier, Jaime and Frazier, Tim},
   title = {CARA: Comprehensive Automated Risk Assessment},
   year = {2026},
   version = {2.5},
