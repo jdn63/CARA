@@ -133,7 +133,7 @@ def get_wisconsin_heat_days(county_name: str) -> int:
 
 def get_wisconsin_elderly_population(county_name: str) -> float:
     """
-    Get population aged 65+ percentage for a Wisconsin county
+    Get elderly population percentage for a Wisconsin county
     
     Args:
         county_name: Wisconsin county name (can include ' County' suffix)
@@ -146,7 +146,7 @@ def get_wisconsin_elderly_population(county_name: str) -> float:
     
     data = WISCONSIN_COUNTY_CLIMATE_DATA.get(clean_county_name, WISCONSIN_COUNTY_CLIMATE_DATA['default'])
     elderly_pct = data['elderly_population_pct']
-    logger.info(f"Wisconsin census data - Population 65+ for {clean_county_name} (from {county_name}): {elderly_pct}%")
+    logger.info(f"Wisconsin census data - Elderly population for {clean_county_name} (from {county_name}): {elderly_pct}%")
     return elderly_pct
 
 def get_wisconsin_heat_ed_visits(county_name: str) -> int:

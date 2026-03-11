@@ -30,7 +30,3 @@ openpyxl
 apscheduler
 pypdf
 python-docx
-census
-us
-trafilatura
-tableauscraper

@@ -81,24 +81,24 @@ extreme_heat:
     _default: 0.50     # Statewide median estimate
 
   # VULNERABILITY COMPONENT
-  # Proxy: Census ACS 2022 population aged 65+ (%) and poverty rate; CDC SVI housing theme
-  # Higher population aged 65+ (%), poverty, and older housing stock = higher heat vulnerability
+  # Proxy: Census ACS 2022 elderly % and poverty rate; CDC SVI housing theme
+  # Higher elderly %, poverty, and older housing stock = higher heat vulnerability
   vulnerability:
-    Milwaukee: 0.70    # 25% poverty rate, 13% aged 65+, aging housing stock
+    Milwaukee: 0.70    # 25% poverty rate, 13% elderly, aging housing stock
     Dane: 0.45         # 11% poverty, university resources, newer housing
     Waukesha: 0.38     # 5% poverty, higher income, newer housing
     Brown: 0.52        # 11% poverty, mixed urban/rural
-    Racine: 0.65       # 17% poverty, 16% aged 65+, older housing
+    Racine: 0.65       # 17% poverty, 16% elderly, older housing
     Kenosha: 0.60      # 13% poverty, mixed demographics
     Rock: 0.58         # 14% poverty, industrial area
     Walworth: 0.47     # 9% poverty, resort area, seasonal population
     Jefferson: 0.50    # 10% poverty, mixed rural/suburban
-    Bayfield: 0.55     # 12% poverty, 24% aged 65+, remote
+    Bayfield: 0.55     # 12% poverty, 24% elderly, remote
     Douglas: 0.52      # 14% poverty, rural
     Ashland: 0.58      # 18% poverty, rural, tribal areas
-    Iron: 0.62         # 13% poverty, 28% aged 65+, remote
-    Vilas: 0.60        # 11% poverty, 27% aged 65+, seasonal
-    Florence: 0.64     # 12% poverty, 25% aged 65+, limited infrastructure
+    Iron: 0.62         # 13% poverty, 28% elderly, remote
+    Vilas: 0.60        # 11% poverty, 27% elderly, seasonal
+    Florence: 0.64     # 12% poverty, 25% elderly, limited infrastructure
     _default: 0.52     # Statewide median estimate
 
   # RESILIENCE COMPONENT
