@@ -92,15 +92,15 @@ def create_app(config_overrides=None):
         # Production: Let ProxyFix handle scheme/host from headers
         app.config["PREFERRED_URL_SCHEME"] = "https"
     
-    # Database configuration -- use NullPool to avoid holding open connections.
-    # NullPool opens a connection only for each query and closes it immediately,
-    # keeping concurrent connection count minimal for Render Basic Postgres.
-    from sqlalchemy.pool import NullPool
+    # Database configuration with connection pooling for production use
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "poolclass": NullPool,
-        "pool_pre_ping": True,
+        "pool_recycle": 300,      # Recycle connections after 5 minutes
+        "pool_pre_ping": True,    # Verify connections before using
+        "pool_size": 10,          # Number of connections to maintain
+        "max_overflow": 20,       # Additional connections allowed
+        "pool_timeout": 30        # Timeout waiting for connection
     }
     
     # Apply any configuration overrides (useful for testing)
@@ -110,45 +110,10 @@ def create_app(config_overrides=None):
     # Initialize database with app context
     db.init_app(app)
     
-    # Import models and create tables with retry logic for constrained DB plans
-    import time as _time
+    # Import models to ensure all tables are created
     with app.app_context():
-        import models  # noqa: F401
-        for _attempt in range(5):
-            try:
-                db.create_all()
-                break
-            except Exception as _e:
-                if _attempt < 4:
-                    logger.warning(f"db.create_all() attempt {_attempt+1} failed: {_e}, retrying in 5s")
-                    _time.sleep(5)
-                else:
-                    logger.error(f"db.create_all() failed after 5 attempts: {_e}")
-                    raise
-    
-    app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    if app.config.get("PREFERRED_URL_SCHEME") == "https":
-        app.config["SESSION_COOKIE_SECURE"] = True
-    
-    @app.context_processor
-    def inject_globals():
-        from datetime import datetime
-        now = datetime.now()
-        month = now.month
-        if month in (3, 4, 5):
-            season = "Spring"
-        elif month in (6, 7, 8):
-            season = "Summer"
-        elif month in (9, 10, 11):
-            season = "Fall"
-        else:
-            season = "Winter"
-        return {
-            "current_year": now.year,
-            "last_updated": now.strftime("%B %Y"),
-            "current_season": season,
-        }
+        import models  # Import all models for table creation
+        db.create_all()  # Create all database tables
     
     # Register template filters (moved from app.py)
     register_template_filters(app)
@@ -159,18 +124,13 @@ def create_app(config_overrides=None):
     # Register blueprints with routes (routes moved from app.py to blueprints)
     register_blueprints(app)
     
-    # Only start background services (scheduler, export worker) on the first
-    # gunicorn worker to avoid duplicate schedulers and excess DB connections.
-    # In development (no GUNICORN_WORKER_ID set) or on worker 1, start services.
-    worker_id = os.environ.get("GUNICORN_WORKER_ID")
-    is_primary_worker = worker_id is None or worker_id == "1"
-
-    if is_primary_worker:
-        initialize_background_services(app)
-    else:
-        logger.info(f"Skipping background services on worker {worker_id}")
-
-    enable_worker = is_primary_worker and (
+    # Initialize background services (scheduler, etc.)
+    initialize_background_services(app)
+    
+    # Start export job worker in background - only in development or when explicitly enabled
+    # In production with Gunicorn, multiple workers would start multiple schedulers causing conflicts
+    # Use ENABLE_EXPORT_WORKER=true to enable in production if running single-worker mode
+    enable_worker = (
         os.environ.get("ENABLE_EXPORT_WORKER", "").lower() == "true" or
         os.environ.get("REPLIT_DEV_DOMAIN") is not None or
         os.environ.get("FLASK_ENV") == "development"

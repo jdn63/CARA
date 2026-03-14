@@ -9,6 +9,7 @@ geopandas
 matplotlib
 pyshp
 shapely
+census
 beautifulsoup4
 folium
 fpdf
@@ -28,5 +29,4 @@ scikit-learn
 openpyxl
 apscheduler
 pypdf
-scipy
-census
+python-docx

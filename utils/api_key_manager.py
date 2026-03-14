@@ -8,7 +8,6 @@ and health check endpoints for external services used in the CARA application.
 import os
 import logging
 import time
-import threading
 import requests
 from typing import Dict, Any, Optional, List, Tuple
 from functools import wraps
@@ -29,8 +28,7 @@ class APIKeyManager:
             'AIRNOW_API_KEY': os.environ.get('AIRNOW_API_KEY'),
         }
         self.validation_cache = {}
-        self._lock = threading.Lock()
-        self.cache_duration = 3600
+        self.cache_duration = 3600  # 1 hour cache for validation results
         
     def get_api_key(self, service: str) -> Optional[str]:
         """Get API key for a specific service"""
@@ -52,24 +50,22 @@ class APIKeyManager:
         Returns:
             Tuple of (is_valid, status_message)
         """
+        # Check cache first
         cache_key = f"{service}_validation"
-        with self._lock:
-            if not force_refresh and cache_key in self.validation_cache:
-                cached_time, cached_result = self.validation_cache[cache_key]
-                if time.time() - cached_time < self.cache_duration:
-                    return cached_result
+        if not force_refresh and cache_key in self.validation_cache:
+            cached_time, cached_result = self.validation_cache[cache_key]
+            if time.time() - cached_time < self.cache_duration:
+                return cached_result
         
         if not self.is_key_available(service):
             result = (False, "API key not configured")
-            with self._lock:
-                self.validation_cache[cache_key] = (time.time(), result)
+            self.validation_cache[cache_key] = (time.time(), result)
             return result
         
         api_key = self.get_api_key(service)
         if not api_key:
             result = (False, "API key is empty or None")
-            with self._lock:
-                self.validation_cache[cache_key] = (time.time(), result)
+            self.validation_cache[cache_key] = (time.time(), result)
             return result
         
         try:
@@ -86,16 +82,15 @@ class APIKeyManager:
             else:
                 result = (False, f"Unknown service: {service}")
                 
-            with self._lock:
-                self.validation_cache[cache_key] = (time.time(), result)
+            # Cache the result
+            self.validation_cache[cache_key] = (time.time(), result)
             return result
             
         except (requests.exceptions.RequestException, ValueError, KeyError, TypeError) as e:
             error_type = type(e).__name__
             logger.error(f"Error validating {service} ({error_type}): {e}")
             result = (False, f"Validation error ({error_type}): {str(e)}")
-            with self._lock:
-                self.validation_cache[cache_key] = (time.time(), result)
+            self.validation_cache[cache_key] = (time.time(), result)
             return result
     
     def _validate_census_key(self, api_key: str) -> Tuple[bool, str]:
