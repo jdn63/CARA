@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+{% from 'components/info_popover.html' import show_work_btn %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2>HERC Region Risk Analysis Dashboard</h2>
+                <p class="text-muted">Public Health analysis for {{ risk_data.name }}</p>
+                <span class="badge bg-info me-2">HERC Region</span>
+                <a href="/methodology" class="btn btn-sm btn-outline-info" target="_blank" rel="noopener noreferrer">
+                    View Risk Assessment Methodology
+                </a>
+                <a href="/herc-print-summary/{{ risk_data.herc_id }}" class="btn btn-sm btn-outline-secondary ms-2" target="_blank" rel="noopener noreferrer">
+                    Print Risk Summary
+                </a>
+                <a href="/herc-kp-hva-export/{{ risk_data.herc_id }}" class="btn btn-sm btn-outline-warning ms-2" target="_blank" rel="noopener noreferrer">
+                    Export KP HVA
+                </a>
+            </div>
+            <div>
+                <a href="/" class="btn btn-outline-secondary">
+                    Back to Selection
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERC Region Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">HERC Region Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Counties in Region ({{ risk_data.jurisdiction_count }} jurisdictions)</h6>
+                            <ul>
+                                {% for county in risk_data.counties %}
+                                <li>{{ county }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>About This Dashboard</h6>
+                            <p>All scores shown are regional averages aggregated across the {{ risk_data.jurisdiction_count }} jurisdictions in this HERC region. Domain scores use the same EVR methodology and data sources as individual jurisdiction dashboards.</p>
+                            <p>For granular county-level detail, select an individual jurisdiction from the home page.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Temporal Risk Components Section -->
+    {% if temporal_risk_data %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Temporal Risk Analysis (BSTA Framework) &mdash; Regional Averages</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <p>
+                                Our <strong>Baseline-Seasonal-Trend-Acute (BSTA)</strong> framework breaks down risks into temporal components for strategic preparedness planning. Values below represent averages across all {{ risk_data.jurisdiction_count }} jurisdictions in this HERC region.
+                                <a href="/methodology" class="small" target="_blank" rel="noopener noreferrer">Learn about the BSTA framework</a>
+                            </p>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="alert alert-secondary mb-0 small">
+                                <strong>Annual Planning Focus:</strong> Trend data derived from NOAA Storm Events, OpenFEMA, climate projections, and Census data. Infectious disease uses WI DHS surveillance for acute scoring instead of trend.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hazard Type</th>
+                                    <th>Baseline (60%)</th>
+                                    <th>Seasonal (25%)</th>
+                                    <th>Trend (15%)</th>
+                                    <th>Acute</th>
+                                    <th>Composite Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hazard_type, data in temporal_risk_data.items() %}
+                                {% set is_id = hazard_type == 'health' or hazard_type == 'infectious_disease' %}
+                                <tr>
+                                    <td><strong>{{ hazard_type.replace('_', ' ').title() }}</strong></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" role="progressbar"
+                                                style="width: {{ data.temporal_components.baseline * 100 }}%;"
+                                                aria-valuenow="{{ data.temporal_components.baseline * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.temporal_components.baseline) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-warning" role="progressbar"
+                                                style="width: {{ data.temporal_components.seasonal * 100 }}%;"
+                                                aria-valuenow="{{ data.temporal_components.seasonal * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.temporal_components.seasonal) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if is_id %}
+                                        <span class="badge bg-secondary" title="Infectious disease uses acute surveillance instead of trend analysis">N/A</span>
+                                        {% else %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                style="width: {{ data.temporal_components.trend * 100 }}%;"
+                                                aria-valuenow="{{ data.temporal_components.trend * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.temporal_components.trend) }}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if is_id %}
+                                        <div class="progress" style="height: 20px;" title="WI DHS respiratory surveillance data (15% weight)">
+                                            <div class="progress-bar bg-danger" role="progressbar"
+                                                style="width: {{ data.temporal_components.acute * 100 }}%;"
+                                                aria-valuenow="{{ data.temporal_components.acute * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.temporal_components.acute) }} (15%)
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" role="progressbar"
+                                                style="width: {{ data.temporal_components.acute * 100 }}%;"
+                                                aria-valuenow="{{ data.temporal_components.acute * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.temporal_components.acute) }}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar
+                                                {% if data.composite_score < 0.3 %}bg-success{% endif %}
+                                                {% if data.composite_score >= 0.3 and data.composite_score < 0.6 %}bg-warning{% endif %}
+                                                {% if data.composite_score >= 0.6 %}bg-danger{% endif %}"
+                                                role="progressbar"
+                                                style="width: {{ data.composite_score * 100 }}%;"
+                                                aria-valuenow="{{ data.composite_score * 100 }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.2f"|format(data.composite_score) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>How to use this analysis:</strong> Focus regional interventions based on temporal components:
+                        <ul class="mb-0">
+                            <li><strong>High Baseline:</strong> Long-term infrastructure and capacity building across the region</li>
+                            <li><strong>High Seasonal:</strong> Prepare for predictable seasonal patterns (current season: {{ current_season }})</li>
+                            <li><strong>High Trend:</strong> Strategic planning for emerging risks across member counties</li>
+                            <li><strong>High Acute:</strong> Immediate regional coordination and response required</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Overall Risk Score -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Overall Regional Risk Assessment</h5>
+                    <div class="mb-3">
+                        <span class="text-muted small">Aggregated PHRAT Score ({{ risk_data.jurisdiction_count }} jurisdictions)
+                        {{ show_work_btn('overall-info', 'Regional Risk Score Calculation',
+                        '<div class="formula-line">Score = PHRAT Quadratic Mean of 7 Primary Domains</div>'
+                        ~ '<div class="formula-line">= sqrt(Σ(w_i × domain_i²)) — regional averages</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Natural Hazards (28%): ' ~ "%.3f"|format(risk_data.natural_hazards_risk|default(0)) ~ '</li>'
+                        ~ '<li>Active Shooter (18%): ' ~ "%.3f"|format(risk_data.active_shooter_risk|default(0)) ~ '</li>'
+                        ~ '<li>Health Metrics (17%): ' ~ "%.3f"|format(risk_data.health_risk|default(0)) ~ '</li>'
+                        ~ '<li>Air Quality (12%): ' ~ "%.3f"|format(risk_data.air_quality_risk|default(0)) ~ '</li>'
+                        ~ '<li>Extreme Heat (11%): ' ~ "%.3f"|format(risk_data.extreme_heat_risk|default(0)) ~ '</li>'
+                        ~ '<li>Dam Failure (7%): ' ~ "%.3f"|format(risk_data.dam_failure_risk|default(0)) ~ '</li>'
+                        ~ '<li>Vector-Borne Disease (7%): ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</li>'
+                        ~ '</ul>'
+                        ~ '<div class="formula-line">Regional Score = ' ~ "%.3f"|format(risk_data.total_risk_score) ~ '</div>'
+                        ~ '<div class="data-source">7-domain weighted quadratic mean (PHRAT p=2); values are averages across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions</div>'
+                        ) }}
+                        </span>
+                        <div class="display-4 mb-1">{{ "%.2f"|format(risk_data.total_risk_score) }}</div>
+                        <div class="badge bg-{{ 'danger' if risk_data.total_risk_score > 0.6 else 'warning' if risk_data.total_risk_score > 0.3 else 'success' }} mb-3">
+                            {{ 'High Risk' if risk_data.total_risk_score > 0.6 else 'Medium Risk' if risk_data.total_risk_score > 0.3 else 'Low Risk' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category: Biological (24% combined weight) -->
+    <div class="category-section">
+        <div class="category-header category-disease">Biological (24% combined weight)</div>
+        <div class="row g-2">
+
+        <!-- Infectious Disease Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Infectious Disease Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.health_risk|default(0)) }}
+                        {{ show_work_btn('health-info', 'Infectious Disease Risk (Regional Average)',
+                        '<ul class="component-list">'
+                        ~ '<li>Influenza Activity (30%): CDC NSSP/ESSENCE ED visits % for Wisconsin</li>'
+                        ~ '<li>COVID-19 Activity (30%): CDC NSSP/ESSENCE ED visits % for Wisconsin</li>'
+                        ~ '<li>RSV Activity (20%): CDC NSSP/ESSENCE ED visits % for Wisconsin</li>'
+                        ~ '<li>Vaccination Coverage (20%): WI DHS WIR MMR rates; County Health Rankings flu rates</li>'
+                        ~ '</ul>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.health_risk|default(0)) ~ '</div>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: CDC NSSP ED Visits (data.cdc.gov/resource/vutn-jzwm, weekly); County Health Rankings 2025</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.health_risk|default(0) > 0.6 else 'warning' if risk_data.health_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.health_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.health_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.health_risk|default(0) > 0.6 else 'warning' if risk_data.health_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.health_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.health_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, updated weekly); WI DHS WIR immunization data; County Health Rankings 2025. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vector-Borne Disease Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Vector-Borne Disease Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.vector_borne_disease_risk|default(0)) }}
+                        {{ show_work_btn('vbd-info', 'Vector-Borne Disease Risk (Regional Average)',
+                        '<div class="formula-line">Risk = (Exposure x Vulnerability) x (2.0 - Resilience) x HIF</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: Lyme/WNV incidence rates, land cover, climate trend</li>'
+                        ~ '<li>Vulnerability: outdoor workforce, elderly, rural, SVI</li>'
+                        ~ '<li>Resilience: surveillance programs, public awareness</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.vector_borne_disease_risk|default(0) > 0.6 else 'warning' if risk_data.vector_borne_disease_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.vector_borne_disease_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.vector_borne_disease_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.vector_borne_disease_risk|default(0) > 0.6 else 'warning' if risk_data.vector_borne_disease_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.vector_borne_disease_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.vector_borne_disease_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <!-- Category: Natural Hazards (28% combined weight) -->
+    <div class="category-section">
+        <div class="category-header category-hazards">Natural Hazards (28% combined weight)</div>
+        <div class="row g-2">
+
+        {% for hazard_type in ['flood', 'tornado', 'winter_storm', 'thunderstorm'] %}
+        {% set score = risk_data.natural_hazards[hazard_type]|default(0) %}
+        <div class="col-md-3 compact-tile">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{{ hazard_type|replace('_', ' ')|title }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <h6>Regional Avg Score:
+                            {{ show_work_btn(hazard_type ~ '-info', hazard_type|replace('_', ' ')|title ~ ' Risk (Regional Average)',
+                            '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                            ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(score) ~ '</div>'
+                            ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: FEMA NRI, NOAA Storm Events, OpenFEMA Declarations, CDC SVI, U.S. Census</div>'
+                            ) }}
+                            </h6>
+                            <h6 class="fw-bold text-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
+                                {{ "%.2f"|format(score) }}
+                            </h6>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}"
+                                 role="progressbar"
+                                 style="width: {{ score * 100 }}%"
+                                 aria-valuenow="{{ score * 100 }}"
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <span class="badge bg-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
+                            {{ 'High Risk' if score > 0.6 else 'Medium Risk' if score > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        </div>
+    </div>
+
+    <!-- Category: Environmental (30% combined weight) -->
+    <div class="category-section">
+        <div class="category-header category-environmental">Environmental (30% combined weight)</div>
+        <div class="row g-2">
+
+        <!-- Air Quality Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Air Quality Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.air_quality_risk|default(0)) }}
+                        {{ show_work_btn('aq-info', 'Air Quality Risk (Regional Average)',
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.air_quality_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: AQI readings, PM2.5/ozone concentrations</li>'
+                        ~ '<li>Vulnerability: respiratory disease prevalence (COPD), elderly, SVI</li>'
+                        ~ '<li>Resilience: healthcare access, primary care density</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: EPA AirNow API, CDC PLACES, County Health Rankings</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.air_quality_risk|default(0) > 0.6 else 'warning' if risk_data.air_quality_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.air_quality_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.air_quality_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.air_quality_risk|default(0) > 0.6 else 'warning' if risk_data.air_quality_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.air_quality_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.air_quality_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Sources: EPA AirNow, CDC PLACES, County Health Rankings. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extreme Heat Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Extreme Heat Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.extreme_heat_risk|default(0)) }}
+                        {{ show_work_btn('heat-info', 'Extreme Heat Risk (Regional Average)',
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.extreme_heat_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: NWS heat forecasts, historical heat events, climate trend</li>'
+                        ~ '<li>Vulnerability: elderly, low-income, urban heat island, SVI</li>'
+                        ~ '<li>Resilience: cooling centers, healthcare capacity, green space</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: NOAA/NWS, FEMA NRI, CDC SVI, U.S. Census</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.extreme_heat_risk|default(0) > 0.6 else 'warning' if risk_data.extreme_heat_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.extreme_heat_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.extreme_heat_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.extreme_heat_risk|default(0) > 0.6 else 'warning' if risk_data.extreme_heat_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.extreme_heat_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.extreme_heat_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Sources: NOAA/NWS, FEMA NRI, CDC SVI. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dam Failure Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Dam Failure Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.dam_failure_risk|default(0)) }}
+                        {{ show_work_btn('dam-info', 'Dam Failure Risk (Regional Average)',
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.dam_failure_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: downstream population, dam hazard class, NID condition rating</li>'
+                        ~ '<li>Vulnerability: floodplain residents, critical infrastructure, SVI</li>'
+                        ~ '<li>Resilience: Emergency Action Plans, inspection history</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: WI DNR Dam Safety Database, USACE NID ArcGIS FeatureServer</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.dam_failure_risk|default(0) > 0.6 else 'warning' if risk_data.dam_failure_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.dam_failure_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.dam_failure_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.dam_failure_risk|default(0) > 0.6 else 'warning' if risk_data.dam_failure_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.dam_failure_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.dam_failure_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Sources: WI DNR Dam Safety Database (primary), USACE NID (fallback). Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <!-- Category: Security (18% weight) -->
+    <div class="category-section">
+        <div class="category-header category-safety">Security (18% weight)</div>
+        <div class="row g-2">
+
+        <!-- Active Shooter Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Active Shooter / Mass Casualty Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.active_shooter_risk|default(0)) }}
+                        {{ show_work_btn('shooter-info', 'Active Shooter Risk (Regional Average)',
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.active_shooter_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: historical incidents, density of soft targets, population</li>'
+                        ~ '<li>Vulnerability: public venue density, large gathering capacity, SVI</li>'
+                        ~ '<li>Resilience: law enforcement response time, trauma center access, preparedness training</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: GVA 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, CHR 2025, CDC PLACES, RAND 2022</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.active_shooter_risk|default(0) > 0.6 else 'warning' if risk_data.active_shooter_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.active_shooter_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.active_shooter_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.active_shooter_risk|default(0) > 0.6 else 'warning' if risk_data.active_shooter_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.active_shooter_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.active_shooter_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Sources: Gun Violence Archive 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, County Health Rankings 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <!-- Supplementary Domains (not included in PHRAT score) -->
+    <div class="category-section">
+        <div class="category-header" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; margin-bottom: 0.75rem;">Supplementary Domains (not included in PHRAT score)</div>
+        <div class="row g-2">
+
+        <!-- Cybersecurity Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Cybersecurity Risk <span class="badge bg-secondary ms-1 small">Supplementary</span></h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.cybersecurity_risk|default(0)) }}
+                        {{ show_work_btn('cyber-info', 'Cybersecurity Risk (Regional Average)',
+                        '<div class="formula-line">Supplementary domain — not included in PHRAT composite score</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.cybersecurity_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: public sector cyber incidents, critical infrastructure density</li>'
+                        ~ '<li>Vulnerability: legacy system prevalence, IT staffing, SVI</li>'
+                        ~ '<li>Resilience: IT security policies, backup infrastructure, incident response</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Supplementary context for EM planning.</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.cybersecurity_risk|default(0) > 0.6 else 'warning' if risk_data.cybersecurity_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.cybersecurity_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.cybersecurity_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.cybersecurity_risk|default(0) > 0.6 else 'warning' if risk_data.cybersecurity_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.cybersecurity_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.cybersecurity_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utilities Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Utilities / Infrastructure Risk <span class="badge bg-secondary ms-1 small">Supplementary</span></h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>{{ "%.2f"|format(risk_data.utilities_risk|default(0)) }}
+                        {{ show_work_btn('util-info', 'Utilities Risk (Regional Average)',
+                        '<div class="formula-line">Supplementary domain — not included in PHRAT composite score</div>'
+                        ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.utilities_risk|default(0)) ~ '</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Exposure: power outage frequency, water system disruptions</li>'
+                        ~ '<li>Vulnerability: aging infrastructure, population dependency, SVI</li>'
+                        ~ '<li>Resilience: backup power capacity, mutual aid agreements</li>'
+                        ~ '</ul>'
+                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Supplementary context for EM planning.</div>'
+                        ) }}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.utilities_risk|default(0) > 0.6 else 'warning' if risk_data.utilities_risk|default(0) > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.utilities_risk|default(0) > 0.6 else 'Medium Risk' if risk_data.utilities_risk|default(0) > 0.3 else 'Low Risk' }}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-{{ 'danger' if risk_data.utilities_risk|default(0) > 0.6 else 'warning' if risk_data.utilities_risk|default(0) > 0.3 else 'success' }}"
+                             role="progressbar"
+                             style="width: {{ risk_data.utilities_risk|default(0) * 100 }}%"
+                             aria-valuenow="{{ risk_data.utilities_risk|default(0) * 100 }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <!-- Hospital Preparedness Program Integration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Hospital Preparedness Program Integration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Kaiser Permanente HVA Tool Compatibility</h6>
+                            <p>The risk data for this HERC region has been formatted for use with the Kaiser Permanente HVA Tool used for Hospital Preparedness Program (HPP) planning.</p>
+                            <p>To download data in a compatible format for importing into the Kaiser Permanente HVA Tool:</p>
+                            <a href="/herc-kp-hva-export/{{ risk_data.herc_id }}" class="btn btn-primary">
+                                Export for Kaiser Permanente HVA
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">What is the Kaiser Permanente HVA Tool?</h6>
+                                <p class="small mb-0">The Kaiser Permanente Hazard Vulnerability Analysis (HVA) tool is a standardized approach for healthcare facilities to identify and assess potential hazards, threats, and events that could negatively affect operations. This tool is widely used in the Hospital Preparedness Program.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Sources Footer -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body bg-dark text-white">
+                    <h6>Data Sources</h6>
+                    <p class="small mb-0">Risk data in this dashboard is aggregated from the following counties: {{ risk_data.counties|join(', ') }}</p>
+                    <p class="small mb-0">All domain scores are averages of real EVR calculations across {{ risk_data.jurisdiction_count }} jurisdictions. Sources: FEMA NRI, NOAA Storm Events, OpenFEMA, WI DHS, WI DNR, USACE NID, CDC PLACES, County Health Rankings, EPA AirNow, NOAA/NWS, CDC SVI 2022.</p>
+                    <p class="small mb-0">Additional regional healthcare data can be accessed through the <a href="https://www.dhs.wisconsin.gov/preparedness/healthcare/index.htm" target="_blank" rel="noopener noreferrer" class="text-info">HERC coordinator</a>.</p>
+                    <div class="small mt-1">
+                        Last updated: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function(popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            html: true,
+            sanitize: false
+        });
+    });
+});
+</script>
+{% endblock %}
