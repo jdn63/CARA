@@ -147,9 +147,8 @@ def herc_kp_hva_export(herc_id):
         )
         
     except Exception as e:
-        logger.error(f"Error generating Kaiser Permanente HVA export for HERC region {herc_id}: {str(e)}")
         import traceback
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Error generating Kaiser Permanente HVA export for HERC region {herc_id}: {str(e)}\n{traceback.format_exc()}")
         return render_template('error.html', 
                            message="An error occurred while generating the Kaiser Permanente HVA export. Please try again.")
 

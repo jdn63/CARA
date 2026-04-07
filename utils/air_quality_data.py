@@ -199,7 +199,7 @@ def fetch_live_air_quality_data(county_name: str) -> Dict[str, Any]:
     
     try:
         # Use strategic air quality module for consistent long-term data
-        from utils.strategic_air_quality import get_strategic_air_quality_assessment
+        from utils.strategic_assessments import get_strategic_air_quality_assessment
         
         air_quality_data = get_strategic_air_quality_assessment(county_name)
         
