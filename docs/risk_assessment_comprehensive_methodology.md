@@ -115,8 +115,10 @@ All external data is pre-fetched by APScheduler jobs and stored in PostgreSQL ca
 Each sub-type (flood, tornado, winter storm, thunderstorm) uses an Exposure-Vulnerability-Resilience framework with health impact factor:
 
 ```
-Residual_Risk = (Exposure * Vulnerability * Health_Impact_Factor) / Resilience
+Residual_Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
 ```
+
+The `(2.0 - Resilience)` term is an amplifier, not a divisor. At low resilience (0.1) it multiplies risk by 1.9x; at high resilience (0.9) by 1.1x. Resilience attenuates risk without eliminating it.
 
 **Exposure** incorporates:
 - NOAA Storm Events historical counts (event frequency by county)
@@ -124,11 +126,13 @@ Residual_Risk = (Exposure * Vulnerability * Health_Impact_Factor) / Resilience
 - OpenFEMA NFIP claims (flood insurance claims as flood exposure proxy)
 - FEMA NRI baseline scores (census tract level, aggregated to county)
 
+For flood specifically, component weights are: NRI 45%, NOAA storm events 25%, NFIP claims 10%, proximity to major water bodies 20%. An urban stormwater exposure factor (0.25) is applied to high-impervious-surface counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) to account for combined sewer overflow and stormwater flooding that FEMA NRI does not measure.
+
 **Vulnerability** uses CDC SVI theme percentiles with hazard-specific sub-weights:
-- Flood: socioeconomic (0.20), housing/transportation (0.30), household composition (0.15), minority status (0.15), infrastructure density (0.15), mobile home factor (0.10), elderly factor (0.05), rural isolation (0.15) [PH weights shown; EM weights differ]
+- Flood (PH weights): housing/transportation (0.30), socioeconomic (0.20), household composition (0.15), elderly factor (0.15), minority status (0.10), mobile home factor (0.10). EM weights differ.
 - Tornado, winter storm, thunderstorm: similar SVI-based sub-weight structures with hazard-appropriate adjustments
 
-**Resilience** uses inverse SVI scores as proxies for community adaptive capacity.
+**Resilience** uses inverse SVI scores as proxies for community adaptive capacity. For flood, EOC county capacity is not included as a resilience bonus: emergency operations center readiness improves coordinated disaster response but does not reduce the frequency of stormwater events, riverine flooding, or combined sewer overflows.
 
 **Health Impact Factor** scales risk by population health indicators (elderly percentage, poverty rate).
 

@@ -19,6 +19,21 @@ from utils.gis_export import CARAGISExporter
 
 logger = logging.getLogger(__name__)
 
+
+def _classify_risk_level(score: float) -> str:
+    """Return the qualitative risk level label for a PHRAT score (0–1)."""
+    if score >= 0.85:
+        return "Critical"
+    elif score >= 0.70:
+        return "Very High"
+    elif score >= 0.55:
+        return "High"
+    elif score >= 0.40:
+        return "Moderate"
+    else:
+        return "Low"
+
+
 # Create blueprint for GIS export routes
 gis_export_bp = Blueprint('gis_export', __name__, url_prefix='/api/gis')
 
@@ -60,17 +75,16 @@ def export_all_data():
                 cybersecurity_risk = risk_data.get('cybersecurity_risk', 0.2)
                 utilities_risk = risk_data.get('utilities', {}).get('overall', 0.2)
 
+                total_score = float(risk_data.get('total_risk_score', 0))
+                risk_level = _classify_risk_level(total_score)
+
                 record = {
                     'jurisdiction_id': jid,
                     'jurisdiction': j['name'],
                     'county': county_name,
                     'fips_code': exporter._get_county_fips_code(county_name) or '',
-                    'total_risk_score': round(float(risk_data.get('total_risk_score', 0)), 4),
-                    'residual_risk': round(float(risk_data.get('residual_risk', 0)), 4),
-                    'exposure': round(risk_data.get('exposure', 0), 4),
-                    'vulnerability': round(risk_data.get('vulnerability', 0), 4),
-                    'resilience': round(risk_data.get('resilience', 0), 4),
-                    'health_impact_factor': round(risk_data.get('health_impact_factor', 1.0), 4),
+                    'total_risk_score': round(total_score, 4),
+                    'risk_level': risk_level,
                     'natural_hazards_risk': round(float(natural_hazards_risk or 0), 4),
                     'health_risk': round(float(health_risk or 0), 4),
                     'active_shooter_risk': round(float(active_shooter_risk or 0), 4),
@@ -287,27 +301,23 @@ def get_export_fields():
             'fips_code': 'Federal Information Processing Standard county code'
         },
         'risk_domain_scores': {
-            'total_risk_score': 'Overall composite risk score (0.0-1.0)',
-            'residual_risk': 'Calculated residual risk after resilience adjustment',
-            'natural_hazards_risk': 'Combined natural hazards risk score',
-            'health_risk': 'Public health vulnerability score',
+            'total_risk_score': 'Overall composite PHRAT score (0.0-1.0); quadratic mean of 7 weighted domains',
+            'risk_level': 'Qualitative classification: Low (<0.40), Moderate (0.40-0.54), High (0.55-0.69), Very High (0.70-0.84), Critical (>=0.85)',
+            'natural_hazards_risk': 'Combined natural hazards score — equal-weighted mean of flood, tornado, winter storm, thunderstorm EVR scores',
+            'health_risk': 'Health metrics / infectious disease risk score',
             'active_shooter_risk': 'Community violence risk assessment',
             'extreme_heat_risk': 'Heat-related health risk score',
             'air_quality_risk': 'Air pollution and quality risk',
-            'cybersecurity_risk': 'Digital infrastructure vulnerability',
-            'utilities_risk': 'Critical infrastructure risk'
+            'dam_failure_risk': 'Dam failure risk score (EVR framework, WI DNR / NID inventory)',
+            'vector_borne_disease_risk': 'Vector-borne disease risk (Lyme + West Nile Virus, WI DHS surveillance)',
+            'cybersecurity_risk': 'Digital infrastructure vulnerability (supplementary — not in PHRAT)',
+            'utilities_risk': 'Critical infrastructure risk (supplementary — not in PHRAT)'
         },
-        'specific_hazards': {
-            'flood_risk': 'Flood exposure and vulnerability',
-            'tornado_risk': 'Tornado exposure and vulnerability', 
-            'winter_storm_risk': 'Winter weather risk assessment',
-            'thunderstorm_risk': 'Severe thunderstorm risk'
-        },
-        'risk_components': {
-            'exposure': 'Hazard exposure level (0.0-1.0)',
-            'vulnerability': 'Community vulnerability score (0.0-1.0)',
-            'resilience': 'Community resilience capacity (0.0-1.0)',
-            'health_impact_factor': 'Health consequence multiplier (0.8-1.5)'
+        'natural_hazard_subtypes': {
+            'flood_risk': 'Flood EVR score — NRI 45%, storm events 25%, NFIP claims 10%, water proximity 20%; urban stormwater factor applied to SE WI counties',
+            'tornado_risk': 'Tornado EVR score with mobile home density adjustment',
+            'winter_storm_risk': 'Winter storm EVR score',
+            'thunderstorm_risk': 'Thunderstorm risk from NOAA Storm Events county severity index'
         },
         'geographic_data': {
             'lat': 'Latitude of jurisdiction centroid',

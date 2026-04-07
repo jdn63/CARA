@@ -71,13 +71,13 @@ Uses an Exposure-Vulnerability-Resilience (EVR) framework with a health impact f
 
 The residual risk formula:
 ```
-Residual Risk = (Exposure * Vulnerability * Health_Impact_Factor) / Resilience
+Residual Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
 ```
 
 Where:
-- Exposure incorporates NOAA Storm Events historical counts and OpenFEMA disaster declarations/NFIP claims
+- Exposure incorporates NOAA Storm Events historical counts, OpenFEMA disaster declarations/NFIP claims, and FEMA NRI baseline scores. For flood: NRI 45%, storm events 25%, NFIP claims 10%, proximity to major water bodies 20%. High-impervious-surface urban counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) receive an additional 0.25 urban stormwater exposure factor reflecting combined sewer overflow risk not captured by NRI.
 - Vulnerability uses SVI theme percentiles with hazard-specific sub-weights from `config/risk_weights.yaml`
-- Resilience uses inverse SVI socioeconomic and housing scores as proxies
+- Resilience uses inverse SVI socioeconomic and housing scores as proxies. The (2.0 - Resilience) amplifier means low resilience (0.1) produces a 1.9x multiplier; high resilience (0.9) produces a 1.1x multiplier — resilience attenuates risk but never eliminates it. For flood, EOC county capacity is not applied as a resilience bonus because emergency operations center readiness does not reduce the frequency of stormwater events or riverine flooding.
 - Health Impact Factor scales risk by population health indicators (elderly percentage, poverty rate)
 
 ### Mobile Home Impact on Tornado Risk

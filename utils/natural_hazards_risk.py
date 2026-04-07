@@ -213,12 +213,18 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
     flat_terrain_counties = ['Columbia', 'Dodge', 'Fond du Lac', 'Green Lake', 'Marquette',
                              'Winnebago', 'Calumet', 'Outagamie', 'Brown']
     high_precip_counties = ['Bayfield', 'Douglas', 'Ashland', 'Iron', 'Vilas', 'Florence']
+    # Urban counties with high impervious surface coverage — primary flood mechanism is
+    # stormwater runoff and sewer surcharge, which FEMA NRI systematically underestimates
+    # because NRI is calibrated on riverine/coastal flooding, not urban runoff.
+    urban_stormwater_counties = ['Milwaukee', 'Racine', 'Kenosha', 'Waukesha',
+                                 'Ozaukee', 'Washington']
 
     exposure_factors = {
-        'historical_nri': base_flood_risk * 0.7,
+        'historical_nri': base_flood_risk * 0.65,
         'proximity_to_water': 0.0,
         'terrain_risk': 0.15,
         'precipitation_patterns': 0.15,
+        'urban_stormwater': 0.0,
         'climate_trend': min(1.0, base_flood_risk * climate_mult) - base_flood_risk
     }
 
@@ -230,13 +236,19 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
         exposure_factors['terrain_risk'] = 0.25
     if county_name in high_precip_counties:
         exposure_factors['precipitation_patterns'] = 0.25
+    # Urban impervious surface boost: dense urban counties flood frequently via
+    # stormwater runoff, basement backups, and combined sewer overflows —
+    # mechanisms not captured by NRI riverine flood indices.
+    if county_name in urban_stormwater_counties:
+        exposure_factors['urban_stormwater'] = 0.25
 
     exposure_score = min(1.0, (
-        (exposure_factors['historical_nri'] * 0.55) +
-        (exposure_factors['proximity_to_water'] * 0.15) +
+        (exposure_factors['historical_nri'] * 0.45) +
+        (exposure_factors['proximity_to_water'] * 0.20) +
         (exposure_factors['terrain_risk'] * 0.10) +
         (exposure_factors['precipitation_patterns'] * 0.10) +
-        (exposure_factors['climate_trend'] * 0.10)
+        (exposure_factors['urban_stormwater'] * 0.10) +
+        (exposure_factors['climate_trend'] * 0.05)
     ))
 
     if discipline == 'em':
@@ -252,7 +264,15 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
             (census['elderly_factor'] * 0.05) +
             (rural_isolation * 0.15)
         ))
-        resilience_raw = _calculate_em_resilience(svi, census, county_name)
+        # Flood-specific EM resilience: does NOT include the EOC county bonus used
+        # by _calculate_em_resilience. An EOC improves response but does not reduce
+        # stormwater flood exposure or combined sewer capacity constraints.
+        resilience_raw = 0.45
+        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.10)
+        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.15)
+        if census['population'] > 75000:
+            resilience_raw += 0.05  # smaller than standard; large cities have more infrastructure at risk
+        resilience_raw = max(0.1, min(0.9, resilience_raw))
     else:
         vulnerability_score = min(1.0, (
             (svi['housing_transportation'] * 0.30) +
@@ -267,11 +287,15 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
         resilience_raw += ((1.0 - svi['socioeconomic']) * 0.20)
         resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
 
-        protected_counties = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'Racine']
-        if county_name in protected_counties:
-            resilience_raw += 0.20
-        elif county_name in ['La Crosse', 'Outagamie', 'Rock', 'Kenosha']:
-            resilience_raw += 0.10
+        # Flood-specific resilience credit: only for documented stormwater capital
+        # investment programs (retention basins, green infrastructure, sewer separation).
+        # Note: EOC capacity and general emergency management strength do NOT reduce
+        # flood exposure — they improve response speed but not prevention. Urban counties
+        # with dense impervious surfaces (Milwaukee, Racine, Kenosha) have LOWER
+        # stormwater resilience due to aging combined sewers, not higher.
+        stormwater_investment_counties = ['Dane', 'Brown', 'La Crosse', 'Outagamie']
+        if county_name in stormwater_investment_counties:
+            resilience_raw += 0.07
 
         resilience_raw = max(0.1, min(0.9, resilience_raw))
 

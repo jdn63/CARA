@@ -37,9 +37,9 @@ This document provides a comprehensive reference for all data variables, risk me
 #### Flood Risk
 | Variable | Type | Range | Unit | Description |
 |----------|------|-------|------|-------------|
-| `flood_exposure` | Float | 0.0 - 1.0 | Normalized | FEMA flood zone and historical flooding |
-| `flood_vulnerability` | Float | 0.0 - 1.0 | Normalized | Population and infrastructure in flood zones |
-| `flood_resilience` | Float | 0.0 - 1.0 | Normalized | Flood mitigation and response capacity |
+| `flood_exposure` | Float | 0.0 - 1.0 | Normalized | NRI baseline (45%), NOAA storm events (25%), NFIP claims (10%), water body proximity (20%); urban stormwater factor (+0.25) applied to Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington counties |
+| `flood_vulnerability` | Float | 0.0 - 1.0 | Normalized | SVI housing/transportation (30%), socioeconomic (20%), household composition (15%), elderly population (15%), minority status (10%), mobile home density (10%) |
+| `flood_resilience` | Float | 0.0 - 1.0 | Normalized | Inverse SVI socioeconomic and housing scores; EOC county capacity is not included (operational readiness does not reduce stormwater or riverine flood frequency) |
 | `fema_flood_zone` | String | - | Categorical | A, AE, X, etc. (FEMA flood zone designations) |
 | `dam_count` | Integer | 0 - 50 | Count | Number of dams in jurisdiction |
 

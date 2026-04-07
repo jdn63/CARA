@@ -1,0 +1,50 @@
+CARA - Comprehensive Automated Risk Assessment
+Version: 2.5
+Release date: 2026-04-03
+Push: v25
+
+Changelog summary:
+- v25: Upgrade HERC region dashboard to fully mirror jurisdiction dashboard.
+  herc_dashboard.html rebuilt with: BSTA temporal risk table (regional averages),
+  all 7 PHRAT primary domain tiles (added Air Quality, Dam Failure, VBD which
+  were previously missing), category-header layout (Biological 24%, Natural
+  Hazards 28%, Environmental 30%, Security 18%), supplementary domain tiles
+  (Cybersecurity, Utilities with clear "not in PHRAT" labeling), show-work
+  popovers on every domain tile showing regional averages across N jurisdictions,
+  unified 0.6/0.3 risk thresholds consistent with jurisdiction dashboard.
+  routes/herc.py updated to extract temporal_risk_data and current_season as
+  separate template variables matching routes/dashboard.py pattern.
+- v24: Add county-level communicable disease metrics from two new data sources.
+  New utils/health_metrics_data.py module provides:
+    (1) Flu vaccination rate from County Health Rankings 2025 CSV (BRFSS survey);
+        replaces statewide 52.1% flat rate with county-specific values ranging
+        22% (Taylor/Polk) to 69% (Dane). Drives flu herd immunity gap analysis
+        in strategic vaccination risk assessment.
+    (2) Primary care physician access from CHR (physicians per 100k); integrated
+        as a resilience modifier in the disease EVR formula. Adams County: 9.6/100k
+        vs Waukesha: 140/100k. Adds up to +0.15 resilience for high-access counties.
+    (3) COPD prevalence from CDC PLACES Socrata API (crude prevalence, no key
+        required); integrated as a vulnerability modifier in the disease EVR formula.
+        Forest: 10.2% vs Waukesha: 4.1%. Adds up to +0.15 vulnerability for
+        high-COPD counties. All three sources cached 30 days; CHR annual update.
+- v23: Replace dead DHS GeoService COVID vaccination API with WI DHS WIR
+  county immunization CSV (county-immunization-data.csv). MMR (1) rates
+  for 24-month olds now loaded for all 72 Wisconsin counties from the most
+  recent year available (2025). County-specific rates now drive both the
+  disease risk score and the strategic vaccination outbreak risk multiplier
+  in disease_surveillance.py. 30-day persistent cache; health-ranking
+  formula retained as a fallback if the CSV is unavailable.
+- v22: Temporarily hide Tribal jurisdictions from public dropdown and block
+  direct URL access to Tribal dashboards pending Tribal data sovereignty
+  protocol finalization. No Tribal data or logic removed. Fully reversible;
+  see .local/tribal_access_reversal.md for exact steps.
+- v21: Update GitHub Actions to Node.js 24-compatible versions:
+  actions/checkout@v3 -> @v4, actions/setup-python@v4 -> @v5
+- v20: README replaced with clean 7-domain version; county_baselines.yaml
+  force-committed to fix CI test failures in CARA-template; VERSION.txt
+  canary file added to confirm successful pushes
+- v19: Geometric tribal county weights via spatial overlay (EPSG:3174);
+  trust land inclusion; Ho-Chunk Nation expanded to 13 counties; tribal
+  metadata excluded from Risk Summary and Action Plan; Tribal Nation
+  Methodology section added; em-dash formatting fixes across all templates
+- v18 and earlier: see README.md Version History section

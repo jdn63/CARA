@@ -222,7 +222,7 @@ class HERCRiskAggregator:
                                 temporal_data[hazard_type]['trend'].append(components.get('trend', 0.0))
                                 temporal_data[hazard_type]['acute'].append(components.get('acute', 0.0))
                     
-                    jurisdiction_risks.append(comprehensive_risk.get('total_risk_score', 0.0))
+                    jurisdiction_risks.append(risk_data.get('total_risk_score', 0.0))
                     successful_calculations += 1
                     
                 except Exception as e:

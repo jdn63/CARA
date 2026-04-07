@@ -279,10 +279,13 @@
 
             <h6>EVR Components by Hazard</h6>
             <ul>
-                <li><strong>Exposure:</strong> FEMA NRI hazard scores with climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code></li>
+                <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and OpenFEMA NFIP claims. Climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code> are applied per hazard type. For flood, proximity to major water bodies contributes 20% of the exposure score; NRI contributes 45%, storm events 25%, and NFIP claims 10%.</li>
                 <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (population aged 65+ (%), mobile home %, population density)</li>
-                <li><strong>Resilience:</strong> Socioeconomic capacity and infrastructure factors</li>
+                <li><strong>Resilience:</strong> Inverse SVI socioeconomic and housing scores as proxies for community adaptive capacity. The EVR formula uses a <code>(2.0 - Resilience)</code> amplifier rather than a simple divisor, so low resilience magnifies risk and high resilience attenuates it without eliminating it entirely. For flood specifically, EOC county capacity is not included as a resilience bonus: emergency operations center readiness improves coordinated disaster response but does not reduce the frequency of stormwater events, riverine flooding, or combined sewer overflows.</li>
             </ul>
+            <div class="alert alert-secondary mb-0 mt-2">
+                <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. A 0.25 urban stormwater exposure factor is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. NRI weight is held at 45% (rather than 55%) to account for this structural gap, and proximity to water body is weighted at 20%.
+            </div>
 
             <h6 class="mt-3">SVI Vulnerability Weights by Hazard Type</h6>
             <div class="table-responsive">

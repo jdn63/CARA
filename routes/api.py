@@ -193,6 +193,34 @@ def get_scheduler_status_api():
         return api_server_error(str(e))
 
 
+@api_bp.route('/invalidate-herc-cache', methods=['POST'])
+@require_api_key('admin')
+def invalidate_herc_cache_api():
+    """Mark all HERC DB cache entries as invalid, forcing recalculation on next request.
+    Call this after deploying methodology changes that affect HERC risk scores."""
+    try:
+        from core import db
+        from models import HERCRiskCache
+
+        count = db.session.query(HERCRiskCache).update({'is_valid': False})
+        db.session.commit()
+
+        # Also clear in-memory caches
+        from utils.herc_risk_aggregator import _herc_cache, _jurisdiction_cache
+        _herc_cache.clear()
+        _jurisdiction_cache.clear()
+
+        logger.info(f"HERC cache invalidated: {count} DB entries marked invalid (admin request)")
+        return api_success({
+            'db_entries_invalidated': count,
+            'in_memory_cleared': True,
+            'timestamp': datetime.now().isoformat()
+        }, f"HERC cache cleared. {count} region(s) will recalculate on next dashboard load.")
+    except Exception as e:
+        logger.error(f"Error invalidating HERC cache: {str(e)}")
+        return api_server_error(str(e))
+
+
 @api_bp.route('/refresh-data/<source>')
 @require_api_key('admin')  # Requires admin access for data refresh
 def refresh_data_source_api(source):
