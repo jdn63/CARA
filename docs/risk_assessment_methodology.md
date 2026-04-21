@@ -78,7 +78,8 @@ Where:
 - Exposure incorporates NOAA Storm Events historical counts, OpenFEMA disaster declarations/NFIP claims, and FEMA NRI baseline scores. For flood: NRI 45%, storm events 25%, NFIP claims 10%, proximity to major water bodies 20%. High-impervious-surface urban counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) receive an additional 0.25 urban stormwater exposure factor reflecting combined sewer overflow risk not captured by NRI.
 - Vulnerability uses SVI theme percentiles with hazard-specific sub-weights from `config/risk_weights.yaml`
 - Resilience uses inverse SVI socioeconomic and housing scores as proxies. The (2.0 - Resilience) amplifier means low resilience (0.1) produces a 1.9x multiplier; high resilience (0.9) produces a 1.1x multiplier — resilience attenuates risk but never eliminates it. For flood, EOC county capacity is not applied as a resilience bonus because emergency operations center readiness does not reduce the frequency of stormwater events or riverine flooding.
-- Health Impact Factor scales risk by population health indicators (elderly percentage, poverty rate)
+- Health Impact Factor (0.80–1.50) is derived from the FEMA NRI Expected Annual Loss Score (EALS) for each hazard type, mapping county EALS percentile linearly to the adjustment range
+- The four EVR scores (flood, tornado, winter storm, thunderstorm) are combined into the natural hazards domain score using an equal-weighted quadratic mean (RMS, p=2), consistent with the outer PHRAT formula. A county with one high-severity sub-hazard scores higher than one with uniformly moderate sub-domain scores.
 
 ### Mobile Home Impact on Tornado Risk
 ```

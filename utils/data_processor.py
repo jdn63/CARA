@@ -463,49 +463,6 @@ def calculate_jurisdiction_risk(county_name: str) -> dict:
     adjusted_tornado_risk = base_tornado_risk * (1.0 + mobile_factor)
     logger.info(f"Tornado risk for {county_name}: base={base_tornado_risk:.2f}, adjusted={adjusted_tornado_risk:.2f} (mobile home factor={mobile_factor:.2f})")
     
-    # Calculate thunderstorm risk based on tornado risk and other factors
-    # Thunderstorms are usually more frequent but less severe than tornadoes
-    # Base thunderstorm risk on tornado risk but adjust for frequency and severity
-    base_thunderstorm_risk = 0.38  # Default base risk
-    
-    # Use tornado risk as a correlation factor (0.7 correlation)
-    tornado_correlation = adjusted_tornado_risk * 0.7
-    
-    # Blend default base risk with tornado correlation
-    thunderstorm_risk = (base_thunderstorm_risk * 0.3) + tornado_correlation
-    
-    # Get SVI data to adjust thunderstorm risk
-    try:
-        from utils.svi_data import get_svi_data
-        svi_data = get_svi_data(county_name)
-        
-        if svi_data and isinstance(svi_data, dict):
-            # Housing vulnerability has impact on thunderstorm risk - using a more balanced approach
-            housing_svi = svi_data.get('housing_transportation', 0.5)
-            socioeconomic_svi = svi_data.get('socioeconomic', 0.5)
-            
-            # Use a weighted average approach to prevent extreme values
-            housing_weight = 0.3
-            socioeconomic_weight = 0.15
-            base_weight = 1.0 - (housing_weight + socioeconomic_weight)
-            
-            # Apply SVI adjustments to thunderstorm risk using weighted average
-            # Scale down base risk as it's already quite high in many cases
-            scaling_factor = 0.7  # Scale down by 30%
-            
-            thunderstorm_risk = min(0.85, (
-                (thunderstorm_risk * base_weight * scaling_factor) + 
-                (housing_svi * housing_weight) + 
-                (socioeconomic_svi * socioeconomic_weight)
-            ))
-            
-            logger.info(f"Adjusted thunderstorm risk with SVI factors for {county_name}: {thunderstorm_risk:.2f}")
-    except Exception as e:
-        logger.warning(f"Could not apply SVI factors to thunderstorm risk: {str(e)}")
-    
-    # Cap risk at 0.85 for consistency with our detailed calculation
-    thunderstorm_risk = min(thunderstorm_risk, 0.85)
-    
     from utils.natural_hazards_risk import (
         calculate_enhanced_flood_risk,
         calculate_enhanced_tornado_risk,
@@ -1148,7 +1105,11 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
         # Filter out None values and convert to float
         valid_values = [float(v) for v in numeric_hazards.values() if v is not None and isinstance(v, (int, float))]
         if valid_values:
-            natural_hazards_score = sum(valid_values) / len(valid_values)
+            # Quadratic mean (RMS, p=2) is consistent with the outer PHRAT formula and
+            # ensures that a single high-risk sub-domain elevates the domain score
+            # more than an arithmetic mean would.
+            import math
+            natural_hazards_score = math.sqrt(sum(v ** 2 for v in valid_values) / len(valid_values))
         else:
             natural_hazards_score = _get_fallback('natural_hazards')
     else:

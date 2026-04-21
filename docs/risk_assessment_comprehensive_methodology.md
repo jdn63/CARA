@@ -142,7 +142,7 @@ mobile_home_factor = min(1.0, mobile_home_percentage * 5)
 adjusted_tornado_risk = min(1.0, base_tornado_risk * (1 + mobile_home_factor))
 ```
 
-The four sub-type scores are combined into a single natural hazards score.
+The four sub-type scores are combined into a single natural hazards score using an equal-weighted quadratic mean (RMS, p=2), consistent with the outer PHRAT formula. This ensures that a county with one high-severity hazard type scores higher than one with uniformly moderate sub-domain scores.
 
 ### 4.2 Active Shooter Risk
 

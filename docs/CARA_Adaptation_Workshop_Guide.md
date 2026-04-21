@@ -2,7 +2,7 @@
 
 ## Adapting CARA for Subnational Healthcare Emergency Preparedness Risk Assessment
 
-This guide walks workshop participants through obtaining, configuring, and customizing the Comprehensive Automated Risk Assessment (CARA) platform for a new jurisdiction. It is written for facilitators working with participants who have no coding experience. The guide uses Libya as the example context but applies to any country or subnational region.
+This guide walks workshop participants through obtaining, configuring, and customizing the Comprehensive Automated Risk Assessment (CARA) platform for a new jurisdiction. It is written for facilitators working with participants who have no coding experience. The guide applies to any country or subnational region.
 
 The steps in this guide are the same regardless of how you choose to work with the code - whether on your own computer, on a cloud development platform, or any other environment that can run Python.
 
@@ -67,18 +67,27 @@ Walk participants through the live CARA demo. Show them:
 
 Key concepts to explain:
 
-**Risk Domains**: CARA organizes risk into separate categories (called "domains"). Wisconsin's CARA uses these 7 primary domains, plus 2 supplementary domains:
+**Risk Domains**: CARA organizes risk into separate categories (called "domains"). The template ships with these primary domains, organized into two profiles -- US State and International:
+
+US State profile domains (default weights):
 - Natural Hazards (28%): floods, tornadoes, winter storms, thunderstorms
-- Active Shooter (18%): historical incidents, school vulnerability, community factors
+- Mass Casualty / Violence (18%): historical incidents, community vulnerability factors
 - Health Metrics / Infectious Disease (17%): respiratory illness, vaccination coverage, healthcare capacity
 - Air Quality (12%): EPA monitoring, pollution exposure
 - Extreme Heat (11%): heat vulnerability, urban heat island effect
 - Dam Failure (7%): dam inventory, downstream population exposure
-- Vector-Borne Disease (7%): Lyme disease and West Nile Virus surveillance
-- Cybersecurity (supplementary): proxy indicators, not in composite score
-- Utilities (supplementary): infrastructure disruption proxies, not in composite score
+- Vector-Borne Disease (7%): disease surveillance data
 
-Each primary domain gets a weight reflecting how much it contributes to the overall risk score. These weights add up to 100%.
+International profile domains (default weights):
+- Natural Hazards (25%): historical disasters, climate exposure
+- Conflict / Displacement (20%): conflict event data, population displacement
+- Health Metrics (17%): health system indicators, disease burden
+- Mass Casualty / Violence (12%): incident data, community factors
+- Air Quality (10%): monitoring and modeled exposure
+- Extreme Heat (10%): heat exposure and vulnerability
+- Vector-Borne Disease (6%): disease surveillance
+
+Each primary domain gets a weight reflecting how much it contributes to the overall risk score. These weights add up to 100%. Your adaptation will select a profile and then adjust the weights to match your context.
 
 **The PHRAT Formula**: The overall risk score is calculated using a quadratic mean:
 
@@ -86,7 +95,7 @@ Each primary domain gets a weight reflecting how much it contributes to the over
 
 This formula gives extra emphasis to domains with higher risk scores -- meaning a jurisdiction with one very high risk is scored higher than one with several moderate risks.
 
-**Jurisdictions**: CARA maps risk at the subnational level. Wisconsin uses 95 public health jurisdictions (84 counties and 11 tribal nations). Your adaptation will use whatever administrative divisions make sense for your context -- governorates, districts, municipalities, etc.
+**Jurisdictions**: CARA maps risk at the subnational level. Your adaptation will use whatever administrative divisions make sense for your context -- counties, governorates, districts, municipalities, or other units. These are defined in a single configuration file rather than scattered across the codebase.
 
 ### Session 2: Planning Your Adaptation (2 hours)
 
@@ -94,39 +103,40 @@ This is the most important session. Before touching any code, the group needs to
 
 **1. What are your jurisdictions?**
 
-Write out a complete list of subnational units you want to assess. For Libya, this might be:
-- The 22 shabiyat (districts)
-- Specific municipalities within districts
-- Health facility catchment areas
-
-For each jurisdiction, you need:
-- A unique ID (can be a number: 1, 2, 3...)
+Write out a complete list of subnational units you want to assess. For each jurisdiction, you need:
+- A unique ID (a short text string: `district_01`, `province_north`, etc.)
 - A display name
-- The parent region or district it belongs to
-- Whether it is a primary entry or a secondary/duplicate (most will be primary)
+- The parent region or district it belongs to (if applicable)
+- The GADM geographic identifier for boundary mapping (the facilitator can help look these up)
 
-**2. What risk domains matter for your context?**
+**2. Which profile fits your context?**
 
-Wisconsin's domains may not all apply to Libya, and Libya may have risks that Wisconsin does not. Discuss as a group:
+The template ships two profiles that control which domains and data connectors are active:
 
-Domains you might keep:
-- Natural Hazards (but with different hazard types -- e.g., sandstorms, drought, flooding instead of tornadoes and winter storms)
+- `us_state`: Designed for US states and territories. Uses US-specific data sources (FEMA, CDC, EPA AirNow, NOAA/NWS). Includes dam failure. Does not include conflict or displacement.
+- `international`: Designed for non-US countries and subnational regions. Uses globally available data sources (WHO GHO, ACLED, EM-DAT, World Bank, OpenAQ, NOAA GSOD). Includes conflict and displacement. Does not include dam failure or US-specific feeds.
+
+If neither profile fits precisely, the `custom` profile lets you override individual domain weights while still using whichever connectors you enable.
+
+**3. What risk domains matter for your context?**
+
+The selected profile's domains may not all apply to your jurisdiction. Discuss as a group:
+
+Domains you might keep, remove, or reweight depending on your context:
+- Natural Hazards (but with locally relevant hazard types)
 - Health Metrics (with locally relevant indicators)
-- Extreme Heat (likely very relevant for Libya)
+- Extreme Heat (relevant in most climates)
 - Air Quality
+- Conflict / Displacement (international profile; highly relevant in fragile or conflict-affected settings)
+- Mass Casualty / Violence (present in both profiles; adjust weight to context)
 
-Domains you might add:
-- Conflict/Security Risk
-- Displacement/Migration
+Domains you might add beyond the built-in set (requires facilitator-led coding in Session 10):
 - Water Scarcity
 - Infrastructure Damage
 - Supply Chain Disruption
+- Food Security
 
-Domains you might remove:
-- Active Shooter (this is a U.S.-specific risk type)
-- Winter Storm (not applicable)
-
-**3. What data sources are available?**
+**4. What data sources are available?**
 
 For each domain you keep or add, you need data. Discuss what is available:
 
@@ -136,7 +146,7 @@ International data sources that may be useful:
 - WHO Global Health Observatory (https://www.who.int/data/gho) -- health indicators by country
 - EM-DAT International Disaster Database (https://www.emdat.be) -- historical disaster records
 - World Bank Open Data (https://data.worldbank.org) -- economic and infrastructure indicators
-- ACLED (https://acleddata.com) -- conflict event data
+- ACLED (https://acleddata.com) -- conflict event data (requires free account registration)
 - IPC Food Security Classification (https://www.ipcinfo.org) -- food security assessments
 - NASA FIRMS (https://firms.modaps.eosdis.nasa.gov) -- fire/hotspot data
 - Climate Change Knowledge Portal (https://climateknowledgeportal.worldbank.org)
@@ -155,21 +165,9 @@ For each data source, note:
 - Whether it covers all your jurisdictions or only some
 - Whether it is publicly accessible or requires authorization
 
-**4. What weights should each domain have?**
+**5. What weights should each domain have?**
 
-As a group, decide how much each domain should contribute to the overall risk score. The weights must add up to 1.0 (100%). For example, a Libya adaptation might use:
-
-| Domain | Weight | Rationale |
-|--------|--------|-----------|
-| Conflict/Security | 0.25 | Primary driver of healthcare disruption |
-| Health Metrics | 0.25 | Core to healthcare preparedness |
-| Natural Hazards | 0.20 | Flooding, drought, sandstorms |
-| Infrastructure | 0.15 | Facility damage, power, water |
-| Extreme Heat | 0.10 | Seasonal health impact |
-| Displacement | 0.05 | Population movement pressures |
-| **Total** | **1.00** | |
-
-Document all decisions from this session. You will need them on Day 2.
+As a group, decide how much each domain should contribute to the overall risk score. The weights must add up to 1.0 (100%). Document all decisions from this session. You will need them on Day 2.
 
 ---
 
@@ -187,7 +185,7 @@ This creates your own independent copy of the CARA code that you can modify free
 2. Make sure you are signed in to your GitHub account
 3. Click the "Fork" button in the top-right corner of the page
 4. On the fork creation page:
-   - Change the "Repository name" to something meaningful, like `cara-libya` or `cara-your-country`
+   - Change the "Repository name" to something meaningful, like `cara-[your-country]` or `cara-[your-region]`
    - Optionally add a description
    - Click "Create fork"
 5. Wait for the fork to complete. You now have your own copy of the code on GitHub
@@ -205,31 +203,36 @@ Choose the option that matches your setup:
    ```
 3. Download your forked repository:
    ```
-   git clone https://github.com/your-username/cara-libya.git
+   git clone https://github.com/your-username/cara-[your-region].git
    ```
-   (Replace `your-username` with your GitHub username and `cara-libya` with whatever you named your fork)
+   (Replace `your-username` with your GitHub username and `cara-[your-region]` with whatever you named your fork)
 4. Move into the project folder:
    ```
-   cd cara-libya
+   cd cara-[your-region]
    ```
 5. Install the required Python packages:
    ```
    pip install -r requirements.txt
    ```
-6. Set up your PostgreSQL database:
-   - Create a new database (for example, named `cara_libya`)
+6. Copy the jurisdiction configuration template to create your working configuration file:
+   ```
+   cp config/jurisdiction.yaml.example config/jurisdiction.yaml
+   ```
+   (On Windows: `copy config\jurisdiction.yaml.example config\jurisdiction.yaml`)
+7. Set up your PostgreSQL database:
+   - Create a new database (for example, named `cara_[region]`)
    - Set the connection information as an environment variable:
-     - On Mac/Linux: `export DATABASE_URL="postgresql://username:password@localhost:5432/cara_libya"`
-     - On Windows: `set DATABASE_URL=postgresql://username:password@localhost:5432/cara_libya`
+     - On Mac/Linux: `export DATABASE_URL="postgresql://username:password@localhost:5432/cara_[region]"`
+     - On Windows: `set DATABASE_URL=postgresql://username:password@localhost:5432/cara_[region]`
    - Replace `username` and `password` with your PostgreSQL credentials
-7. Set a session secret:
+8. Set a session secret:
    - On Mac/Linux: `export SESSION_SECRET="any-random-text-here"`
    - On Windows: `set SESSION_SECRET=any-random-text-here`
-8. Start the application:
+9. Start the application:
    ```
    python main.py
    ```
-9. Open a web browser and go to `http://localhost:5000` -- you should see the CARA home page
+10. Open a web browser and go to `http://localhost:5000` -- you should see the CARA home page
 
 **If working on Replit:**
 
@@ -238,14 +241,19 @@ Choose the option that matches your setup:
 3. Select "Import from GitHub"
 4. Paste the URL of your forked repository
 5. Click "Import from GitHub" and wait for the import to complete
-6. In Replit, set up a PostgreSQL database using the Database tool in the sidebar
-7. Click the "Run" button -- CARA should start and a preview window will appear
+6. In Replit, open the Shell tab and run:
+   ```
+   cp config/jurisdiction.yaml.example config/jurisdiction.yaml
+   ```
+7. In Replit, set up a PostgreSQL database using the Database tool in the sidebar
+8. Click the "Run" button -- CARA should start and a preview window will appear
 
 **If working on another cloud platform:**
 
 Follow that platform's instructions for importing a GitHub repository and setting up a Python application with PostgreSQL. The key requirements are:
 - Python 3.9+
 - PostgreSQL database
+- Copy `config/jurisdiction.yaml.example` to `config/jurisdiction.yaml` before starting
 - The `DATABASE_URL` and `SESSION_SECRET` environment variables must be set
 - The application starts with `python main.py` (or `gunicorn --bind 0.0.0.0:5000 main:app` for production)
 
@@ -254,9 +262,9 @@ Follow that platform's instructions for importing a GitHub repository and settin
 However you set things up, verify that:
 1. The application starts without errors
 2. You can see the CARA home page in a browser
-3. You can select a jurisdiction and see a dashboard
+3. You can select one of the example jurisdictions from the template and see a dashboard
 
-You should see the Wisconsin version of CARA running. This confirms the setup is working correctly. In the next sessions, you will replace the Wisconsin data with your own.
+If the application does not start, the most common cause is a missing `config/jurisdiction.yaml` file. Check that you completed the copy step above, and that the `DATABASE_URL` and `SESSION_SECRET` environment variables are set. In the next sessions, you will replace the example jurisdiction data with your own.
 
 ### Session 4: Understanding the File Structure (30 minutes)
 
@@ -266,12 +274,10 @@ Show participants the key files and folders they will be working with. These fil
 
 | File | What it contains | What you will do |
 |------|-----------------|-----------------|
-| `utils/jurisdictions_code.py` | List of all jurisdictions (names, IDs, counties) | Replace with your jurisdictions |
-| `config/risk_weights.yaml` | Domain weights and sub-domain weights | Change weights to match your decisions |
-| `config/county_baselines.yaml` | Baseline risk scores for each jurisdiction | Replace with your jurisdiction baselines |
-| `data/census/wisconsin_demographics.csv` | Population and age data by county | Replace with your demographic data |
-| `data/census/wisconsin_housing_data.csv` | Housing data by county | Replace with your infrastructure data (or remove if not relevant) |
-| `data/svi/wisconsin_svi_data.json` | Social vulnerability index data | Replace with your vulnerability indicators |
+| `config/jurisdiction.yaml` | Your jurisdiction profile, geographic settings, and the full list of subdivisions (districts, counties, etc.) | Replace the example settings with your own |
+| `config/risk_weights.yaml` | Domain weights and sub-domain weights, organized by profile | Change weights to match your decisions |
+| `data/census/[jurisdiction]_demographics.csv` | Population and age data by subdivision | Replace with your demographic data |
+| `data/svi/[jurisdiction]_vulnerability_data.json` | Social vulnerability index data | Replace with your vulnerability indicators |
 | `templates/index.html` | Home page | Change title, descriptions, jurisdiction labels |
 | `templates/base.html` | Page header/footer used on every page | Change application name and branding |
 | `static/images/` | Logo and map images | Replace with your own logo and maps |
@@ -280,8 +286,8 @@ Show participants the key files and folders they will be working with. These fil
 
 | File | What it contains |
 |------|-----------------|
-| `utils/data_processor.py` | Core risk calculation logic -- change if adding/removing domains |
-| `utils/natural_hazards_risk.py` | Natural hazard calculations -- adapt hazard types |
+| `utils/data_processor.py` | Core risk calculation logic -- change if adding domains beyond the built-in set |
+| `utils/domains/natural_hazards.py` | Natural hazard calculations -- adapt hazard types |
 | `templates/dashboard.html` | Dashboard layout -- update domain display sections |
 | `templates/methodology.html` | Methodology explanation page |
 
@@ -295,6 +301,8 @@ Show participants the key files and folders they will be working with. These fil
 | `gunicorn.conf.py` | Web server settings |
 | `static/css/` | Visual styling |
 | `static/js/` | Interactive features |
+| `utils/risk_engine.py` | The PHRAT scoring formula (no need to change; reads weights from config) |
+| `utils/connectors/` | Data source connectors (only change if adding a new custom connector) |
 
 ---
 
@@ -304,156 +312,197 @@ For all of the steps below, open each file in your text editor (Visual Studio Co
 
 After making changes, save the file and restart the application to see the effect. If you are running locally, stop the application (press Ctrl+C in the terminal) and run `python main.py` again. On Replit, click the "Stop" then "Run" buttons.
 
-### Session 5: Replace the Jurisdictions (1 hour)
+### Session 5: Configure Your Jurisdiction (1 hour)
 
-This is the first and most important change. Open `utils/jurisdictions_code.py`.
+This is the first and most important change. Open `config/jurisdiction.yaml`.
 
-You will see entries that look like this:
+All jurisdiction settings live in this single file. It controls the application name, profile, geographic boundaries, administrative structure, and the complete list of your subdivisions. You will update it in three parts.
 
-```python
-jurisdictions = [
-    {
-        'id': '1',
-        'name': 'Adams County Health & Human Services',
-        'county': 'Adams',
-        'primary': True
-    },
-    {
-        'id': '2',
-        'name': 'Ashland County Health & Human Services',
-        'county': 'Ashland',
-        'primary': True
-    },
-    ...
-]
+**Part 1: Top-level settings**
+
+Find the `jurisdiction:` block at the top of the file:
+
+```yaml
+jurisdiction:
+  name: "Your Jurisdiction Name"
+  short_name: "YJN"
+  profile: international
+  country_code: "XX"
+  iso3166_1: "XX"
+  language: "en"
+  timezone: "UTC"
+  population: 0
+  area_sq_km: 0
 ```
 
-Replace all entries with your jurisdictions. For a Libya adaptation:
+Update each field:
+- `name`: The full name of your project or jurisdiction (e.g., "Eastern Province Health Authority")
+- `short_name`: A short abbreviation used in the interface
+- `profile`: Either `us_state` or `international` (choose based on your planning in Session 2)
+- `country_code` and `iso3166_1`: Your two-letter ISO country code (e.g., `LY`, `KE`, `CO`)
+- `language`: The two-letter language code for your interface (e.g., `en`, `ar`, `fr`)
+- `timezone`: Your local timezone in standard format (e.g., `Africa/Tripoli`, `America/Bogota`)
+- `population` and `area_sq_km`: Total population and area for your jurisdiction
 
-```python
-jurisdictions = [
-    {
-        'id': '1',
-        'name': 'Tripoli',
-        'county': 'Tripoli',
-        'primary': True
-    },
-    {
-        'id': '2',
-        'name': 'Benghazi',
-        'county': 'Benghazi',
-        'primary': True
-    },
-    {
-        'id': '3',
-        'name': 'Misrata',
-        'county': 'Misrata',
-        'primary': True
-    },
-    ...
-]
+**Part 2: Geographic settings**
+
+Find the `geographic:` block:
+
+```yaml
+  geographic:
+    gadm_country: "XX"
+    gadm_level: 2
+    bounding_box:
+      north: 0.0
+      south: 0.0
+      east: 0.0
+      west: 0.0
+    center:
+      lat: 0.0
+      lon: 0.0
 ```
+
+Update each field:
+- `gadm_country`: Your three-letter ISO country code for GADM boundary files (e.g., `LBY`, `KEN`, `COL`)
+- `gadm_level`: The administrative level of your subdivisions. Level 1 is typically states or provinces; level 2 is typically districts or counties. Check the GADM website (https://gadm.org) if you are unsure which level applies to your subdivisions
+- `bounding_box` and `center`: The geographic extent of your jurisdiction, used for map display. These are decimal degree coordinates (positive = north/east, negative = south/west)
+
+Also update the `administrative_hierarchy:` block to use the correct terms for your context:
+
+```yaml
+  administrative_hierarchy:
+    level_0: "Country"
+    level_1: "Province / State"
+    level_2: "District / County"
+    level_3: "Municipality / Ward"
+    primary_assessment_level: 2
+```
+
+Replace the level names with whatever terms are appropriate (e.g., "Governorate", "Shabiyat", "Departamento").
+
+**Part 3: Subdivision list**
+
+Find the `subdivisions:` list. This is the complete list of administrative units you will assess. Replace the example entries with your actual jurisdictions:
+
+```yaml
+  subdivisions:
+    - id: "district_01"
+      name: "District 1"
+      level: 2
+      gadm_gid: "XX.1.1_1"
+```
+
+For each of your subdivisions, add an entry with:
+- `id`: A short unique identifier with no spaces (e.g., `district_01`, `province_north`). Can also be a number as a string: `"1"`, `"2"`.
+- `name`: The full display name as it should appear on the dashboard
+- `level`: The GADM level (should match `gadm_level` above)
+- `gadm_gid`: The GADM geographic ID for boundary mapping. The facilitator can help look these up at https://gadm.org. If you do not have GADM IDs yet, you can leave these as placeholder values and update them before deploying.
 
 Notes:
-- The `id` field must be unique for each jurisdiction
-- The `county` field is used internally for data lookups -- use the same value as `name` unless you have a parent region structure
-- Set `primary` to `True` for all entries unless you have multi-district groupings
-- Make sure every jurisdiction in your demographic data files has a matching entry here
+- There is no limit on the number of subdivisions
+- Make sure the `id` value is unique across all entries
+- Jurisdiction names must be spelled identically here and in all data files (even small differences will cause data mismatches)
 
 ### Session 6: Update Risk Weights (30 minutes)
 
 Open `config/risk_weights.yaml`. This file controls how much each domain contributes to the overall score.
 
-Find the section called `overall_risk_weights`:
+The weights are organized under a `profiles:` block. Find the profile that matches what you set in `jurisdiction.yaml` (either `us_state` or `international`):
 
 ```yaml
-overall_risk_weights:
-  natural_hazards: 0.33
-  health_metrics: 0.20
-  active_shooter: 0.20
-  extreme_heat: 0.13
-  air_quality: 0.14
+profiles:
+  us_state:
+    natural_hazards: 0.28
+    mass_casualty: 0.18
+    health_metrics: 0.17
+    air_quality: 0.12
+    extreme_heat: 0.11
+    dam_failure: 0.07
+    vector_borne_disease: 0.07
+
+  international:
+    natural_hazards: 0.25
+    conflict_displacement: 0.20
+    health_metrics: 0.17
+    mass_casualty: 0.12
+    air_quality: 0.10
+    extreme_heat: 0.10
+    vector_borne_disease: 0.06
 ```
 
-Replace with the weights your group decided on in Day 1. For example:
+Find the block for your selected profile and replace the values with the weights your group decided on in Day 1. For example, if you are using the international profile and want to emphasize health metrics and conflict:
 
 ```yaml
-overall_risk_weights:
-  natural_hazards: 0.20
-  health_metrics: 0.25
-  conflict_security: 0.25
-  infrastructure: 0.15
-  extreme_heat: 0.10
-  displacement: 0.05
+  international:
+    natural_hazards: 0.20
+    conflict_displacement: 0.25
+    health_metrics: 0.25
+    mass_casualty: 0.10
+    air_quality: 0.08
+    extreme_heat: 0.07
+    vector_borne_disease: 0.05
 ```
 
-Important: The values must add up to exactly 1.0.
+Important rules:
+- The values in your active profile must add up to exactly 1.0
+- Do not change the key names (e.g., `conflict_displacement`) -- these must match the domain names used in the code
+- Only modify the profile block that matches the profile you set in `jurisdiction.yaml`. Leave the others as they are.
 
-Also update the sub-domain weights in the same file. For example, if your natural hazards are flooding, drought, and sandstorms instead of flood, tornado, winter storm, and thunderstorm:
-
-```yaml
-natural_hazards_weights:
-  flood: 0.40
-  drought: 0.35
-  sandstorm: 0.25
-```
+If you want to use different weights than either built-in profile provides, switch your profile to `custom` in `jurisdiction.yaml` and fill in all values under the `custom:` block in `risk_weights.yaml`.
 
 ### Session 7: Replace Demographic Data (45 minutes)
 
-Open `data/census/wisconsin_demographics.csv`. You can open CSV files in any text editor or in a spreadsheet application like Excel or Google Sheets. It looks like this:
+The template stores demographic data in CSV files in the `data/census/` folder. These are plain text files that can be opened in any text editor or in a spreadsheet application like Excel or Google Sheets.
+
+Create a new file named `data/census/[your_jurisdiction]_demographics.csv` (replace `[your_jurisdiction]` with your jurisdiction name or abbreviation, with no spaces). It should follow this structure:
 
 ```
-county_name,total_population,population_65_plus,pct_aged_65_plus
-Adams,20654,4131,20.0
-Ashland,15666,3289,21.0
+subdivision_name,total_population,population_65_plus,pct_aged_65_plus
+District 1,450000,36000,8.0
+District 2,220000,17600,8.0
+District 3,180000,14400,8.0
 ```
 
-Replace with your jurisdiction data. Keep the same column structure but use your jurisdiction names (must match the `county` field in `jurisdictions_code.py`):
+Keep the same column names. The `subdivision_name` values must match the `name` field in your `config/jurisdiction.yaml` subdivisions list exactly (including capitalization and spacing).
 
-```
-county_name,total_population,population_65_plus,pct_aged_65_plus
-Tripoli,1158000,92640,8.0
-Benghazi,632000,50560,8.0
-Misrata,462000,36960,8.0
-```
+Do the same for housing and infrastructure data in `data/census/[your_jurisdiction]_housing_data.csv`. If this data is not available yet, you can create a placeholder file with the same structure and update it later.
 
-Do the same for `data/census/wisconsin_housing_data.csv` -- replace with your local housing or infrastructure data, or if this data is not available, you can leave placeholder values and update later.
+After creating your files, open `utils/data_processor.py` and find the lines that reference the data file paths. Update the filenames to match what you created. The facilitator will help identify the exact lines to change.
 
 ### Session 8: Update the User Interface (45 minutes)
 
 Open `templates/base.html` and change:
 - The application title from "CARA" to your project name
-- Any references to "Wisconsin" in the header or footer
+- Any references to the reference jurisdiction in the header or footer
 - The logo image if you have one (place your logo file in the `static/images/` folder)
 
 Open `templates/index.html` and change:
 - The welcome text and description
-- References to "84 local public health agencies and 11 tribal health centers" -- update to describe your jurisdictions
-- The "HERC Regions" tab -- rename or remove this if your jurisdiction does not use health emergency readiness coalitions
-- Any Wisconsin-specific help text
+- References to specific jurisdiction counts -- update to describe your jurisdictions
+- Any region grouping tabs (such as "HERC Regions") -- rename or remove these if your jurisdiction does not use similar regional structures
+- Any context-specific help text
 
 Open `templates/methodology.html` and update:
 - The methodology description to reflect your domains and data sources
-- Any references to Wisconsin-specific regulations or frameworks
+- The assessment framework section to reflect whichever framework you are using (WHO IHR for international; CDC PHEP for US state)
 - Data source citations
 
 ### Session 9: Update the Vulnerability Index (30 minutes)
 
-Open `data/svi/wisconsin_svi_data.json`. This file contains social vulnerability indicators for each jurisdiction. The format is:
+Open `data/svi/[your_jurisdiction]_vulnerability_data.json`. This file contains social vulnerability indicators for each jurisdiction. The format is:
 
 ```json
 {
-  "Adams": {
+  "District 1": {
     "socioeconomic": 0.75,
     "household_disability": 0.65,
     "minority_language": 0.30,
     "housing_transportation": 0.80
-  },
-  ...
+  }
 }
 ```
 
-Replace with vulnerability indicators for your jurisdictions. If you do not have an SVI equivalent, you can use proxy indicators such as:
+Replace with vulnerability indicators for your jurisdictions. The key names (outer level) must match the `name` values in your subdivision list. If you do not have an SVI equivalent, you can use proxy indicators such as:
 - Poverty rate
 - Access to healthcare facilities
 - Literacy rate
@@ -462,58 +511,86 @@ Replace with vulnerability indicators for your jurisdictions. If you do not have
 
 Use values between 0 and 1, where higher values indicate greater vulnerability.
 
+After creating your file, update the path reference in `utils/data_processor.py` to point to your new file. The facilitator will help identify the line to change.
+
 ### Session 10: Adding New Risk Domains (1.5 hours)
 
-This session is for when your adaptation needs risk domains that do not exist in the original CARA. This requires some code changes and should be done with facilitator guidance.
+This session is for when your adaptation needs risk domains that do not exist in the built-in set. The template uses a layered architecture: each domain is a separate module in `utils/domains/` that reads data from one or more connectors in `utils/connectors/`. This structure makes it straightforward to add new domains without changing the core risk engine.
+
+This session requires facilitator guidance. Participants do not need to write code independently -- the facilitator demonstrates each step while participants follow along.
 
 #### Adding a New Domain: Step-by-Step
 
-Example: Adding a "Conflict/Security Risk" domain for Libya.
+Example: Adding a "Water Scarcity" domain.
 
-**Step 1: Create the data source**
+**Step 1: Identify or create your data source**
 
-Create a new folder and CSV file at `data/conflict/libya_conflict_data.csv`:
+First, determine where the data will come from:
+
+Option A: An existing connector already fetches relevant data (check the connector files in `utils/connectors/worldwide/` or `utils/connectors/us/`).
+
+Option B: You have a local CSV file with per-jurisdiction values. Create a folder and file for it:
 
 ```
-district_name,incidents_2023,incidents_2024,displacement_events,infrastructure_damage_score
-Tripoli,45,32,12,0.35
-Benghazi,28,18,8,0.45
-Misrata,12,8,3,0.20
+data/water/[jurisdiction]_water_scarcity.csv
 ```
 
-**Step 2: Create a calculation function**
+With columns like:
+```
+subdivision_name,access_to_safe_water_pct,days_of_shortage_per_year,infrastructure_damage_score
+District 1,72.0,45,0.35
+District 2,58.0,90,0.55
+District 3,81.0,20,0.20
+```
 
-The facilitator will help create a new file `utils/conflict_risk.py` that reads the data and calculates a risk score between 0 and 1 for each jurisdiction. The basic pattern is:
+**Step 2: Create the domain module**
 
-1. Read the data file
-2. Normalize each indicator to a 0-1 scale
+The facilitator will help create a new file `utils/domains/water_scarcity.py`. All domain modules follow the same pattern -- they extend `BaseDomain` from `utils/domains/base_domain.py`:
+
+1. Read data for the requested jurisdiction
+2. Normalize each indicator to a 0-1 scale using the base class helper
 3. Apply sub-domain weights
-4. Return a combined score
+4. Return a combined score between 0 and 1
 
-**Step 3: Connect to the main risk engine**
+The facilitator can copy an existing domain (such as `utils/domains/extreme_heat.py`) and adapt it, which is faster than writing from scratch.
 
-In `utils/data_processor.py`, the facilitator will help add code that:
-1. Calls your new conflict risk function
-2. Includes the result in the overall PHRAT calculation
-3. Passes the data to the dashboard template for display
+**Step 3: Register the domain in the connector registry**
 
-**Step 4: Add a dashboard section**
+Open `utils/connector_registry.py`. The facilitator will add your new domain to the list of domains that get loaded for your profile. This tells the risk engine that your domain exists and should be scored.
 
-In `templates/dashboard.html`, add a new card section to display the conflict risk score and its components, following the pattern of existing domain sections.
+**Step 4: Add the weight in risk_weights.yaml**
 
-**Step 5: Update the methodology page**
+Add your new domain to the profile block in `config/risk_weights.yaml` and assign it a weight. Reduce other domain weights proportionally so the total still adds up to 1.0:
+
+```yaml
+  international:
+    natural_hazards: 0.22
+    conflict_displacement: 0.20
+    health_metrics: 0.17
+    water_scarcity: 0.10
+    mass_casualty: 0.10
+    air_quality: 0.08
+    extreme_heat: 0.08
+    vector_borne_disease: 0.05
+```
+
+**Step 5: Add a dashboard section**
+
+In `templates/dashboard.html`, add a new card section to display the water scarcity score and its components, following the pattern of existing domain sections.
+
+**Step 6: Update the methodology page**
 
 Add a section to `templates/methodology.html` describing your new domain, its data sources, and how the score is calculated.
 
 #### Removing a Domain
 
-To remove a domain you do not need (for example, Active Shooter):
+To remove a domain you do not need (for example, dam failure is not relevant for landlocked regions without large dams):
 
-1. In `config/risk_weights.yaml`, remove the domain from `overall_risk_weights` and redistribute its weight among the remaining domains (must still total 1.0)
+1. In `config/risk_weights.yaml`, remove the domain key from your active profile and redistribute its weight among the remaining domains (must still total 1.0)
 2. In `templates/dashboard.html`, remove or comment out the dashboard card for that domain
 3. In `templates/methodology.html`, remove the methodology description for that domain
 
-The calculation code in `utils/` can be left in place -- it simply will not be used if the weight is removed.
+The calculation code in `utils/domains/` can be left in place -- it simply will not be called if the weight is removed.
 
 ---
 
@@ -582,7 +659,7 @@ If the numbers match, the formula is working correctly. If they do not match, ch
 **Step 3: Check data consistency**
 
 Open each data file and verify:
-- Every jurisdiction in `utils/jurisdictions_code.py` has a corresponding row in the demographic CSV, the vulnerability JSON, and all domain data files
+- Every jurisdiction in `config/jurisdiction.yaml` (under `subdivisions:`) has a corresponding row in the demographic CSV, the vulnerability JSON, and all domain data files
 - Jurisdiction names are spelled identically across all files (even small differences like "Al Marj" vs "Al-Marj" will cause mismatches)
 - All numerical values are within expected ranges (populations are positive, percentages are between 0 and 100, risk scores are between 0 and 1)
 - No jurisdiction is listed twice with different data
@@ -591,9 +668,9 @@ Open each data file and verify:
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| A jurisdiction shows 0.5 for every domain | Jurisdiction name in data file does not match `jurisdictions_code.py` | Fix the spelling to match exactly |
-| One jurisdiction has an unexpectedly high score | A single data point is an outlier (e.g., damage amount not normalized) | Check raw data values and normalization |
-| Two jurisdictions that should differ have identical scores | They share the same data because of a name mapping issue | Check `JURISDICTION_TO_COUNTY` mapping in `data_processor.py` |
+| A jurisdiction shows 0.5 for every domain | Jurisdiction name in data file does not match the `name` in `jurisdiction.yaml` subdivisions | Fix the spelling to match exactly |
+| One jurisdiction has an unexpectedly high score | A single data point is an outlier (e.g., a damage amount not normalized) | Check raw data values and normalization |
+| Two jurisdictions that should differ have identical scores | They share data because of a name mapping issue | Check that the `name` fields in `jurisdiction.yaml` match the keys in each data file |
 | Score changed after updating one data file | A different domain's data file has a dependency on the same variable | Review how vulnerability indicators feed into multiple domains |
 
 ### Session 13: Ethical Data Use and Responsible Disclosure (30 minutes)
@@ -680,7 +757,7 @@ Store this information in a document accessible to everyone who will maintain th
 
 ### Session 15: Testing Your Adaptation (45 minutes)
 
-This session covers both functional testing and the data integrity checks from Day 5.
+This session covers both functional testing and the data integrity checks from Day 4.
 
 1. Start your application (or restart it if it is already running)
 2. Open the home page in a browser
@@ -697,10 +774,11 @@ Common issues and solutions:
 
 | Problem | Likely cause | Solution |
 |---------|-------------|----------|
-| Jurisdiction dropdown is empty | Jurisdiction names in `jurisdictions_code.py` have errors | Check for typos, missing commas, or mismatched quotes |
-| Dashboard shows all zeros | Demographic data file names do not match jurisdiction names | Make sure `county_name` in CSV files exactly matches `county` in `jurisdictions_code.py` |
+| Application fails to start with a configuration error | `config/jurisdiction.yaml` is missing | Copy `config/jurisdiction.yaml.example` to `config/jurisdiction.yaml` |
+| Jurisdiction dropdown is empty | Error in the `subdivisions:` list in `jurisdiction.yaml` | Check for typos, missing dashes, or incorrect indentation in the YAML file |
+| Dashboard shows all zeros | Subdivision names in data files do not match the `name` field in `jurisdiction.yaml` | Make sure names are spelled identically in `jurisdiction.yaml` and in all CSV/JSON data files |
 | Application will not start | Syntax error in a file you edited | Check the console/terminal for error messages -- the error usually names the file and line number |
-| Risk scores are all the same | Weights are not set correctly | Check that `risk_weights.yaml` values add up to 1.0 |
+| Risk scores are all the same | Weights are not set correctly | Check that the values in `risk_weights.yaml` for your active profile add up to 1.0 |
 
 ### Session 16: Refinement (45 minutes)
 
@@ -721,7 +799,10 @@ If you developed on Replit, click the "Deploy" button and follow the wizard. You
 
 **Option B: Render**
 
-The CARA codebase includes a `render.yaml` file for deployment to Render.com (https://render.com). Create a free account, connect your GitHub repository, and Render will build and deploy the application automatically.
+The CARA codebase includes a `render.yaml.example` file for deployment to Render.com (https://render.com). Before using it:
+1. Copy `render.yaml.example` to `render.yaml`
+2. Update the service name and any environment variable placeholders
+3. Create a free Render account, connect your GitHub repository, and Render will build and deploy the application automatically
 
 **Option C: Your organization's servers**
 
@@ -746,7 +827,7 @@ Regardless of where you developed, it is important to save your changes back to 
 2. Run these commands:
    ```
    git add .
-   git commit -m "Adapted CARA for Libya"
+   git commit -m "Adapted CARA for [your jurisdiction]"
    git push
    ```
 
@@ -760,18 +841,21 @@ Most cloud platforms have a built-in way to push changes to GitHub. Check the pl
 Use this checklist to track your progress:
 
 **Setup and Adaptation:**
-- [ ] `utils/jurisdictions_code.py` -- Replaced all jurisdictions
-- [ ] `config/risk_weights.yaml` -- Updated domain weights and sub-domain weights
-- [ ] `config/county_baselines.yaml` -- Updated baseline scores for your jurisdictions
-- [ ] `data/census/wisconsin_demographics.csv` -- Replaced with your demographic data
-- [ ] `data/census/wisconsin_housing_data.csv` -- Replaced with your housing/infrastructure data
-- [ ] `data/svi/wisconsin_svi_data.json` -- Replaced with your vulnerability indicators
+- [ ] `config/jurisdiction.yaml.example` copied to `config/jurisdiction.yaml`
+- [ ] `config/jurisdiction.yaml` -- Updated name, profile, country code, and geographic settings
+- [ ] `config/jurisdiction.yaml` -- Subdivisions list replaced with your actual jurisdictions
+- [ ] `config/risk_weights.yaml` -- Active profile weights updated to match your domain decisions
+- [ ] `data/census/[jurisdiction]_demographics.csv` -- Created with your demographic data
+- [ ] `data/census/[jurisdiction]_housing_data.csv` -- Created with your housing/infrastructure data
+- [ ] `data/svi/[jurisdiction]_vulnerability_data.json` -- Created with your vulnerability indicators
+- [ ] `utils/data_processor.py` -- Data file path references updated to your file names
 - [ ] `templates/base.html` -- Updated application name and branding
 - [ ] `templates/index.html` -- Updated welcome text and jurisdiction descriptions
 - [ ] `templates/methodology.html` -- Updated methodology for your context
 - [ ] `static/images/` -- Replaced logo and map images
-- [ ] New risk domain data files created (if adding domains)
-- [ ] New risk domain calculation functions created (if adding domains)
+- [ ] New risk domain data files created (if adding domains beyond the built-in set)
+- [ ] New risk domain modules created in `utils/domains/` (if adding domains)
+- [ ] `utils/connector_registry.py` -- New domain registered (if adding domains)
 - [ ] `templates/dashboard.html` -- Updated domain display sections
 
 **Data Integrity and Ethics:**
@@ -780,7 +864,7 @@ Use this checklist to track your progress:
 - [ ] Synthetic data identified and labeled (if any)
 - [ ] Score sanity check -- highest/lowest risk jurisdictions rank correctly
 - [ ] PHRAT formula verified manually for at least one jurisdiction
-- [ ] Data consistency check -- jurisdiction names match across all files
+- [ ] Data consistency check -- jurisdiction names match across `jurisdiction.yaml` and all data files
 - [ ] Bias review -- discussed potential systematic scoring bias
 - [ ] "Limitations and Responsible Use" section added to methodology page
 - [ ] Data sensitivity review -- no harmful data exposed
@@ -793,6 +877,7 @@ Use this checklist to track your progress:
 - [ ] Tested all jurisdictions load correctly
 - [ ] Tested risk scores are reasonable
 - [ ] Transparency disclosures verified
+- [ ] `render.yaml.example` copied to `render.yaml` and updated (if deploying to Render)
 - [ ] Saved changes to GitHub
 - [ ] Deployed and shared URL
 
@@ -803,10 +888,10 @@ Use this checklist to track your progress:
 | Day | Session | Duration | Topic |
 |-----|---------|----------|-------|
 | 1 | 1 | 1 hour | What is CARA? Live demo walkthrough |
-| 1 | 2 | 2 hours | Planning: jurisdictions, domains, data sources, weights |
+| 1 | 2 | 2 hours | Planning: profile, jurisdictions, domains, data sources, weights |
 | 2 | 3 | 45 min | Getting the code and setting up your environment |
 | 2 | 4 | 30 min | Understanding the file structure |
-| 3 | 5 | 1 hour | Replacing jurisdictions |
+| 3 | 5 | 1 hour | Configuring your jurisdiction (jurisdiction.yaml) |
 | 3 | 6 | 30 min | Updating risk weights |
 | 3 | 7 | 45 min | Replacing demographic data |
 | 3 | 8 | 45 min | Updating the user interface |
@@ -832,11 +917,25 @@ Use this checklist to track your progress:
 
 **PHRAT**: Public Health Risk Assessment Tool -- the name for the scoring formula used by CARA.
 
+**Profile**: A named configuration (either `us_state` or `international`) that activates a specific set of domains, connectors, and assessment framework. Set in `config/jurisdiction.yaml`.
+
+**Connector**: A software module that fetches data from a specific external source (for example, the WHO GHO connector or the ACLED connector). Connectors are in `utils/connectors/`.
+
+**Domain module**: A software module that reads connector data and calculates a normalized risk score for a specific risk category. Domain modules are in `utils/domains/`.
+
 **Jurisdiction**: A geographic area being assessed. Could be a county, district, governorate, municipality, or other administrative unit.
+
+**Subdivision**: The term used in `config/jurisdiction.yaml` for the individual administrative units you are assessing. Equivalent to "jurisdiction" in common usage.
 
 **SVI (Social Vulnerability Index)**: A set of indicators that measure how vulnerable a population is to health threats based on social factors like poverty, disability, language barriers, and housing conditions.
 
 **EVR Framework**: Exposure-Vulnerability-Resilience -- the approach used for natural hazard risk scoring. Exposure = likelihood of the hazard occurring; Vulnerability = how susceptible the population is; Resilience = capacity to recover.
+
+**WHO IHR**: World Health Organization International Health Regulations -- the assessment framework used by the international profile. Organizes action plans around the 13 IHR core capacity areas.
+
+**CDC PHEP**: Centers for Disease Control and Prevention Public Health Emergency Preparedness -- the assessment framework used by the US state profile. Organizes action plans around the 15 PHEP core capabilities.
+
+**GADM**: Database of Global Administrative Areas (https://gadm.org). Provides standardized geographic boundary files for countries and subnational units worldwide. Used by CARA to draw jurisdiction boundaries on the map.
 
 **Repository**: A project stored on GitHub that contains all the code files, data files, and version history. Think of it as a shared folder that tracks every change.
 
@@ -850,7 +949,7 @@ Use this checklist to track your progress:
 
 **CSV**: Comma-Separated Values -- a simple spreadsheet format that can be opened in Excel, Google Sheets, or any text editor. Each row is a line, and columns are separated by commas.
 
-**YAML**: A configuration file format used for settings. Uses indentation and colons to organize data. Example: `key: value`.
+**YAML**: A configuration file format used for settings. Uses indentation and colons to organize data. Example: `key: value`. YAML is sensitive to indentation -- use spaces, not tabs.
 
 **Environment variable**: A setting stored outside the code that the application reads when it starts. Used for sensitive information like database passwords and for configuration that varies between environments.
 
@@ -865,6 +964,10 @@ Use this checklist to track your progress:
 - Python basics: https://www.python.org/about/gettingstarted/
 - PostgreSQL documentation: https://www.postgresql.org/docs/
 - Visual Studio Code getting started: https://code.visualstudio.com/docs/getstarted
+- GADM administrative boundaries: https://gadm.org
+- WHO Global Health Observatory API: https://www.who.int/data/gho/info/gho-odata-api
+- ACLED conflict data (registration required): https://acleddata.com
+- EM-DAT disaster database (registration required): https://www.emdat.be
 - For questions about the CARA methodology, contact the original development team
 
 ---

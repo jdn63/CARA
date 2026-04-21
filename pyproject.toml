@@ -33,3 +33,6 @@ dependencies = [
     "oauthlib>=3.2.2",
     "pyjwt>=2.10.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

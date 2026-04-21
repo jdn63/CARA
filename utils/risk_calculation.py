@@ -93,49 +93,31 @@ def get_health_impact_factor(county_name: str, hazard_type: str) -> float:
 def _calculate_normalized_health_factor(county_rows: pd.DataFrame, hazard_type: str) -> float:
     """
     Calculate a normalized health impact factor from NRI data for a specific hazard type.
-    
+
+    Uses the FEMA NRI Expected Annual Loss Score (EALS) column for the hazard type.
+    EALS values in the NRI CSV are already expressed as 0-100 percentile scores
+    relative to all US census tracts, so no additional state-relative normalization
+    is needed.  A county with EALS=0 maps to 0.80 (minimal health amplification)
+    and a county with EALS=100 maps to 1.50 (maximum health amplification).
+
     Args:
-        county_rows: DataFrame containing NRI data for a specific county
-        hazard_type: The type of hazard (flood, tornado, winter)
-        
+        county_rows: DataFrame containing NRI data for a specific county (all tracts)
+        hazard_type: The type of hazard ('flood', 'tornado', or 'winter')
+
     Returns:
         A normalized health impact factor between 0.8 and 1.5
     """
     try:
-        # These field names are examples and would need to be adjusted
-        # based on actual NRI data structure
-        risk_field = f'{hazard_type}_risk'
-        population_loss_field = f'{hazard_type}_eals_population' 
-        exposure_field = f'{hazard_type}_exposure'
-        
-        # Extract relevant metrics if they exist
-        if risk_field in county_rows.columns and population_loss_field in county_rows.columns:
-            # Calculate weighted average based on exposure
-            risk = county_rows[risk_field].mean() / 100.0  # Normalize to 0-1
-            pop_loss = county_rows[population_loss_field].mean()
-            
-            # NRI SoVI (Social Vulnerability Index) includes health components
-            sovi = county_rows['sovi'].mean() / 100.0 if 'sovi' in county_rows.columns else 0.5
-            
-            # Combined factor considering hazard risk, population loss and social vulnerability
-            raw_factor = (0.4 * risk + 0.4 * pop_loss + 0.2 * sovi)
-            
-            # Normalize to our desired range (0.8-1.5)
-            # 0.8 = minimal health impact, 1.5 = severe health impact
-            normalized_factor = 0.8 + (0.7 * raw_factor)
-            
-            # Ensure it's within our bounds
-            return max(0.8, min(1.5, normalized_factor))
+        eals_field = f'{hazard_type}_eals'
+
+        if eals_field in county_rows.columns:
+            eals_value = float(county_rows[eals_field].mean())
+            # Map NRI EALS percentile [0, 100] linearly to [0.80, 1.50]
+            return max(0.80, min(1.50, 0.80 + 0.70 * (eals_value / 100.0)))
         else:
-            # Default values if fields don't exist
-            if hazard_type == 'flood':
-                return 1.2  # Higher health impacts
-            elif hazard_type == 'tornado':
-                return 1.3  # Higher health impacts
-            elif hazard_type == 'winter':
-                return 1.1  # Moderate health impacts
-            else:
-                return 1.0  # Neutral
+            # Fallback for hazard types not covered by the NRI CSV
+            defaults = {'flood': 1.2, 'tornado': 1.3, 'winter': 1.1}
+            return defaults.get(hazard_type, 1.0)
                 
     except Exception as e:
         logger.warning(f"Error calculating health factor for {hazard_type}: {str(e)}")

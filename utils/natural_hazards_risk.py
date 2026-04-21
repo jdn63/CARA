@@ -435,11 +435,15 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
         resilience_raw += ((1.0 - svi['socioeconomic']) * 0.20)
         resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
 
+        # Resilience bonus for counties with documented NIMS-compliant tornado programs,
+        # based on WEM certification records.  Capped at +0.13/+0.07 to prevent
+        # urban counties from compressing to the resilience ceiling (0.9) and
+        # masking meaningful score differences between high-capacity jurisdictions.
         prepared_counties = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'La Crosse']
         if county_name in prepared_counties:
-            resilience_raw += 0.20
+            resilience_raw += 0.13
         elif county_name in ['Outagamie', 'Rock', 'Kenosha', 'Marathon']:
-            resilience_raw += 0.10
+            resilience_raw += 0.07
 
         urban_counties = ['Milwaukee', 'Dane', 'Waukesha', 'Brown', 'Racine', 'Kenosha']
         if county_name in urban_counties:
@@ -626,12 +630,18 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
         resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
         resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
 
+        # Resilience bonus for counties with documented winter-emergency programs
+        # (WEM winter exercise records).  Held to +0.13 so preparedness does not
+        # overshadow the high exposure scores typical of northern/central counties.
         prepared_counties = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'La Crosse', 'Marathon']
         if county_name in prepared_counties:
-            resilience_raw += 0.20
+            resilience_raw += 0.13
 
+        # Northern counties carry elevated winter preparedness (pre-positioned
+        # equipment, mutual-aid agreements with WIDOT).  Bonus is +0.05 so their
+        # still-elevated exposure drives the final risk score.
         if county_name in northern_counties:
-            resilience_raw += 0.10
+            resilience_raw += 0.05
 
         resilience_raw = max(0.1, min(0.9, resilience_raw))
 
@@ -776,7 +786,7 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         ))
         resilience_raw = _calculate_em_resilience(svi, census, county_name)
     else:
-        vulnerability_score = min(0.90, (
+        vulnerability_score = min(1.0, (
             (svi['housing_transportation'] * 0.25) +
             (svi['socioeconomic'] * 0.10) +
             (svi['household_composition'] * 0.10) +
@@ -791,12 +801,15 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
         resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
 
+        # Resilience bonus for counties with documented thunderstorm/severe weather
+        # programs.  Reduced to +0.13/+0.07 to preserve score differentiation
+        # among high-capacity urban jurisdictions.
         high_resilience_counties = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'Racine', 'Kenosha']
         moderate_resilience_counties = ['Outagamie', 'Rock', 'La Crosse', 'Marathon', 'Eau Claire', 'Sheboygan']
         if county_name in high_resilience_counties:
-            resilience_raw += 0.20
+            resilience_raw += 0.13
         elif county_name in moderate_resilience_counties:
-            resilience_raw += 0.10
+            resilience_raw += 0.07
 
         resilience_raw = max(0.1, min(0.9, resilience_raw))
 

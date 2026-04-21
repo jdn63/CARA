@@ -255,7 +255,7 @@
             <h2 class="h5 mb-0">Natural Hazards Domain (28% of Overall)</h2>
         </div>
         <div class="card-body">
-            <p>The natural hazards score is the <strong>equal-weighted average</strong> of four hazard types, each calculated using the EVR framework described above.</p>
+            <p>The natural hazards score is the <strong>equal-weighted quadratic mean (RMS, p=2)</strong> of four hazard types, each calculated using the EVR framework described above. This is consistent with the outer PHRAT formula and ensures that a single high-severity hazard type elevates the domain score more than a simple average would.</p>
             <div class="table-responsive">
                 <table class="table table-bordered text-center">
                     <thead class="table-light">
@@ -402,7 +402,7 @@
             </div>
 
             <div class="alert alert-info mb-0 mt-2">
-                <strong>Thunderstorm Independence:</strong> Thunderstorm risk is calculated independently using the <strong>NOAA Storm Events Database</strong> county-level severity index from <code>data/climate/thunderstorm_severity_by_county.json</code>, rather than being derived from tornado data.
+                <strong>Thunderstorm Independence:</strong> Thunderstorm risk is calculated independently using the <strong>NOAA Storm Events Database</strong> county-level severity index stored in <code>data/climate/natural_hazard_climate_projections.json</code> (derived from 20 years of Thunderstorm Wind, Hail, Lightning, and Funnel Cloud event records for all 72 Wisconsin counties), rather than being derived from tornado data.
             </div>
         </div>
     </div>
