@@ -38,7 +38,7 @@ def get_health_impact_factor(county_name: str, hazard_type: str) -> float:
     if _nri_health_data_cache is None:
         try:
             # Attempt to load data from NRI CSV file
-            nri_path = 'attached_assets/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv'
+            nri_path = 'data/nri/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv'
             if os.path.exists(nri_path):
                 logger.info(f"Loading NRI health impact data from {nri_path}")
                 nri_df = pd.read_csv(nri_path)

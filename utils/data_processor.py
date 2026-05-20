@@ -223,7 +223,7 @@ def load_nri_data():
         
     try:
         # Load NRI data for Wisconsin counties (from FEMA)
-        nri_df = pd.read_csv('attached_assets/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv')
+        nri_df = pd.read_csv('data/nri/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv')
         
         # Filter to county level and relevant columns
         county_data = {}
@@ -588,7 +588,7 @@ def get_wi_jurisdictions() -> List[Dict]:
         from utils.jurisdictions_code import jurisdictions
         
         # Load geometry data
-        geometries = extract_geometries() if os.path.exists('./attached_assets/Wisconsin_Local_Public_Health_Department_Office_Boundaries.geojson') else {}
+        geometries = extract_geometries() if os.path.exists('./data/geojson/Wisconsin_Local_Public_Health_Department_Office_Boundaries.geojson') else {}
         
         # Filter to primary entries only (unique health departments for dropdown)
         primary_jurisdictions = []

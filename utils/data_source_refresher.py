@@ -375,9 +375,8 @@ def refresh_all_fema_nri() -> Dict[str, Any]:
         }
 
         candidate_paths = [
-            'attached_assets/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv',
+            'data/nri/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv',
             'data/nri/NRI_Table_Counties.csv',
-            'attached_assets/NRI_Table_Counties.csv',
         ]
 
         nri_path = next((p for p in candidate_paths if os.path.exists(p)), None)

@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 # Load the active shooter risk model configuration
 try:
-    with open('attached_assets/active_shooter_risk_model_config.json', 'r') as f:
+    with open('data/config/active_shooter_risk_model_config.json', 'r') as f:
         RISK_MODEL_CONFIG = json.load(f)
     logger.info("Loaded active shooter risk model configuration")
 except Exception as e:

@@ -29,7 +29,7 @@ class CARAGISExporter:
         self.exports_dir.mkdir(exist_ok=True)
         
         # Load Wisconsin jurisdiction geometries (county/city)
-        self.county_geojson_path = 'attached_assets/Wisconsin_Local_Public_Health_Department_Office_Boundaries.geojson'
+        self.county_geojson_path = 'data/geojson/Wisconsin_Local_Public_Health_Department_Office_Boundaries.geojson'
         # Tribal boundaries path
         self.tribal_geojson_path = 'data/tribal/wisconsin_tribal_boundaries_filtered.geojson'
         self.timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
