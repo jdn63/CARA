@@ -1,0 +1,124 @@
+{# Active Surveillance Flags (v1: H5N1, mpox, enteric composite, legionella)
+
+   Shape A: lightweight statewide outbreak flags that nudge the
+   infectious_disease Acute signal. See utils/disease_surveillance.py for
+   the dispatch and stacking rule. All flags are isolated to the
+   infectious_disease domain per design decision (#5); they do not
+   influence active_shooter, natural_hazards, or any other domain.
+
+   Granularity: all flags are statewide Wisconsin signals per design
+   decision (#2). Each row shows a "WI statewide" badge so users do not
+   mistake the value for county-specific surveillance.
+#}
+{% set vra = risk_data.health_metrics.vaccination_risk_assessment if risk_data.health_metrics is mapping else None %}
+{% set oc = vra.outbreak_conditions if vra is mapping and vra.outbreak_conditions is mapping else None %}
+{% if oc and (oc.h5n1 is mapping or oc.mpox is mapping or oc.enteric is mapping or oc.legionella is mapping) %}
+<div class="mb-3">
+    <h6 class="text-muted mb-2">Active Surveillance Flags
+        <span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;"
+              title="Lightweight statewide outbreak flags that contribute to the infectious-disease Acute signal. Isolated to infectious-disease only.">v1 prototype</span>
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">Flag</th>
+                    <th style="width: 18%;">Tier</th>
+                    <th style="width: 12%;">Boost</th>
+                    <th>Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if oc.h5n1 is mapping %}
+                {% set h = oc.h5n1 %}
+                <tr>
+                    <td>
+                        H5N1 avian influenza
+                        <br><small class="text-muted">{{ h.source_label|default('USDA APHIS HPAI') }}</small>
+                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
+                    </td>
+                    <td>
+                        {% set t = h.tier|default('none') %}
+                        <span class="badge bg-{{ 'danger' if t == 'local' else 'warning text-dark' if t == 'state' else 'info text-dark' if t == 'national_only' else 'success' }}">
+                            {{ t|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if h.boost and h.boost > 0 %}+{{ "%.2f"|format(h.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
+                    </td>
+                    <td><small>{{ h.detail|default('No detail') }}</small></td>
+                </tr>
+                {% endif %}
+                {% if oc.mpox is mapping %}
+                {% set m = oc.mpox %}
+                <tr>
+                    <td>
+                        Mpox
+                        <br><small class="text-muted">{{ m.source_label|default('CDC Mpox surveillance') }}</small>
+                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
+                    </td>
+                    <td>
+                        {% set t = m.tier|default('baseline') %}
+                        <span class="badge bg-{{ 'danger' if t == 'cluster' else 'warning text-dark' if t == 'elevated' else 'success' }}">
+                            {{ t|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if m.boost and m.boost > 0 %}+{{ "%.2f"|format(m.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
+                    </td>
+                    <td><small>{{ m.detail|default('No detail') }}</small></td>
+                </tr>
+                {% endif %}
+                {% if oc.enteric is mapping %}
+                {% set e = oc.enteric %}
+                <tr>
+                    <td>
+                        Enteric / waterborne (composite)
+                        <br><small class="text-muted">{{ e.source_label|default('CDC NNDSS enteric subset') }}</small>
+                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
+                    </td>
+                    <td>
+                        {% set t = e.tier|default('none') %}
+                        <span class="badge bg-{{ 'danger' if t == 'cluster' else 'warning text-dark' if t == 'elevated' else 'success' }}">
+                            {{ t|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if e.boost and e.boost > 0 %}+{{ "%.2f"|format(e.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
+                    </td>
+                    <td><small>{{ e.detail|default('No detail') }}</small></td>
+                </tr>
+                {% endif %}
+                {% if oc.legionella is mapping %}
+                {% set l = oc.legionella %}
+                <tr>
+                    <td>
+                        Legionellosis
+                        <br><small class="text-muted">{{ l.source_label|default('CDC NNDSS Legionellosis') }}</small>
+                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
+                    </td>
+                    <td>
+                        {% set t = l.tier|default('none') %}
+                        <span class="badge bg-{{ 'warning text-dark' if t == 'active' else 'success' }}">
+                            {{ t|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if l.boost and l.boost > 0 %}+{{ "%.2f"|format(l.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
+                    </td>
+                    <td><small>{{ l.detail|default('No detail') }}</small></td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if oc.stacked_outbreak_boost is defined and oc.stacked_outbreak_boost is number and oc.stacked_outbreak_boost > 0 %}
+    <div class="alert alert-secondary py-2 px-3 mb-0 small" role="note">
+        <strong>Combined Acute boost:</strong> +{{ "%.2f"|format(oc.stacked_outbreak_boost) }}
+        applied to the infectious-disease risk multiplier
+        (max individual flag boost plus 0.05 per additional concurrent active flag, capped at 0.40).
+        Isolated to infectious disease; no cross-domain effect.
+    </div>
+    {% endif %}
+</div>
+{% endif %}

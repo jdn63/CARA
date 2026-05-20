@@ -1,9 +1,28 @@
 CARA - Comprehensive Automated Risk Assessment
-Version: 2.5
-Release date: 2026-04-03
-Push: v25
+Version: 2.6
+Release date: 2026-05-20
+Push: v26
 
 Changelog summary:
+- v26: Strategic Preparedness Baseline (Option 1) for infectious disease risk.
+  Adds a P-times-C floor on the displayed infectious-disease score so the
+  number never drops below a meaningful preparedness level on quiet
+  surveillance weeks. New utils/strategic_baseline.py computes a per-disease
+  and severity-weighted aggregate baseline from already-cached county
+  vulnerability inputs (SVI, MMR, COPD, primary-care density); no HTTP.
+  New disease_severity_profiles block in config/risk_weights.yaml covers
+  15 diseases (measles, pertussis, meningococcal, seasonal flu, COVID-19,
+  RSV, H5N1, mpox, legionellosis + 6 enteric), each with CFR,
+  hospitalization rate, R0, vulnerable-population multiplier, and an
+  explicit literature citation + source URL (CDC Pink Book, Yellow Book,
+  MMWR, FoodNet, WHO). utils/disease_surveillance.get_disease_metrics()
+  computes acute_risk_score (unchanged formula) then takes max(acute,
+  aggregate_baseline). New templates/dashboard/_strategic_baseline_panel.html
+  surfaces aggregate / current acute / displayed scores side by side plus
+  the full per-disease table with linked citations. Acute path is
+  unchanged; the floor only ever raises the displayed score. Returned
+  data shape leaves the Option 2 (two-component side-by-side) upgrade
+  fully unblocked.
 - v25: Upgrade HERC region dashboard to fully mirror jurisdiction dashboard.
   herc_dashboard.html rebuilt with: BSTA temporal risk table (regional averages),
   all 7 PHRAT primary domain tiles (added Air Quality, Dam Failure, VBD which

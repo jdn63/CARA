@@ -113,7 +113,32 @@ def get_disease_metrics(county_name: str) -> Dict[str, Any]:
         dhs_combined_risk = risk_indicators.get('combined_risk', 0.45)
         vaccination_risk_assessment = _calculate_strategic_vaccination_risk(vaccination_data, county_name)
         base_risk_with_vaccination = dhs_combined_risk * vaccination_risk_assessment['risk_multiplier']
-        risk_score = min(1.0, max(0.0, base_risk_with_vaccination))
+        acute_risk_score = min(1.0, max(0.0, base_risk_with_vaccination))
+
+        # === STRATEGIC PREPAREDNESS BASELINE FLOOR (Option 1, 2026-05-20) ===
+        # Applies a P-times-C floor so the displayed infectious-disease risk
+        # never drops below a meaningful preparedness level on a quiet
+        # surveillance week. See utils/strategic_baseline.py for the formula
+        # and config/risk_weights.yaml -> disease_severity_profiles for the
+        # cited per-disease severity inputs. The floor is unconditional
+        # (CARA is effectively always in strategic_planning mode for the
+        # request path; emergency_response mode was retired in 2026-05).
+        try:
+            from utils.strategic_baseline import compute_disease_baselines
+            strategic_baseline = compute_disease_baselines(county_name)
+            baseline_score = float(strategic_baseline.get('aggregate_baseline', 0.10))
+        except Exception as _baseline_exc:
+            logger.warning(
+                f"strategic_baseline failed for {county_name}: {_baseline_exc}"
+            )
+            strategic_baseline = None
+            baseline_score = 0.10
+
+        # Floor: displayed score is the max of current acute and strategic
+        # baseline. The acute path retains all upside; the baseline only
+        # raises the floor, never lowers an active signal.
+        risk_score = min(1.0, max(acute_risk_score, baseline_score))
+        floor_applied = baseline_score > acute_risk_score
 
         # Activity level strings for display
         activity_levels = {
@@ -139,6 +164,9 @@ def get_disease_metrics(county_name: str) -> Dict[str, Any]:
         )
         return {
             'risk_score': risk_score,
+            'acute_risk_score': acute_risk_score,
+            'strategic_baseline': strategic_baseline,
+            'floor_applied': floor_applied,
             'metrics': metrics,
             'activity_levels': activity_levels,
             'trend': trend,
@@ -399,7 +427,79 @@ def _calculate_strategic_vaccination_risk(
         elif ytd_elevated:
             outbreak_boost = 0.10   # year-level elevated incidence only
     outbreak_boost = min(0.30, outbreak_boost)
-    base_multiplier += outbreak_boost
+
+    # === ADDITIONAL OUTBREAK FLAGS (v1 Shape A: H5N1, mpox, enteric, legionella)
+    # Lightweight statewide outbreak flags that nudge the infectious_disease
+    # Acute signal. Each flag fetcher is cache-only-safe (see
+    # utils/request_context.py); live HTTP is performed exclusively by the
+    # corresponding scheduler jobs in utils/data_source_refresher.py.
+    #
+    # Stacking rule (per design decision #1): one big outbreak still
+    # dominates, but concurrent smaller signals are visible:
+    #   stacked = min(0.40, max_individual + 0.05 * (other_active_flag_count))
+    #
+    # Isolated to infectious_disease (design decision #5); these flags do
+    # NOT cross-contaminate active_shooter, natural_hazards, or any other
+    # domain.
+    #
+    # Granularity: all v1 flags are statewide Wisconsin (design decision
+    # #2). The dashboard partial templates/dashboard/_active_surveillance_flags.html
+    # surfaces a "WI statewide" badge on every row.
+    try:
+        from utils.h5n1_surveillance import get_h5n1_outbreak_flags
+        from utils.mpox_surveillance import get_mpox_outbreak_flags
+        from utils.nndss_enteric import (
+            get_enteric_outbreak_flags,
+            get_legionella_outbreak_flags,
+        )
+        h5n1_flags = get_h5n1_outbreak_flags()
+        mpox_flags = get_mpox_outbreak_flags()
+        enteric_flags = get_enteric_outbreak_flags()
+        legionella_flags = get_legionella_outbreak_flags()
+    except Exception as exc:
+        logger.warning(
+            f"v1 outbreak flags unavailable, defaulting to none: {exc}"
+        )
+        _empty = lambda src: {
+            'tier': 'none', 'boost': 0.0, 'active': False,
+            'source': 'unavailable', 'source_label': src,
+            'detail': 'Flag module unavailable', 'signal_scope': 'statewide_wisconsin',
+            'last_updated': None,
+        }
+        h5n1_flags = _empty('USDA APHIS HPAI')
+        mpox_flags = {**_empty('CDC Mpox surveillance'), 'tier': 'baseline'}
+        enteric_flags = {**_empty('CDC NNDSS enteric subset'), 'agents_elevated': [], 'agents': {}}
+        legionella_flags = _empty('CDC NNDSS Legionellosis')
+
+    # Surface the new flags on outbreak_conditions for templates / downstream.
+    outbreak_conditions['h5n1'] = h5n1_flags
+    outbreak_conditions['mpox'] = mpox_flags
+    outbreak_conditions['enteric'] = enteric_flags
+    outbreak_conditions['legionella'] = legionella_flags
+
+    # Compute the stacked outbreak boost. The measles outbreak_boost above
+    # is already gated by below_measles_threshold; we feed it into the
+    # stack as the measles contribution.
+    _flag_boosts = [
+        ('measles', outbreak_boost),
+        ('h5n1', float(h5n1_flags.get('boost', 0.0) or 0.0)),
+        ('mpox', float(mpox_flags.get('boost', 0.0) or 0.0)),
+        ('enteric', float(enteric_flags.get('boost', 0.0) or 0.0)),
+        ('legionella', float(legionella_flags.get('boost', 0.0) or 0.0)),
+    ]
+    _active = [(name, b) for name, b in _flag_boosts if b > 0]
+    if _active:
+        _max_b = max(b for _, b in _active)
+        _others = len(_active) - 1
+        stacked_outbreak_boost = min(0.40, _max_b + 0.05 * _others)
+    else:
+        stacked_outbreak_boost = 0.0
+    outbreak_conditions['stacked_outbreak_boost'] = stacked_outbreak_boost
+    outbreak_conditions['active_flag_count'] = len(_active)
+    outbreak_conditions['active_flag_names'] = [n for n, _ in _active]
+
+    # Apply the stacked boost in place of the measles-only boost.
+    base_multiplier += stacked_outbreak_boost
 
     # School vulnerability emergency adjustment (pure undervaccination
     # signal; no longer compounds with the outbreak boost above).

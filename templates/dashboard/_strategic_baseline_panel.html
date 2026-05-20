@@ -1,0 +1,121 @@
+{# Strategic Preparedness Baseline panel (Option 1)
+
+   Surfaces the per-disease and aggregate strategic baseline that floors
+   the infectious-disease risk score. Renders only if the strategic_baseline
+   payload was attached by utils/disease_surveillance.get_disease_metrics().
+
+   Designed to upgrade cleanly to Option 2 (two-component side-by-side
+   display) without further template surgery: the table already separates
+   Current Activity from Strategic Baseline.
+#}
+{% set sb = risk_data.health_metrics.strategic_baseline if risk_data.health_metrics is mapping else None %}
+{% if sb is mapping and sb.per_disease is mapping %}
+<div class="mb-3">
+    <h6 class="text-muted mb-2">Strategic Preparedness Baseline
+        <span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;"
+              title="Per-disease consequence-side floor on the infectious-disease score. Ensures the displayed risk never drops below a meaningful preparedness level on quiet surveillance weeks. See utils/strategic_baseline.py.">
+            P x C floor
+        </span>
+    </h6>
+    <div class="row g-2 mb-2">
+        <div class="col-md-4">
+            <div class="card bg-secondary text-light h-100">
+                <div class="card-body p-2">
+                    <div class="text-uppercase small">Aggregate baseline</div>
+                    <div class="h4 mb-0">{{ "%.2f"|format(sb.aggregate_baseline|default(0.0)) }}</div>
+                    <div class="small text-muted">severity-weighted mean across disease portfolio</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark text-light h-100">
+                <div class="card-body p-2">
+                    <div class="text-uppercase small">Current acute score</div>
+                    <div class="h4 mb-0">{{ "%.2f"|format(risk_data.health_metrics.acute_risk_score|default(0.0)) }}</div>
+                    <div class="small text-muted">NSSP activity x vaccination risk multiplier</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card {{ 'border-warning' if risk_data.health_metrics.floor_applied else 'border-success' }} h-100">
+                <div class="card-body p-2">
+                    <div class="text-uppercase small">Displayed score (max)</div>
+                    <div class="h4 mb-0">{{ "%.2f"|format(risk_data.health_metrics.risk_score|default(0.0)) }}</div>
+                    <div class="small text-muted">
+                        {% if risk_data.health_metrics.floor_applied %}
+                            baseline floor applied (acute below baseline)
+                        {% else %}
+                            acute signal above baseline
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle small">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">Disease</th>
+                    <th style="width: 10%;" title="Combined CFR, hospitalization rate, and transmissibility scaled to a 0-1 severity index, with a vulnerable-population multiplier applied.">Severity</th>
+                    <th style="width: 10%;" title="Per-disease baseline = severity x county vulnerability x (1 - 0.5 x response capacity), clamped to 0.10-0.60.">Baseline</th>
+                    <th style="width: 14%;">CFR</th>
+                    <th style="width: 14%;">Hosp.</th>
+                    <th style="width: 10%;">R0</th>
+                    <th>Citation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, d in sb.per_disease.items()|sort(attribute='1.baseline_score', reverse=True) %}
+                <tr>
+                    <td>
+                        {{ d.display_name }}
+                        {% if d.vulnerable_population %}
+                        <br><small class="text-muted">{{ d.vulnerable_population }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.2f"|format(d.severity_index|default(0.0)) }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'danger' if d.baseline_score >= 0.45 else 'warning text-dark' if d.baseline_score >= 0.25 else 'success' }}">
+                            {{ "%.2f"|format(d.baseline_score|default(0.0)) }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if d.case_fatality_rate is not none %}
+                            {{ "%.2f"|format(d.case_fatality_rate * 100) }}%
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if d.hospitalization_rate is not none %}
+                            {{ "%.0f"|format(d.hospitalization_rate * 100) }}%
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if d.r0 is not none %}
+                            {{ "%.1f"|format(d.r0) }}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if d.citation_url %}
+                            <a href="{{ d.citation_url }}" target="_blank" rel="noopener noreferrer" class="text-info">{{ d.citation|default(d.citation_url) }}</a>
+                        {% else %}
+                            <span class="text-muted">{{ d.citation|default('uncited') }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% set cf = sb.county_factors %}
+    {% if cf is mapping %}
+    <div class="alert alert-secondary py-2 px-3 mb-0 small" role="note">
+        <strong>County factors:</strong>
+        vulnerability {{ "%.2f"|format(cf.county_vulnerability|default(0.0)) }},
+        response capacity {{ "%.2f"|format(cf.response_capacity|default(0.0)) }}.
+        Inputs: SVI, MMR coverage, COPD prevalence, primary-care density (all from existing CARA caches).
+        {{ sb.method|default('') }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

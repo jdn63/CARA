@@ -361,6 +361,233 @@ disease_alert_thresholds:
     method_label: 'CARA heuristic (1.5x 5-year weekly median, floor 5 cases); not a CSTE/CDC published threshold'
     citation_status: 'uncited operational heuristic - see disease_alert_thresholds comment block'
 
+  # v1 Shape A outbreak flags (added 2026-05-20). Lightweight statewide
+  # signals that nudge the infectious_disease Acute multiplier via the
+  # stacking rule in utils/disease_surveillance.py:
+  #   stacked_boost = min(0.40, max_individual + 0.05 * other_active_count)
+  # Isolated to infectious_disease only (design decision #5).
+  # Granularity: statewide Wisconsin (design decision #2).
+  # All thresholds below are CARA operational heuristics, not CSTE/CDC
+  # published thresholds. Tune in this config; no code change required.
+
+  h5n1:
+    # Tier definitions in utils/h5n1_surveillance.py. Source: USDA APHIS
+    # HPAI Livestock + Poultry Detections (Wisconsin filter, last 90 days).
+    tier_boosts:
+      none: 0.00
+      national_only: 0.05   # US detections present, no WI detection in 90d
+      state: 0.15           # WI livestock or poultry detection in last 90d
+      local: 0.30           # reserved: county-level escalation (deferred in v1)
+
+  mpox:
+    # Source: CDC mpox state-of-residence Socrata dataset. WI 4-week
+    # rolling case count compared to threshold floors.
+    elevated_threshold_4wk_cases: 3
+    cluster_threshold_4wk_cases: 5
+    tier_boosts:
+      baseline: 0.00
+      elevated: 0.15
+      cluster: 0.30
+
+  enteric:
+    # Composite GI outbreak signal. NNDSS agents tracked: Salmonellosis,
+    # STEC, Shigellosis, Campylobacteriosis, Cryptosporidiosis, Giardiasis.
+    # Norovirus folded into composite (no individual NNDSS feed) per
+    # design decision #3.
+    agent_elevated_multiplier: 1.5      # 4wk count >= 1.5x (5yr weekly median * 4)
+    cluster_min_elevated_agents: 2      # >=2 agents elevated -> cluster tier
+    tier_boosts:
+      none: 0.00
+      elevated: 0.10
+      cluster: 0.25
+
+  legionella:
+    # Source: CDC NNDSS Legionellosis (Wisconsin). Separated from enteric
+    # composite because PHEP response posture (building water management,
+    # cooling tower investigation) is operationally distinct.
+    elevated_multiplier: 2.0            # 4wk count >= 2.0x (5yr weekly median * 4)
+    min_cases_floor: 4                  # also require >= 4 cases (noise floor)
+    tier_boosts:
+      none: 0.00
+      active: 0.20
+
+# =============================================================================
+# Disease Severity Profiles (Strategic Preparedness Baseline, 2026-05-20)
+# =============================================================================
+# Per-disease consequence-side parameters used by utils/strategic_baseline.py
+# to compute a P-times-C floor on the infectious-disease risk score. The
+# floor is applied via max(current_acute_score, aggregate_baseline) inside
+# utils/disease_surveillance.get_disease_metrics(). Acute case-driven paths
+# remain unchanged; the floor only ever raises the displayed value.
+#
+# Each entry carries an explicit literature citation and source URL.
+# All values are CARA-curated literature defaults pending SME review;
+# tune in this config without code changes.
+#
+# Field definitions:
+#   case_fatality_rate          - proportion of cases that die (0-1)
+#   hospitalization_rate        - proportion of cases hospitalized (0-1)
+#   r0                          - basic reproduction number in a fully
+#                                 susceptible US population (best published estimate)
+#   vulnerable_population_multiplier - >1.0 if Wisconsin demographic
+#                                 distributions amplify the consequence
+#                                 (e.g., aging counties, daycare networks);
+#                                 1.0 = neutral
+#   vulnerable_population_description - short prose for dashboard tooltip
+#   citation                    - human-readable source title + year
+#   citation_url                - permalink to the cited source
+disease_severity_profiles:
+
+  measles:
+    display_name: 'Measles'
+    case_fatality_rate: 0.002      # 1-3 per 1000 reported US cases
+    hospitalization_rate: 0.20     # ~20% of reported US cases hospitalized
+    r0: 15.0                       # 12-18 range; midpoint
+    vulnerable_population_multiplier: 1.25
+    vulnerable_population_description: 'Unvaccinated children, immunocompromised; amplified by under-95% MMR pockets in Wisconsin'
+    citation: 'CDC Pink Book Chapter 13: Measles (2021)'
+    citation_url: 'https://www.cdc.gov/vaccines/pubs/pinkbook/meas.html'
+
+  pertussis:
+    display_name: 'Pertussis (whooping cough)'
+    case_fatality_rate: 0.005      # 0.5% overall; up to 1.6% in infants <2mo
+    hospitalization_rate: 0.05     # ~5% overall (infants <1y reach ~50%, captured via vulnerable_population_multiplier)
+    r0: 14.0                       # 12-17 range
+    vulnerable_population_multiplier: 1.15
+    vulnerable_population_description: 'Infants under 2 months too young for first DTaP dose'
+    citation: 'CDC Pink Book Chapter 16: Pertussis (2021)'
+    citation_url: 'https://www.cdc.gov/vaccines/pubs/pinkbook/pert.html'
+
+  meningococcal_disease:
+    display_name: 'Meningococcal disease'
+    case_fatality_rate: 0.13       # 10-15% with treatment; >50% untreated
+    hospitalization_rate: 1.00     # universally hospitalized (medical emergency)
+    r0: 1.4                        # household contacts; low community R0
+    vulnerable_population_multiplier: 1.10
+    vulnerable_population_description: 'Adolescents and young adults (college dorms), infants under 1 year'
+    citation: 'CDC Pink Book Chapter 14: Meningococcal Disease (2021)'
+    citation_url: 'https://www.cdc.gov/vaccines/pubs/pinkbook/mening.html'
+
+  seasonal_influenza:
+    display_name: 'Seasonal influenza'
+    case_fatality_rate: 0.001      # ~0.1% CFR aggregated across seasons
+    hospitalization_rate: 0.015    # 1-2% of symptomatic cases
+    r0: 1.3                        # 1.2-1.5 (Biggerstaff 2014 BMC Inf Dis)
+    vulnerable_population_multiplier: 1.20
+    vulnerable_population_description: 'Adults 65+, pregnant persons, chronic cardiopulmonary disease'
+    citation: 'Biggerstaff et al., Estimates of the reproduction number for seasonal, pandemic, and zoonotic influenza, BMC Infectious Diseases (2014)'
+    citation_url: 'https://bmcinfectdis.biomedcentral.com/articles/10.1186/1471-2334-14-480'
+
+  covid19:
+    display_name: 'COVID-19 (post-vaccine era)'
+    case_fatality_rate: 0.008      # 0.5-1% in post-Omicron era with mixed immunity
+    hospitalization_rate: 0.030    # 2-5% of symptomatic; varies by variant
+    r0: 3.5                        # Omicron and successors; 2-5 range
+    vulnerable_population_multiplier: 1.20
+    vulnerable_population_description: 'Adults 65+, unvaccinated, immunocompromised, COPD'
+    citation: 'CDC COVID-19 Current Trends and Variant Proportions (rolling update)'
+    citation_url: 'https://covid.cdc.gov/covid-data-tracker/#variant-proportions'
+
+  rsv:
+    display_name: 'Respiratory syncytial virus (RSV)'
+    case_fatality_rate: 0.005      # 0.5% in infants and 65+; near 0 in healthy adults
+    hospitalization_rate: 0.08     # 5-10% in vulnerable populations
+    r0: 1.5                        # 1.2-2.0 range
+    vulnerable_population_multiplier: 1.15
+    vulnerable_population_description: 'Infants under 6 months, adults 65+, chronic lung disease'
+    citation: 'CDC MMWR: RSV Disease in Older Adults (2023)'
+    citation_url: 'https://www.cdc.gov/mmwr/volumes/72/rr/rr7203a1.htm'
+
+  h5n1_avian_influenza:
+    display_name: 'H5N1 highly pathogenic avian influenza'
+    case_fatality_rate: 0.52       # WHO cumulative human CFR since 2003 (clamped at 0.20 in normalization)
+    hospitalization_rate: 0.95     # nearly all confirmed human cases hospitalized
+    r0: 0.1                        # currently <1 in humans (no sustained transmission)
+    vulnerable_population_multiplier: 1.30
+    vulnerable_population_description: 'Dairy and poultry workers; pandemic potential if H5N1 adapts to efficient human-to-human spread'
+    citation: 'WHO Cumulative number of confirmed human cases of avian influenza A(H5N1) reported (2003-present)'
+    citation_url: 'https://www.who.int/publications/m/item/cumulative-number-of-confirmed-human-cases-for-avian-influenza-a(h5n1)-reported-to-who--2003-2024-1-may-2024'
+
+  mpox:
+    display_name: 'Mpox (monkeypox)'
+    case_fatality_rate: 0.003      # clade II ~0.1%; clade I 1-10% (using weighted current US mix)
+    hospitalization_rate: 0.12     # 10-15% in people with HIV
+    r0: 1.4                        # 1-2 in MSM sexual networks; <1 in general population
+    vulnerable_population_multiplier: 1.05
+    vulnerable_population_description: 'Men who have sex with men networks; people with advanced HIV at risk for severe disease'
+    citation: 'CDC Mpox Clinical Recognition and Treatment Guidance (2024)'
+    citation_url: 'https://www.cdc.gov/poxvirus/mpox/clinicians/clinical-recognition.html'
+
+  legionellosis:
+    display_name: 'Legionellosis (Legionnaires disease)'
+    case_fatality_rate: 0.10       # ~10% community-acquired; up to 25% healthcare-associated
+    hospitalization_rate: 0.95     # pneumonia by definition; nearly all hospitalized
+    r0: 0.0                        # no documented person-to-person transmission
+    vulnerable_population_multiplier: 1.20
+    vulnerable_population_description: 'Adults 50+, current/former smokers, immunocompromised; aging Wisconsin water infrastructure'
+    citation: 'CDC Yellow Book Chapter 4: Legionellosis (2024)'
+    citation_url: 'https://wwwnc.cdc.gov/travel/yellowbook/2024/infections-diseases/legionellosis'
+
+  salmonellosis:
+    display_name: 'Salmonellosis (non-typhoidal)'
+    case_fatality_rate: 0.001      # ~0.1% overall
+    hospitalization_rate: 0.06     # 6% of culture-confirmed FoodNet cases
+    r0: 0.3                        # primarily foodborne; secondary transmission limited
+    vulnerable_population_multiplier: 1.10
+    vulnerable_population_description: 'Children under 5, adults 65+, immunocompromised'
+    citation: 'CDC FoodNet Annual Report (2023)'
+    citation_url: 'https://www.cdc.gov/foodnet/reports/annual-reports.html'
+
+  stec:
+    display_name: 'Shiga toxin-producing E. coli (STEC)'
+    case_fatality_rate: 0.005      # overall ~0.5%; HUS sequelae carry 3-5% mortality
+    hospitalization_rate: 0.40     # ~40% culture-confirmed (higher in children)
+    r0: 0.5                        # secondary household transmission documented
+    vulnerable_population_multiplier: 1.15
+    vulnerable_population_description: 'Children under 5 (HUS risk), elderly; daycare and petting-zoo outbreak settings'
+    citation: 'CDC FoodNet Annual Report (2023); CDC Healthcare-Associated Infections HUS surveillance'
+    citation_url: 'https://www.cdc.gov/foodnet/reports/annual-reports.html'
+
+  shigellosis:
+    display_name: 'Shigellosis'
+    case_fatality_rate: 0.0005     # <0.1% in US
+    hospitalization_rate: 0.20     # ~20% of culture-confirmed cases
+    r0: 1.5                        # very low infectious dose; daycare amplification
+    vulnerable_population_multiplier: 1.05
+    vulnerable_population_description: 'Children under 5, daycare attendees and staff'
+    citation: 'CDC FoodNet Annual Report (2023)'
+    citation_url: 'https://www.cdc.gov/foodnet/reports/annual-reports.html'
+
+  campylobacteriosis:
+    display_name: 'Campylobacteriosis'
+    case_fatality_rate: 0.0005     # <0.1%; GBS sequelae ~1/1000
+    hospitalization_rate: 0.15     # 15% of culture-confirmed
+    r0: 0.2                        # primarily foodborne (poultry); minimal person-to-person
+    vulnerable_population_multiplier: 1.05
+    vulnerable_population_description: 'Immunocompromised; Guillain-Barre syndrome risk'
+    citation: 'CDC FoodNet Annual Report (2023)'
+    citation_url: 'https://www.cdc.gov/foodnet/reports/annual-reports.html'
+
+  cryptosporidiosis:
+    display_name: 'Cryptosporidiosis'
+    case_fatality_rate: 0.001      # near zero immunocompetent; high in advanced HIV
+    hospitalization_rate: 0.05     # 5% overall
+    r0: 0.8                        # waterborne and person-to-person in daycare
+    vulnerable_population_multiplier: 1.10
+    vulnerable_population_description: 'Immunocompromised (especially advanced HIV); recreational water exposure'
+    citation: 'CDC Cryptosporidiosis surveillance summaries; MMWR'
+    citation_url: 'https://www.cdc.gov/parasites/crypto/surveillance.html'
+
+  giardiasis:
+    display_name: 'Giardiasis'
+    case_fatality_rate: 0.0001     # essentially 0 with treatment
+    hospitalization_rate: 0.03     # 3% overall
+    r0: 0.6                        # waterborne; daycare amplification
+    vulnerable_population_multiplier: 1.00
+    vulnerable_population_description: 'Children in daycare, international travelers, immunocompromised'
+    citation: 'CDC Giardiasis Surveillance Summary; MMWR (2019)'
+    citation_url: 'https://www.cdc.gov/mmwr/volumes/68/ss/ss6807a1.htm'
+
 # =============================================================================
 
 # Version and Metadata

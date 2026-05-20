@@ -951,6 +951,148 @@ def refresh_all_cdc_nhsn_hospital() -> Dict[str, Any]:
         return results
 
 
+def refresh_all_h5n1() -> Dict[str, Any]:
+    """
+    Refresh USDA APHIS H5N1 HPAI livestock/poultry detection cache for WI.
+
+    Pulls the latest CSV exports, filters to Wisconsin, derives the tier
+    (none / national_only / state / local), and writes the result to the
+    persistent cache. See utils/h5n1_surveillance.py for tier definitions
+    and the source URLs.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.h5n1_surveillance import fetch_h5n1_surveillance
+        from utils.persistent_cache import clear_cache_by_prefix
+
+        results: Dict[str, Any] = {
+            'source_type': 'h5n1',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0, 'failed': 0, 'fallback': 0, 'errors': [],
+        }
+        try:
+            start = time.time()
+            clear_cache_by_prefix('h5n1_surveillance')
+            data = fetch_h5n1_surveillance()
+            duration = time.time() - start
+            if data.get('source') == 'usda_aphis':
+                results['success'] = 1
+                logger.info(
+                    f"H5N1 refresh: cache warmed in {duration:.1f}s, "
+                    f"tier={data.get('tier')}, "
+                    f"wi_livestock={data.get('wi_livestock_detections_90d')}, "
+                    f"wi_poultry={data.get('wi_poultry_detections_90d')}"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning("H5N1 refresh: completed but source != 'usda_aphis' (fallback path)")
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"H5N1 refresh exception: {exc}")
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_mpox() -> Dict[str, Any]:
+    """
+    Refresh CDC mpox state-level case-count cache for Wisconsin.
+
+    Pulls the CDC mpox Socrata dataset, derives WI 4-week count, and
+    classifies the tier (baseline / elevated / cluster). See
+    utils/mpox_surveillance.py for tier thresholds.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.mpox_surveillance import fetch_mpox_surveillance
+        from utils.persistent_cache import clear_cache_by_prefix
+
+        results: Dict[str, Any] = {
+            'source_type': 'mpox',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0, 'failed': 0, 'fallback': 0, 'errors': [],
+        }
+        try:
+            start = time.time()
+            clear_cache_by_prefix('mpox_surveillance')
+            data = fetch_mpox_surveillance()
+            duration = time.time() - start
+            if data.get('source') == 'cdc_mpox':
+                results['success'] = 1
+                logger.info(
+                    f"Mpox refresh: cache warmed in {duration:.1f}s, "
+                    f"tier={data.get('tier')}, "
+                    f"wi_4wk={data.get('wi_recent_4wk_cases')}"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning("Mpox refresh: completed but source != 'cdc_mpox' (fallback path)")
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"Mpox refresh exception: {exc}")
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_nndss_enteric() -> Dict[str, Any]:
+    """
+    Refresh CDC NNDSS Wisconsin enteric + legionellosis cache.
+
+    Pulls the latest weekly NNDSS rows for the tracked enteric agents
+    (Salmonellosis, STEC, Shigellosis, Campylobacteriosis,
+    Cryptosporidiosis, Giardiasis) plus Legionellosis. Drives the
+    enteric composite flag and the legionella flag in
+    utils/disease_surveillance.py. See utils/nndss_enteric.py for the
+    agent list and threshold logic.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.nndss_enteric import fetch_nndss_enteric_wi
+        from utils.persistent_cache import clear_cache_by_prefix
+
+        results: Dict[str, Any] = {
+            'source_type': 'nndss_enteric',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0, 'failed': 0, 'fallback': 0, 'errors': [],
+        }
+        try:
+            start = time.time()
+            clear_cache_by_prefix('nndss_enteric_wi')
+            data = fetch_nndss_enteric_wi()
+            duration = time.time() - start
+            if data.get('data_source') == 'cdc_nndss_enteric':
+                results['success'] = 1
+                agents = data.get('enteric_agents', {})
+                leg = data.get('legionella', {})
+                logger.info(
+                    f"NNDSS enteric refresh: cache warmed in {duration:.1f}s, "
+                    f"report={data.get('report_date')}, "
+                    f"agents={len(agents)}, "
+                    f"legionella_4wk={leg.get('recent_4wk_cases')}"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning(
+                    "NNDSS enteric refresh: completed but data_source != 'cdc_nndss_enteric'"
+                )
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"NNDSS enteric refresh exception: {exc}")
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
 def run_all_refreshes() -> Dict[str, Any]:
     """
     Run all data source refreshes. Used for initial cache population.
@@ -977,6 +1119,9 @@ def run_all_refreshes() -> Dict[str, Any]:
     results['sources']['nssp_respiratory'] = refresh_all_nssp_respiratory()
     results['sources']['cdc_nndss_communicable'] = refresh_all_cdc_nndss_communicable()
     results['sources']['cdc_nhsn_hospital'] = refresh_all_cdc_nhsn_hospital()
+    results['sources']['h5n1'] = refresh_all_h5n1()
+    results['sources']['mpox'] = refresh_all_mpox()
+    results['sources']['nndss_enteric'] = refresh_all_nndss_enteric()
 
     results['finished_at'] = datetime.utcnow().isoformat()
     

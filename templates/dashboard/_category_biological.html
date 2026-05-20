@@ -85,6 +85,16 @@
                         {% endif %}
                     </div>
                     {% endif %}
+                    {# Active surveillance flags (v1 Shape A: H5N1, mpox, enteric, legionella).
+                       Lightweight statewide outbreak flags that contribute to the
+                       infectious-disease Acute signal. See utils/disease_surveillance.py
+                       for the dispatch and stacking rule. #}
+                    {% include 'dashboard/_active_surveillance_flags.html' ignore missing %}
+                    {# Strategic Preparedness Baseline (Option 1, 2026-05-20).
+                       P-times-C floor on the infectious-disease score driven by
+                       per-disease severity profiles (with citations) and county
+                       vulnerability inputs. See utils/strategic_baseline.py. #}
+                    {% include 'dashboard/_strategic_baseline_panel.html' ignore missing %}
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
