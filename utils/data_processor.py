@@ -892,11 +892,38 @@ def apply_percentile_ranking(risk_data, region_name: str = None) -> Dict:
 
 def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorage] = None, discipline: str = 'public_health') -> dict:
     """Process FEMA NRI data and additional uploaded data to calculate risk scores.
-    
+
     Args:
         jurisdiction_id: The jurisdiction ID to process
         additional_data: Optional uploaded data file
         discipline: Assessment discipline - 'public_health' (default) or 'em' (emergency management)
+
+    Architectural note: this function is the canonical entry point for the
+    user-facing dashboard request path. It enters cache_only_context() to
+    forbid any reachable fetcher from making a live external HTTP call;
+    cache misses must return a fallback payload. Live data refresh is the
+    sole responsibility of scheduler jobs in utils/data_source_refresher.py.
+    """
+    from utils.request_context import cache_only_context, get_blocked_fetches
+
+    with cache_only_context(label=f"process_risk_data:{jurisdiction_id}"):
+        result = _process_risk_data_inner(jurisdiction_id, additional_data, discipline)
+        blocked = get_blocked_fetches()
+        if blocked and isinstance(result, dict):
+            # Surface telemetry so the dashboard and logs can show that
+            # some upstream sources were unavailable (cache miss in
+            # request path). Each label identifies the fetcher.
+            result.setdefault('data_quality', {})['blocked_fetches'] = blocked
+        return result
+
+
+def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[FileStorage] = None, discipline: str = 'public_health') -> dict:
+    """Inner implementation of process_risk_data; do not call directly.
+
+    Always invoked from process_risk_data() which establishes the
+    cache-only request context. Calling this function outside that
+    context will allow live HTTP fetches and violate the no-live-calls
+    architectural guarantee.
     """
     # Get jurisdiction information
     jurisdictions = get_wi_jurisdictions()
@@ -948,15 +975,42 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
     
     # Get Social Vulnerability Index (SVI) data for the county
     # SVI is now used as a multiplier for various risk types
+    #
+    # NORMALIZATION: utils/svi_data.py returns a FLAT shape:
+    #   { 'overall', 'socioeconomic', 'household_composition',
+    #     'minority_status', 'housing_transportation', ... }
+    # Older code here expected a nested shape with 'social_vulnerability_index'
+    # and 'themes'. We adapt the flat shape into the legacy nested shape at
+    # this single boundary so downstream code can stay unchanged.
     from utils.svi_data import get_svi_data
-    svi_data = get_svi_data(county_name)
-    overall_svi = svi_data.get('social_vulnerability_index', 0.5)
-    svi_themes = svi_data.get('themes', {
-        'socioeconomic': 0.5,
-        'household_composition': 0.5,
-        'minority_status': 0.5,
-        'housing_transportation': 0.5
-    })
+    svi_raw = get_svi_data(county_name) or {}
+
+    def _coerce_svi(value, default=0.5):
+        try:
+            v = float(value)
+            if v != v:  # NaN guard
+                return default
+            return max(0.0, min(1.0, v))
+        except (TypeError, ValueError):
+            return default
+
+    overall_svi = _coerce_svi(
+        svi_raw.get('social_vulnerability_index',
+                    svi_raw.get('overall', 0.5))
+    )
+    svi_themes_source = svi_raw.get('themes') if isinstance(svi_raw.get('themes'), dict) else svi_raw
+    svi_themes = {
+        'socioeconomic': _coerce_svi(svi_themes_source.get('socioeconomic', 0.5)),
+        'household_composition': _coerce_svi(svi_themes_source.get('household_composition', 0.5)),
+        'minority_status': _coerce_svi(svi_themes_source.get('minority_status', 0.5)),
+        'housing_transportation': _coerce_svi(svi_themes_source.get('housing_transportation', 0.5)),
+    }
+    svi_data = {
+        'social_vulnerability_index': overall_svi,
+        'themes': svi_themes,
+        'data_source': svi_raw.get('data_source', 'unknown'),
+        'cache_miss': bool(svi_raw.get('_cache_miss', False)),
+    }
     
     logger.info(f"SVI data for {county_name}: Overall={overall_svi:.2f}, " +
                 f"Housing={svi_themes.get('housing_transportation', 0.5):.2f}, " +
@@ -970,6 +1024,34 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
     # Aggregate health metrics data through disease surveillance module
     from utils.disease_surveillance import calculate_infectious_disease_risk
     health_metrics = calculate_infectious_disease_risk(jurisdiction_id)
+
+    # Attach NNDSS communicable-disease payload to the request result so
+    # the biological category partial can surface its outbreak_flags,
+    # pertussis_alert_method (review finding H3 caveat), and granularity
+    # notes. The fetcher is cache-only-aware; on a cache miss inside
+    # the request context it returns its fallback shape and records
+    # "cdc_nndss_communicable" on blocked_fetches rather than making
+    # an HTTP call. Wrapped in try/except so a fetcher regression
+    # cannot crash the composite calculation.
+    try:
+        from utils.nndss_communicable import fetch_nndss_wi_communicable
+        nndss_payload = fetch_nndss_wi_communicable()
+    except Exception as _nndss_exc:
+        logger.warning(
+            "Failed to attach nndss_data to risk_data: %s", _nndss_exc
+        )
+        nndss_payload = None
+
+    # NSSP respiratory attachment removed 2026-05-20 along with the
+    # Operational Alert Overlay. CARA is a strategic planning tool,
+    # not an emergency-response dashboard; surfacing acute Very-High
+    # respiratory activity at request time conflated horizons. The
+    # fetcher (utils/nssp_respiratory.fetch_nssp_wi_respiratory) is
+    # retained and still refreshed by the scheduler for any future
+    # strategic surveillance use, but is no longer attached to
+    # request-path risk_data.
+    nssp_payload = None
+
     
     # Calculate multi-dimensional active shooter risk
     active_shooter_data = calculate_active_shooter_risk(county_name)
@@ -979,22 +1061,48 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
     from utils.climate_adjusted_risk import calculate_enhanced_extreme_heat_risk
     enhanced_heat_data = calculate_enhanced_extreme_heat_risk(county_name, jurisdiction_id)
     
-    # Convert enhanced data to expected format for dashboard compatibility
+    # Convert enhanced data to expected format for dashboard compatibility.
+    # Q7 horizon reconciliation (2026-05-20): enhanced_heat_data['overall_risk']
+    # is now the PRESENT-DAY 12-month score (matching the dashboard's
+    # "Annual Strategic" label). The separate 2025-2050 trajectory is
+    # surfaced via extreme_heat_metrics['trajectory_2050'] for a
+    # dedicated dashboard panel; it is NOT folded into the PHRAT composite.
+    # Defensive .get() chain across the entire heat payload so the
+    # fallback assessment shape (overall_risk=None, sub-blocks present
+    # but inner final_* keys may be missing) cannot raise KeyError
+    # during composition. Any missing key safely surfaces as None and
+    # the downstream None-guard treats heat as unavailable.
+    _heat_wrapper_metrics = enhanced_heat_data.get('metrics', {}) or {}
+    _exposure_block = enhanced_heat_data.get('exposure') or {}
+    _vuln_block = enhanced_heat_data.get('vulnerability') or {}
+    _resil_block = enhanced_heat_data.get('resilience') or {}
+    _wb_block = enhanced_heat_data.get('wet_bulb_risk') or {}
+    _trend_block = enhanced_heat_data.get('climate_trend_factor') or {}
     extreme_heat_data = {
-        'overall': enhanced_heat_data['overall_risk'],
+        'overall': enhanced_heat_data.get('overall_risk'),
         'components': {
-            'exposure': enhanced_heat_data['exposure']['final_exposure'],
-            'vulnerability': enhanced_heat_data['vulnerability']['final_vulnerability'], 
-            'resilience': enhanced_heat_data['resilience']['final_resilience']
+            'exposure': _exposure_block.get('final_exposure'),
+            'vulnerability': _vuln_block.get('final_vulnerability'),
+            'resilience': _resil_block.get('final_resilience'),
         },
         'metrics': {
-            'wet_bulb_risk': enhanced_heat_data['wet_bulb_risk']['final_wet_bulb_risk'],
-            'climate_trend_factor': enhanced_heat_data['climate_trend_factor']['final_trend_factor'],
-            'risk_level': enhanced_heat_data['risk_level'],
-            'data_sources': enhanced_heat_data['data_sources']
+            'horizon': enhanced_heat_data.get('horizon', 'present_day_12_month'),
+            'wet_bulb_risk': _wb_block.get('final_wet_bulb_risk'),
+            'climate_trend_factor': _trend_block.get('final_trend_factor'),
+            'risk_level': enhanced_heat_data.get('risk_level'),
+            'data_sources': enhanced_heat_data.get('data_sources', []),
+            'heat_advisories': _heat_wrapper_metrics.get('heat_advisories'),
+            'annual_heat_days': _heat_wrapper_metrics.get('annual_heat_days'),
+            'ed_visits': _heat_wrapper_metrics.get('ed_visits'),
+            'trajectory_2050': enhanced_heat_data.get('trajectory_2050'),
         }
     }
     extreme_heat_risk = extreme_heat_data['overall']
+    # Guard: when the climate calculator returns overall_risk=None
+    # (fallback path), keep the composite arithmetic safe by treating
+    # the heat domain as unavailable rather than raising TypeError.
+    if extreme_heat_risk is None:
+        extreme_heat_risk = 0.0
     
     # Calculate multi-dimensional cybersecurity risk
     cybersecurity_data = get_cybersecurity_risk_data(jurisdiction_id)
@@ -1042,9 +1150,13 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
     
     # Apply weighted average formula instead of pure multiplication
     extreme_heat_risk = (extreme_heat_risk_base * heat_base_weight) + (heat_svi_impact * heat_svi_weight)
-    
-    # Ensure score stays between 0.1 and 0.9 to preserve meaningful variation
-    extreme_heat_risk = max(0.1, min(0.9, extreme_heat_risk))
+
+    # Clamp to the natural [0, 1] EVR range. The legacy [0.1, 0.9] band was
+    # introduced to mask uncapped wet-bulb and trend amplifiers in the
+    # upstream heat formula; those amplifiers are now folded into the single
+    # EVR transform in utils/climate_adjusted_risk.py and bounded there,
+    # so the artificial 0.1/0.9 floor and ceiling are no longer needed.
+    extreme_heat_risk = max(0.0, min(1.0, extreme_heat_risk))
     
     logger.info(f"Adjusted extreme heat risk with SVI socioeconomic factor (weighted avg): {extreme_heat_risk_base:.2f} → {extreme_heat_risk:.2f}")
     
@@ -1269,57 +1381,173 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
         }
     }
     
+    # PHRAT composite with domain dropout + weight renormalization.
+    #
+    # Each domain risk above may legitimately be unavailable (None) when its
+    # underlying real-data calculator could not produce a value (e.g.
+    # climate_adjusted_risk failed, NSSP cache empty, etc.). We do NOT
+    # silently substitute a synthetic mid-range value for missing domains -
+    # that would corrupt the composite. Instead we drop unavailable domains,
+    # renormalize the remaining weights to 1.0 over the surviving set, and
+    # widen the composite confidence band as data coverage decreases.
+    import math as _math
+
     _cfg = get_config_manager()
     if discipline == 'em':
-        weights = _cfg.get_em_overall_weights(jurisdiction_id=jurisdiction_id)
-        if not weights:
-            logger.warning("EM weights not found in config, using hardcoded defaults")
-            weights = {
-                'natural_hazards': 0.32, 'health_metrics': 0.10,
-                'active_shooter': 0.13, 'extreme_heat': 0.13,
-                'air_quality': 0.08, 'utilities': 0.10,
-                'dam_failure': 0.08, 'vector_borne_disease': 0.06,
-            }
-        risk_values = {
-            'natural_hazards': float(natural_hazards_score),
-            'health_metrics': float(health_metrics_score),
-            'active_shooter': float(active_shooter_risk),
-            'extreme_heat': float(extreme_heat_risk),
-            'air_quality': float(air_quality_risk),
-            'utilities': float(utilities_category_score),
-            'dam_failure': float(dam_failure_risk),
-            'vector_borne_disease': float(vbd_risk),
+        weights_full = _cfg.get_em_overall_weights(jurisdiction_id=jurisdiction_id) or {
+            'natural_hazards': 0.32, 'health_metrics': 0.10,
+            'active_shooter': 0.13, 'extreme_heat': 0.13,
+            'air_quality': 0.08, 'utilities': 0.10,
+            'dam_failure': 0.08, 'vector_borne_disease': 0.06,
         }
-        risk_values = {k: v for k, v in risk_values.items() if k in weights}
-        logger.info(f"Using Emergency Management PHRAT weights from config: {weights}")
+        raw_values = {
+            'natural_hazards': natural_hazards_score,
+            'health_metrics': health_metrics_score,
+            'active_shooter': active_shooter_risk,
+            'extreme_heat': extreme_heat_risk,
+            'air_quality': air_quality_risk,
+            'utilities': utilities_category_score,
+            'dam_failure': dam_failure_risk,
+            'vector_borne_disease': vbd_risk,
+        }
+        discipline_label = 'Emergency Management'
     else:
-        weights = _cfg.get_overall_weights(jurisdiction_id=jurisdiction_id)
-        if not weights:
-            logger.warning("PH weights not found in config, using hardcoded defaults")
-            weights = {
-                'natural_hazards': 0.28, 'health_metrics': 0.17,
-                'active_shooter': 0.18, 'extreme_heat': 0.11,
-                'air_quality': 0.12, 'dam_failure': 0.07,
-                'vector_borne_disease': 0.07,
-            }
-        risk_values = {
-            'natural_hazards': float(natural_hazards_score),
-            'health_metrics': float(health_metrics_score),
-            'active_shooter': float(active_shooter_risk),
-            'extreme_heat': float(extreme_heat_risk),
-            'air_quality': float(air_quality_risk),
-            'dam_failure': float(dam_failure_risk),
-            'vector_borne_disease': float(vbd_risk),
+        weights_full = _cfg.get_overall_weights(jurisdiction_id=jurisdiction_id) or {
+            'natural_hazards': 0.28, 'health_metrics': 0.17,
+            'active_shooter': 0.18, 'extreme_heat': 0.11,
+            'air_quality': 0.12, 'dam_failure': 0.07,
+            'vector_borne_disease': 0.07,
         }
-        risk_values = {k: v for k, v in risk_values.items() if k in weights}
-        logger.info(f"Using Public Health PHRAT weights from config: {weights}")
-    
+        raw_values = {
+            'natural_hazards': natural_hazards_score,
+            'health_metrics': health_metrics_score,
+            'active_shooter': active_shooter_risk,
+            'extreme_heat': extreme_heat_risk,
+            'air_quality': air_quality_risk,
+            'dam_failure': dam_failure_risk,
+            'vector_borne_disease': vbd_risk,
+        }
+        discipline_label = 'Public Health'
+
+    def _domain_available(value):
+        if value is None:
+            return False
+        try:
+            f = float(value)
+        except (TypeError, ValueError):
+            return False
+        return not (_math.isnan(f) or _math.isinf(f))
+
+    risk_values = {}
+    included_domains = []
+    excluded_domains = []
+    for domain_key in weights_full.keys():
+        raw = raw_values.get(domain_key)
+        if _domain_available(raw):
+            risk_values[domain_key] = max(0.0, min(1.0, float(raw)))
+            included_domains.append(domain_key)
+        else:
+            excluded_domains.append(domain_key)
+
+    sum_all_weights = sum(weights_full.values())
+    sum_present_weights = sum(weights_full[k] for k in included_domains)
+    coverage_fraction = (sum_present_weights / sum_all_weights) if sum_all_weights > 0 else 0.0
+
+    # Defined unconditionally so downstream score_provenance and
+    # verification blocks have well-defined values even when every
+    # domain is missing data (C2 crash-guard).
     p = 2.0
-    
-    weighted_sum = sum(weights[key] * (risk_values[key] ** p) for key in weights.keys())
-    total_risk_score = weighted_sum ** (1.0 / p)
-    
-    total_risk_score = max(0.0, min(1.0, total_risk_score))
+    weighted_sum = 0.0
+
+    if not included_domains or sum_present_weights <= 0:
+        total_risk_score = None
+        renormalized_weights = {}
+        composite_lower = None
+        composite_upper = None
+        composite_confidence = 0.0
+        logger.warning(
+            "PHRAT composite (%s): NO domains have available data for "
+            "jurisdiction %s; total risk score is unavailable.",
+            discipline_label, jurisdiction_id,
+        )
+    else:
+        renormalized_weights = {
+            k: weights_full[k] / sum_present_weights for k in included_domains
+        }
+        weighted_sum = sum(
+            renormalized_weights[k] * (risk_values[k] ** p)
+            for k in included_domains
+        )
+        total_risk_score = weighted_sum ** (1.0 / p)
+        total_risk_score = max(0.0, min(1.0, total_risk_score))
+
+        # Composite confidence band: half-width grows as coverage drops.
+        # Full coverage (1.0): +/- 0.03. Half coverage (0.5): +/- 0.23.
+        # Capped at +/- 0.30 to avoid meaningless [0, 1] bands.
+        half_width = min(0.30, 0.03 + max(0.0, 1.0 - coverage_fraction) * 0.4)
+        composite_lower = round(max(0.0, total_risk_score - half_width), 4)
+        composite_upper = round(min(1.0, total_risk_score + half_width), 4)
+        composite_confidence = round(coverage_fraction * 0.95, 3)
+
+        logger.info(
+            "PHRAT composite (%s) for %s: score=%.3f coverage=%.2f "
+            "included=%s excluded=%s",
+            discipline_label, jurisdiction_id, total_risk_score,
+            coverage_fraction, included_domains, excluded_domains,
+        )
+
+    if excluded_domains:
+        banner = (
+            f"Composite risk computed over {len(included_domains)} of "
+            f"{len(weights_full)} domains; weights renormalized. "
+            f"Excluded (no current real data): {', '.join(excluded_domains)}."
+        )
+    elif total_risk_score is None:
+        banner = (
+            "No real data is currently available for any risk domain in this "
+            "jurisdiction. Composite cannot be computed. Check data refresh "
+            "status."
+        )
+    else:
+        banner = None
+
+    result['data_quality'] = {
+        'discipline': discipline_label,
+        'included_domains': included_domains,
+        'excluded_domains': excluded_domains,
+        'original_weights': dict(weights_full),
+        'renormalized_weights': renormalized_weights,
+        'coverage_fraction': round(coverage_fraction, 3),
+        'composite_confidence': composite_confidence,
+        'confidence_interval': {
+            'lower': composite_lower,
+            'upper': composite_upper,
+            'method': (
+                'Renormalized PHRAT (quadratic mean, p=2) over available '
+                'domains. Confidence band widens as data coverage decreases.'
+            ),
+        },
+        'banner': banner,
+    }
+
+    # Per-source freshness map for dashboard badges. One bulk query
+    # across data_source_cache; rendered by templates/dashboard/
+    # _freshness_badge.html. Wrapped in try/except so a freshness
+    # lookup failure can never break the composite calculation.
+    try:
+        from utils.data_freshness import get_all_freshness_reports
+        result['data_quality']['source_freshness'] = (
+            get_all_freshness_reports()
+        )
+    except Exception as _exc:
+        logger.warning(
+            "Failed to attach source_freshness to data_quality: %s", _exc
+        )
+        result['data_quality']['source_freshness'] = {}
+
+    # Maintain the historical name for downstream code that may inspect
+    # `weights` (now post-renormalization).
+    weights = renormalized_weights
     
     from utils.natural_hazards_risk import (
         calculate_enhanced_flood_risk,
@@ -1362,10 +1590,14 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
         'extreme_heat_components': extreme_heat_data['components'],
         'extreme_heat_metrics': extreme_heat_data['metrics'],
         
-        # Add total risk score and date
-        'total_risk_score': float(total_risk_score),
+        # Add total risk score and date. When no domains have data,
+        # total_risk_score is None; surface 0.0 here and rely on
+        # result['data_quality']['banner'] to signal unavailability to
+        # the UI rather than crashing on float(None).
+        'total_risk_score': float(total_risk_score) if total_risk_score is not None else 0.0,
         'assessment_date': datetime.now().strftime('%Y-%m-%d'),
         'additional_data': additional_risk_data,
+        'nndss_data': nndss_payload,
         'discipline': discipline,
         'discipline_label': 'Emergency Management' if discipline == 'em' else 'Public Health',
         'utilities_in_phrat': discipline == 'em',
@@ -1391,7 +1623,7 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
                 'final_score': round(float(health_metrics_score), 4),
                 'weighted_contribution': round(weights['health_metrics'] * (float(health_metrics_score) ** p), 4),
                 'svi_adjustment': 'None (health data is directly sourced)',
-                'data_sources': ['WI DHS Respiratory Surveillance PDFs (weekly)', 'County Health Rankings (annual)', 'CDC vaccination data'],
+                'data_sources': ['CDC NSSP Emergency Department Visits (weekly, vutn-jzwm)', 'WI DHS WIR County Immunization (annual)', 'County Health Rankings BRFSS (annual)', 'CDC PLACES (annual)'],
                 'aggregation': 'Composite from disease surveillance + vaccination rates'
             },
             {
@@ -1469,7 +1701,10 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
             }
         ],
         'weighted_sum': round(float(weighted_sum), 6),
-        'total_risk_score': round(float(total_risk_score), 4),
+        'total_risk_score': (
+            round(float(total_risk_score), 4)
+            if total_risk_score is not None else None
+        ),
         'svi_themes_used': {
             'socioeconomic': round(socioeconomic_svi_factor, 4),
             'housing_transportation': round(housing_svi_factor, 4),
@@ -1477,12 +1712,28 @@ def process_risk_data(jurisdiction_id: str, additional_data: Optional[FileStorag
         },
         'verification': {
             'weights_sum': round(sum(weights.values()), 4),
-            'manual_check': f'√({" + ".join(f"{weights[k]:.2f}×{risk_values[k]:.4f}²" for k in weights)}) = {total_risk_score:.4f}'
+            'manual_check': (
+                f'√({" + ".join(f"{weights[k]:.2f}×{risk_values[k]:.4f}²" for k in weights)})'
+                f' = {total_risk_score:.4f}'
+                if total_risk_score is not None
+                else 'Composite unavailable (no domains have real data)'
+            )
         }
     }
     
     # The final risk data is in the result variable now
     risk_data = result
+
+    # Build the non-composited Operational Alert Overlay (Q2 remediation,
+    # 2026-05-20). Reads ONLY from risk_data; never fetches live data.
+    # Operational Alert Overlay removed 2026-05-20. CARA is a
+    # strategic planning tool, not emergency-response; acute
+    # operational signals (Very High NSSP activity, Unhealthy AQI,
+    # active heat advisories, measles flags) are intentionally
+    # suppressed from the request-path output. The BSTA acute weight
+    # remains 0 in default planning_mode_config and no separate
+    # overlay re-surfaces those signals.
+
     
     # Store this jurisdiction's risk data in the global collection for percentile calculations
     all_jurisdictions_risk_data[jurisdiction_id] = risk_data

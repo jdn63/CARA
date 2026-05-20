@@ -127,11 +127,17 @@ class RiskConfigManager:
                 return override
         
         mode_weights = temporal_config.get(mode, temporal_config.get('strategic_planning', {}))
-        
+
         if not mode_weights:
             logger.warning(f"No temporal weights found for mode '{mode}', using defaults")
-            return {'baseline': 0.60, 'seasonal': 0.25, 'trend': 0.15, 'acute': 0.00}
-        
+            mode_weights = {'baseline': 0.60, 'seasonal': 0.25, 'trend': 0.15}
+
+        # Acute was retired from non-infectious domains (2026-05). Inject a
+        # zero default so get_composite_score()'s weighted sum still works
+        # without requiring callers to special-case the missing key.
+        if 'acute' not in mode_weights:
+            mode_weights = {**mode_weights, 'acute': 0.0}
+
         return mode_weights
     
     def get_domain_weights(self, domain: str) -> Dict[str, float]:

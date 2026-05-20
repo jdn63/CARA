@@ -69,21 +69,23 @@ svi_adjustment_factors:
   secondary_socioeconomic_all: 0.25      # Socioeconomic SVI → cross-domain secondary adjustment
 
 # Temporal Risk Component Weights (must sum to 1.0)
-# These apply to all risk domains and determine time-based prioritization
+# These apply to all risk domains and determine time-based prioritization.
+#
+# As of 2026-05 CARA is strategic-only. The Acute component has been
+# formally retired from every non-infectious domain (no Acute key here)
+# so it cannot be re-enabled by accident, and the former
+# `emergency_response` mode block was removed for the same reason. The
+# only domain that still uses Acute is infectious_disease, where it
+# replaces Trend (outbreaks come in waves, not smooth multi-year
+# trends). See utils/temporal_risk.calculate_components() and
+# utils/bsta_visualization.py.
 temporal_weights:
-  # Strategic Planning Mode (default for CARA v2.1+)
+  # Strategic Planning Mode (only mode CARA supports)
   strategic_planning:
     baseline: 0.60    # 60% - Long-term structural risks (1-10 years)
     seasonal: 0.25    # 25% - Predictable cyclical variations
     trend: 0.15       # 15% - Medium-term directional changes (real data from NOAA/FEMA/Census)
-    acute: 0.00       # 0% - Short-term events (shown for context only)
-  
-  # Emergency Response Mode (future implementation)
-  emergency_response:
-    baseline: 0.30    # 30% - Background structural risk
-    seasonal: 0.20    # 20% - Seasonal context
-    trend: 0.10       # 10% - Trend awareness
-    acute: 0.40       # 40% - Immediate events drive decisions
+    # acute key intentionally omitted -- retired 2026-05.
 
   # Domain-specific temporal weight overrides
   # These override the mode-level weights for specific risk domains
@@ -92,7 +94,7 @@ temporal_weights:
       baseline: 0.60    # 60% - Long-term structural health risk
       seasonal: 0.25    # 25% - Respiratory illness seasonality (flu/RSV peaks)
       trend: 0.00       # 0% - Disabled: county-level ID trend data insufficient
-      acute: 0.15       # 15% - Active surveillance: WI DHS respiratory reports, outbreak alerts
+      acute: 0.15       # 15% - Active surveillance: CDC NSSP respiratory ED visits, outbreak alerts
 
 # Active Shooter Risk Domain Weights (must sum to 1.0)
 active_shooter_weights:
@@ -316,8 +318,53 @@ em_resilience_inputs:
 
 # =============================================================================
 
+# Disease Alert Thresholds (NNDSS-derived heuristics)
+# These thresholds gate the boolean "elevated" outbreak flags in
+# utils/nndss_communicable.py and are surfaced on the dashboard /
+# herc print summary. They are CARA-specific operational heuristics,
+# NOT CSTE-defined outbreak case definitions or CDC published
+# aberration-detection thresholds. Externalized here per review
+# finding H3 so the assumptions are inspectable and tunable without
+# code changes.
+#
+# pertussis_elevated fires when ALL of:
+#   1. five_year_median > 0 (skip weeks with no historical baseline)
+#   2. current_week_cases >= max(min_cases_floor,
+#                                round(five_year_median * median_multiplier))
+#
+# Rationale and citation status:
+#   - median_multiplier 1.5: a common informal "1.5x baseline" alerting
+#     rule of thumb used in surveillance dashboards. NOT a CDC- or
+#     CSTE-published threshold. CDC NNDSS aberration detection uses
+#     CUSUM, EARS C1/C2/C3, and Farrington algorithms that require more
+#     historical distribution data than the m4 5-year-median field
+#     NNDSS exposes; CARA does not currently fetch the full distribution.
+#   - min_cases_floor 5: statistical noise guard for small absolute
+#     counts. Without a floor, a single case in a week with median 0-2
+#     would trip "elevated" without epidemiological significance. The
+#     5-case floor is a CARA heuristic, not a published threshold.
+#
+# When/if CARA gains the multi-year per-week pertussis distribution
+# (e.g. via NNDSS historical Socrata queries or a state surveillance
+# data feed), this section should be replaced with a Farrington- or
+# EARS-style aberration detector and the heuristic deleted.
+#
+# meningococcal_elevated has no tunable threshold here: per CDC
+# guidance any current-week meningococcal case is operationally
+# significant due to the disease's severity and outbreak potential,
+# so the trigger is hard-coded as "any case OR YTD running ahead of
+# prior YTD" and does not need configuration.
+disease_alert_thresholds:
+  pertussis:
+    median_multiplier: 1.5
+    min_cases_floor: 5
+    method_label: 'CARA heuristic (1.5x 5-year weekly median, floor 5 cases); not a CSTE/CDC published threshold'
+    citation_status: 'uncited operational heuristic - see disease_alert_thresholds comment block'
+
+# =============================================================================
+
 # Version and Metadata
-version: '2.5'
-last_updated: '2026-03-11'
+version: '2.6'
+last_updated: '2026-05-20'
 updated_by: 'CARA Development Team'
 description: 'Comprehensive risk assessment weights for Wisconsin public health and emergency management strategic planning'

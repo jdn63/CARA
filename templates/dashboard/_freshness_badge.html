@@ -1,0 +1,32 @@
+{# Per-source freshness badge.
+   Usage:
+     {% import "dashboard/_freshness_badge.html" as fb %}
+     {{ fb.badge(risk_data.data_quality, 'svi', 'CDC SVI') }}
+     {{ fb.badge_row(risk_data.data_quality, [('storm_events','NOAA Storm Events'), ('nri','FEMA NRI')]) }}
+   The macros are safe to call when data_quality or source_freshness
+   is missing; they emit nothing rather than raising. #}
+
+{% macro badge(dq, source_id, label=None) -%}
+    {%- set sf = (dq.source_freshness if dq and dq.source_freshness is mapping else {}).get(source_id) -%}
+    {%- if sf -%}
+        {%- set cls = 'bg-success' if sf.fresh else 'bg-warning text-dark' if sf.stale and sf.available else 'bg-secondary' -%}
+        {%- set txt = label or source_id -%}
+        <span class="badge {{ cls }} me-1 mb-1"
+              title="{{ sf.detail|e }}"
+              data-bs-toggle="tooltip"
+              style="font-weight: 500;">
+            {{ txt }}: {{ sf.label }}
+        </span>
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro badge_row(dq, sources) -%}
+    {%- if dq and dq.source_freshness is mapping -%}
+    <div class="freshness-badges small mb-2" aria-label="Data source freshness">
+        <span class="text-muted me-2" style="font-size: 0.75rem;">Source freshness:</span>
+        {%- for source_id, label in sources -%}
+            {{ badge(dq, source_id, label) }}
+        {%- endfor -%}
+    </div>
+    {%- endif -%}
+{%- endmacro %}

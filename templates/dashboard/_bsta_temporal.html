@@ -1,0 +1,205 @@
+    <!-- Temporal Risk Components Section (BSTA redesigned 2026-05) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="mb-0">Temporal Risk Analysis (BSTA Framework)</h5>
+                    <div class="btn-group btn-group-sm bsta-view-toggle" role="group" aria-label="BSTA view toggle">
+                        <button type="button" class="btn btn-light active" data-bsta-view="sparkline" aria-pressed="true">Sparkline view</button>
+                        <button type="button" class="btn btn-light" data-bsta-view="plain" aria-pressed="false">Plain-language view</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-lg-8">
+                            <p class="mb-1">
+                                The <strong>Baseline-Seasonal-Trend (BST)</strong> framework decomposes each hazard into time-horizon components for strategic preparedness. Infectious disease additionally carries an <strong>Acute</strong> component fed by CDC NSSP respiratory surveillance (outbreaks come in waves rather than smooth multi-year trends).
+                                <a href="/methodology#temporal-framework" class="small" target="_blank" rel="noopener noreferrer">Learn about the BSTA framework</a>
+                            </p>
+                            <p class="small text-muted mb-0">Sparkline shows the 12-month seasonal curve for each hazard. The filled dot marks the current month ({{ current_season }}); the dashed line is the long-term baseline. Trend label reflects multi-year directional change from NOAA/FEMA/Census/climate-projection data.</p>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="alert alert-secondary mb-0 small">
+                                <strong>Annual Planning Focus.</strong> Acute event signals (weather alerts, current AQI, recent storm counts) were retired from non-infectious domains in 2026-05 because CARA is a strategic planning tool, not an emergency-response dashboard.
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Sparkline view (default) #}
+                    <div class="bsta-view bsta-view-sparkline">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-2 bsta-sparkline-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 20%;">Hazard</th>
+                                        <th style="width: 28%;">Seasonal curve (Jan-Dec)</th>
+                                        <th style="width: 12%;">Baseline</th>
+                                        <th style="width: 12%;">Trend</th>
+                                        <th style="width: 12%;">Acute</th>
+                                        <th style="width: 16%;">Composite</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hazard_type, data in temporal_risk_data.items() %}
+                                    {% set comp = data.temporal_components %}
+                                    {% set viz = data.get('visualization') or {} %}
+                                    {% set curve = viz.get('seasonal_curve') or [] %}
+                                    {% set cur_m = viz.get('current_month', 1) %}
+                                    {% set baseline_val = comp.baseline if comp.baseline is not none else 0 %}
+                                    {% set composite = data.composite_score if data.composite_score is not none else 0 %}
+                                    {% set trend_dir = viz.get('trend_direction', 'stable') %}
+                                    {% set _baseline_fallback = comp.get('baseline_used_fallback') %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ hazard_type.replace('_', ' ').title() }}</strong>
+                                            <div class="small text-muted">{{ viz.get('posture_label', '') }}</div>
+                                        </td>
+                                        <td>
+                                            {% if curve %}
+                                            {% set max_v = curve|max %}
+                                            {% set _maxv = max_v if max_v > 0 else 1 %}
+                                            <svg viewBox="0 0 132 32" width="132" height="32" role="img"
+                                                 aria-label="12-month seasonal curve for {{ hazard_type.replace('_', ' ') }}, currently month {{ cur_m }}.">
+                                                {# baseline reference line #}
+                                                {% set base_y = 28 - (baseline_val / 1.0) * 24 %}
+                                                <line x1="6" x2="126" y1="{{ '%.1f'|format(base_y) }}" y2="{{ '%.1f'|format(base_y) }}"
+                                                      stroke="#6c757d" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+                                                {# polyline #}
+                                                <polyline fill="none" stroke="#0d7377" stroke-width="1.8"
+                                                          points="{% for v in curve %}{{ '%.1f'|format(6 + loop.index0 * (120/11)) }},{{ '%.1f'|format(28 - (v / _maxv) * 24) }}{% if not loop.last %} {% endif %}{% endfor %}"/>
+                                                {# month tick marks #}
+                                                {% for v in curve %}
+                                                <circle cx="{{ '%.1f'|format(6 + loop.index0 * (120/11)) }}"
+                                                        cy="{{ '%.1f'|format(28 - (v / _maxv) * 24) }}"
+                                                        r="1.2" fill="#0d7377" opacity="0.5"/>
+                                                {% endfor %}
+                                                {# current-month dot, sized by composite score #}
+                                                {% set dot_v = curve[cur_m - 1] %}
+                                                {% set dot_x = 6 + (cur_m - 1) * (120/11) %}
+                                                {% set dot_y = 28 - (dot_v / _maxv) * 24 %}
+                                                {% set dot_r = 2.8 + composite * 3.0 %}
+                                                <circle cx="{{ '%.1f'|format(dot_x) }}" cy="{{ '%.1f'|format(dot_y) }}"
+                                                        r="{{ '%.1f'|format(dot_r) }}" fill="#1f4788" stroke="#ffffff" stroke-width="1.2"/>
+                                            </svg>
+                                            <div class="small text-muted" style="font-size: 0.72rem;">
+                                                Now: {{ viz.get('current_month_label', '') }}
+                                                {% if viz.get('peak_label') and not viz.get('is_flat_curve') %}
+                                                | Peak: {{ viz.peak_label }}
+                                                {% endif %}
+                                            </div>
+                                            {% else %}
+                                            <span class="text-muted small">(no seasonal data)</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="fw-semibold">{{ "%.2f"|format(baseline_val) }}</span>
+                                            <div class="small text-muted text-capitalize">{{ viz.get('baseline_level', '') }}</div>
+                                            {% if _baseline_fallback %}
+                                            <div class="small text-warning" title="Baseline substituted: only {{ comp.get('baseline_sample_size', 0) }} of 12+ required historical points available.">* generic baseline</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if viz.get('has_trend') %}
+                                            <span class="badge {% if trend_dir == 'rising' %}bg-danger{% elif trend_dir == 'declining' %}bg-success{% else %}bg-secondary{% endif %}"
+                                                  {% if comp.get('trend_metadata') %}title="{{ comp.trend_metadata.data_source }}: {{ comp.trend_metadata.description[:120] }}"{% endif %}>
+                                                {{ trend_dir }}
+                                            </span>
+                                            <div class="small text-muted">{{ "%.2f"|format(comp.trend if comp.trend is not none else 0) }}</div>
+                                            {% else %}
+                                            <span class="badge bg-light text-muted" title="Infectious disease uses Acute surveillance in place of Trend">not tracked</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if viz.get('has_acute') %}
+                                            {% set acute_val = comp.acute if comp.acute is not none else 0 %}
+                                            <span class="fw-semibold">{{ "%.2f"|format(acute_val) }}</span>
+                                            <div class="small text-muted">surveillance (15%)</div>
+                                            {% else %}
+                                            <span class="badge bg-light text-muted" title="Acute component retired from non-infectious domains 2026-05 (CARA is strategic-only)">retired</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge fs-6
+                                                    {% if composite < 0.3 %}bg-success
+                                                    {% elif composite < 0.6 %}bg-warning text-dark
+                                                    {% else %}bg-danger{% endif %}">
+                                                    {{ "%.2f"|format(composite) }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {# Plain-language posture view (toggled) #}
+                    <div class="bsta-view bsta-view-plain" style="display: none;">
+                        <div class="list-group list-group-flush">
+                            {% for hazard_type, data in temporal_risk_data.items() %}
+                            {% set viz = data.get('visualization') or {} %}
+                            {% set composite = data.composite_score if data.composite_score is not none else 0 %}
+                            <div class="list-group-item d-flex justify-content-between align-items-start flex-wrap py-3">
+                                <div class="flex-grow-1 pe-3">
+                                    <div class="fw-semibold">{{ hazard_type.replace('_', ' ').title() }}</div>
+                                    <div>{{ viz.get('posture_label', '(no posture available)') }}</div>
+                                </div>
+                                <span class="badge fs-6 align-self-center
+                                    {% if composite < 0.3 %}bg-success
+                                    {% elif composite < 0.6 %}bg-warning text-dark
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ "%.2f"|format(composite) }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% set _any_baseline_fallback = temporal_risk_data.values()|selectattr('temporal_components.baseline_used_fallback')|list|length %}
+                    {% if _any_baseline_fallback %}
+                    <div class="alert alert-warning small mt-3 mb-0" role="alert">
+                        <strong>Baseline data quality notice:</strong>
+                        {{ _any_baseline_fallback }} hazard{{ 's' if _any_baseline_fallback != 1 else '' }}
+                        in this jurisdiction have fewer than 12 historical points
+                        and use a generic 0.5 moderate-risk baseline (marked with *).
+                        Seasonal and trend components remain locally derived.
+                    </div>
+                    {% endif %}
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <strong>How to use this analysis.</strong> Use the temporal posture to target preparedness investments:
+                        <ul class="mb-0">
+                            <li><strong>Persistent baseline:</strong> long-term infrastructure and capacity building</li>
+                            <li><strong>Strongly seasonal:</strong> cyclical preparedness on the peak-window calendar (current season: {{ current_season }})</li>
+                            <li><strong>Rising trend:</strong> strategic planning and adaptation for emerging risk</li>
+                            <li><strong>Acute (infectious disease only):</strong> surge surveillance and response readiness when CDC NSSP activity is elevated</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var card = document.querySelector('.bsta-view-toggle');
+        if (!card) return;
+        var buttons = card.querySelectorAll('button[data-bsta-view]');
+        var sparkView = document.querySelector('.bsta-view-sparkline');
+        var plainView = document.querySelector('.bsta-view-plain');
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var mode = btn.getAttribute('data-bsta-view');
+                buttons.forEach(function(b) {
+                    var active = b === btn;
+                    b.classList.toggle('active', active);
+                    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+                });
+                if (sparkView) sparkView.style.display = (mode === 'sparkline') ? '' : 'none';
+                if (plainView) plainView.style.display = (mode === 'plain') ? '' : 'none';
+            });
+        });
+    })();
+    </script>

@@ -53,11 +53,12 @@ These data sources are fetched on a schedule and cached in the database.
 - Used For: Heat forecasts, weather data for extreme heat risk
 - Refresh: Daily
 
-8. **WI DHS Respiratory Illness Surveillance**
-- Source: Web scraper targeting dhs.wisconsin.gov respiratory illness pages
-- Data: ILI activity levels, COVID-19 metrics, RSV activity, vaccination rate indicators
-- Refresh: Weekly
-- Module: `utils/dhs_data.py`, `utils/web_scraper.py`
+8. **CDC NSSP Emergency Department Visits (keyless)**
+- Source: Socrata REST API at data.cdc.gov/resource/vutn-jzwm.json
+- Data: Wisconsin-specific percent of ED visits for Influenza, COVID-19, and RSV; activity-level classification; week-over-week trend direction
+- Refresh: Weekly (updated every Friday)
+- Module: `utils/nssp_respiratory.py` (primary fetcher); `utils/wisconsin_dhs_scraper.py` and `utils/dhs_data.py` are thin wrappers that delegate to the NSSP fetcher
+- Note: NSSP/ESSENCE is the same feed underlying the WI DHS Tableau respiratory dashboards; the legacy WI DHS HTML page web scraper has been removed in favor of going directly to NSSP for accuracy and stability.
 
 9. **WI DHS EPHT Lyme/WNV Surveillance**
 - Source: CSV downloads from dhs.wisconsin.gov/epht
@@ -136,7 +137,7 @@ These are pre-loaded datasets stored locally in the application.
 - CDC SVI percentiles (annual scheduler cache)
 
 ### Health Metrics / Infectious Disease Risk (17% PHRAT weight)
-- WI DHS respiratory illness surveillance (weekly web scraper cache)
+- CDC NSSP Emergency Department Visits: Influenza, COVID-19, RSV (weekly Friday refresh, keyless Socrata API)
 - County Health Rankings 2025: flu vaccination rate and primary care physician density (annual scheduler cache)
 - CDC PLACES: COPD crude prevalence by county (annual scheduler cache)
 - WI DHS WIR: MMR vaccination rate for 24-month-olds by county (annual scheduler cache)
@@ -191,7 +192,7 @@ These are pre-loaded datasets stored locally in the application.
 | CDC SVI 2022 | Annual | JSON file + cache | Active |
 | EPA AirNow | Daily | PostgreSQL cache | Active |
 | NOAA/NWS Heat | Daily | PostgreSQL cache | Active |
-| WI DHS Respiratory | Weekly | PostgreSQL cache | Active |
+| CDC NSSP Emergency Department Visits (Influenza/COVID-19/RSV) | Weekly (Friday) | PostgreSQL cache | Active |
 | WI DHS EPHT (Lyme/WNV) | Weekly | PostgreSQL cache | Active |
 | County Health Rankings (flu vaccination, PC access) | Annual | PostgreSQL cache | Active |
 | CDC PLACES (COPD prevalence) | Annual | PostgreSQL cache | Active |

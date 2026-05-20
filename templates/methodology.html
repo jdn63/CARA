@@ -69,12 +69,12 @@
                     <tbody>
                         <tr>
                             <td><strong>FEMA National Risk Index (NRI)</strong></td>
-                            <td><span class="badge bg-success">Annual (365-day cache)</span></td>
+                            <td><span class="badge bg-success">Annual (scheduler every 8,760 h; max acceptable cache age 400 days)</span></td>
                             <td>Flood, tornado, winter storm exposure scores; health impact factors</td>
                         </tr>
                         <tr>
                             <td><strong>CDC Social Vulnerability Index (SVI)</strong></td>
-                            <td><span class="badge bg-success">Annual (365-day cache)</span></td>
+                            <td><span class="badge bg-success">Annual (scheduler every 8,760 h; max acceptable cache age 400 days)</span></td>
                             <td>4 vulnerability themes integrated into EVR framework across all domains</td>
                         </tr>
                         <tr>
@@ -83,23 +83,33 @@
                             <td>Wisconsin-specific % of ED visits for Influenza, COVID-19, and RSV; activity level classification and week-over-week trend direction; same underlying NSSP/ESSENCE data that powers WI DHS Tableau dashboards</td>
                         </tr>
                         <tr>
+                            <td><strong>CDC NNDSS Weekly Data</strong> (data.cdc.gov/resource/x9gk-5huc)</td>
+                            <td><span class="badge bg-info text-dark">Weekly (Tuesdays)</span></td>
+                            <td>Wisconsin state-level weekly case counts for reportable communicable diseases: Measles (Indigenous and Imported), Pertussis, Meningococcal disease. Drives the active_measles_outbreak flag and elevated-disease indicators. State-level signal applied uniformly to all 72 counties (WEDSS county-level case data is not publicly accessible)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CDC NHSN Hospital Respiratory Data</strong> (data.cdc.gov/resource/ua7e-t2fy)</td>
+                            <td><span class="badge bg-info text-dark">Weekly (Wednesdays)</span></td>
+                            <td>Wisconsin state-level weekly ICU bed counts and occupancy, plus confirmed COVID-19, influenza, and RSV hospitalizations and ICU patients, with weekly new-admission breakdowns by age group. Replaces HHS Protect (closed May 2024) and substitutes for the WHA Information Center capacity feed which requires a HERC partner agreement. State-level signal applied uniformly to all 72 counties</td>
+                        </tr>
+                        <tr>
                             <td><strong>County Health Rankings (CHR) 2025</strong></td>
-                            <td><span class="badge bg-success">Annual (30-day cache)</span></td>
+                            <td><span class="badge bg-success">Annual (scheduler every 8,760 h; max acceptable cache age 400 days)</span></td>
                             <td>All-ages seasonal flu vaccination rate (BRFSS survey) and primary care physician density (per 100,000 population) for all 72 Wisconsin counties; county range: flu 22% (Taylor/Polk) to 69% (Dane), PC access 9.6/100k (Adams) to 173.8/100k (Ashland)</td>
                         </tr>
                         <tr>
                             <td><strong>CDC PLACES Local Data for Better Health</strong> (Socrata API, keyless)</td>
-                            <td><span class="badge bg-success">Annual (30-day cache)</span></td>
+                            <td><span class="badge bg-success">Annual (scheduler every 8,760 h; max acceptable cache age 400 days)</span></td>
                             <td>COPD crude prevalence by county for all 72 Wisconsin counties; BRFSS model-based estimates; county range: 4.1% (Waukesha) to 10.2% (Forest); used as respiratory vulnerability modifier in health metrics EVR calculation</td>
                         </tr>
                         <tr>
                             <td><strong>WI DHS WIR County Immunization CSV</strong></td>
-                            <td><span class="badge bg-success">Annual (30-day cache)</span></td>
+                            <td><span class="badge bg-success">Annual (scheduler every 720 h; max acceptable cache age 60 days)</span></td>
                             <td>MMR (1) vaccination rate for 24-month olds by county (most recent year available); county range: Clark 53.3% to Forest 88.7%; sourced from Wisconsin Immunization Registry (WIR) at dhs.wisconsin.gov/immunization</td>
                         </tr>
                         <tr>
                             <td><strong>NOAA NCEI Storm Events Database</strong></td>
-                            <td><span class="badge bg-info text-dark">Weekly (scheduler cache)</span></td>
+                            <td><span class="badge bg-info text-dark">Weekly (scheduler every 168 h; max acceptable cache age 90 days)</span></td>
                             <td>County-level tornado, flood, winter storm, thunderstorm event counts, property damage, injuries, fatalities from bulk CSV data</td>
                         </tr>
                         <tr>
@@ -144,17 +154,27 @@
                         </tr>
                         <tr>
                             <td><strong>EPA AirNow API</strong></td>
-                            <td><span class="badge bg-info text-dark">Daily (scheduler cache)</span></td>
+                            <td><span class="badge bg-info text-dark">Daily (scheduler every 24 h; max acceptable cache age 2 days)</span></td>
                             <td>Air quality index readings; cache-only mode populated by background scheduler</td>
                         </tr>
                         <tr>
+                            <td><strong>NOAA/NWS Excessive Heat Outlook</strong></td>
+                            <td><span class="badge bg-info text-dark">Weekly (scheduler every 168 h; max acceptable cache age 10 days)</span></td>
+                            <td>Active heat advisories and forecast heat days per county; surfaces as the acute component of the BSTA extreme-heat temporal model. Refreshed by <code>refresh_all_nws_forecasts()</code> under the <code>nws_heat</code> source key. Per review finding M6 (2026-05-20) the freshness window was relaxed from 2 to 10 days so a single missed weekly refresh no longer marks the source stale.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WI DHS Heat Vulnerability Index (HVI)</strong> (ArcGIS MapServer, keyless)</td>
+                            <td><span class="badge bg-info text-dark">Quarterly (scheduler every 2,160 h; max acceptable cache age 120 days)</span></td>
+                            <td>4,472 Census block groups covering all of WI with composite HVI z-score plus environmental, health, population, and socioeconomic sub-indices. Aggregated to a 72-county table via unweighted mean of block-group z-scores, normalized 0-1, bucketed to DHS quintile categories. Preferred baseline-vulnerability source for the BSTA acute heat path (CDC SVI fallback)</td>
+                        </tr>
+                        <tr>
                             <td><strong>WI DHS EPHT (WEDSS)</strong> &mdash; lyme-county.csv, west-nile-data-county.csv</td>
-                            <td><span class="badge bg-info text-dark">Weekly (scheduler cache)</span></td>
-                            <td>County-level Lyme disease and West Nile Virus confirmed/probable case counts and crude rates per 100,000 for all 72 Wisconsin counties</td>
+                            <td><span class="badge bg-info text-dark">Weekly (scheduler every 168 h; max acceptable cache age 14 days)</span></td>
+                            <td>County-level Lyme disease and West Nile Virus confirmed/probable case counts and crude rates per 100,000 for all 72 Wisconsin counties; refreshed by <code>refresh_all_dhs_vbd_surveillance()</code> under the <code>vbd</code> source key</td>
                         </tr>
                         <tr>
                             <td><strong>WI DNR Dam Safety Database</strong> (ArcGIS FeatureServer, primary) / <strong>USACE NID</strong> (fallback)</td>
-                            <td><span class="badge bg-info text-dark">Weekly (scheduler cache)</span></td>
+                            <td><span class="badge bg-info text-dark">Weekly (scheduler every 168 h; max acceptable cache age 60 days)</span></td>
                             <td>Wisconsin dam inventory; hazard classification, downstream population exposure for dam failure risk domain</td>
                         </tr>
                     </tbody>
@@ -163,6 +183,74 @@
             <div class="alert alert-warning mb-0 mt-3">
                 <strong>Data Transparency:</strong> The Cybersecurity and Utilities risk domains are <strong>modeled from proxy indicators</strong> derived from county characteristics and SVI data, not real-time external APIs. These supplementary domains are not included in the primary PHRAT risk score. All proxy-indicator-based components are transparently labeled throughout this methodology.
             </div>
+        </div>
+    </div>
+
+    <!--
+        Review finding L1 (2026-05-20): document hazards present in the
+        Kaiser Permanente HVA reference framework that CARA does not yet
+        model directly, so users do not mistake silence for absence of
+        risk. Each row points to the interim workflow a jurisdiction
+        should use until quantitative coverage is added.
+    -->
+    <div class="card mb-4" id="coverage-gaps">
+        <div class="card-header bg-secondary text-white">
+            <h2 class="h5 mb-0">Hazards Not Yet Modeled (vs Kaiser Permanente HVA)</h2>
+        </div>
+        <div class="card-body">
+            <p class="mb-2">
+                The hazards listed below appear in the Kaiser Permanente
+                Hazard Vulnerability Analysis reference framework but are
+                not yet quantified by a dedicated CARA risk domain. They
+                are listed here so users complete their planning with an
+                explicit, documented qualitative workflow rather than an
+                undisclosed gap.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 22%;">Hazard</th>
+                            <th style="width: 28%;">Current CARA coverage</th>
+                            <th>Interim qualitative scoring workflow</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>HazMat release (fixed-facility, pipeline, rail)</strong></td>
+                            <td>Not modeled. Indirect proxy only via Active Shooter critical-infrastructure exposure and air quality acute events.</td>
+                            <td>Use the local LEPC Tier II inventory and the Wisconsin DOT rail commodity flow study to score Exposure (proximity to pipeline / Class I rail / RMP facility), Vulnerability (downwind population within 1 mile), and Resilience (HazMat team mutual-aid response time) on the same 0.0 to 1.0 scale, then file the worksheet alongside the CARA PDF export.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Agricultural disaster (crop loss, livestock disease, ag-water contamination)</strong></td>
+                            <td>Not modeled. Rural land-use factors appear inside the heat and vector-borne vulnerability components but no dedicated ag-economy domain exists.</td>
+                            <td>Score qualitatively using USDA NASS county crop-value and livestock-inventory percentile, recent FSA disaster designations, and known irrigation-aquifer stress. Treat as a population-displacement risk for counties where farm employment exceeds 10% of the workforce.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Civil unrest / mass demonstration</strong></td>
+                            <td>Not modeled. Active Shooter covers targeted violence but not protest-related medical surge or police-mutual-aid demand.</td>
+                            <td>Score Exposure from county-seat / state-capital proximity and history of declared events in the last five years; score Vulnerability from hospital bed depth and ED diversion frequency; document any standing mutual-aid arrangements in the Resilience line.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Power-grid failure / long-duration outage</strong></td>
+                            <td>Partial proxy only. The Utilities supplementary domain uses SVI and county characteristics; it does not ingest live ATC / MISO reliability data.</td>
+                            <td>Use the PSC of Wisconsin annual reliability report (SAIDI, SAIFI by utility territory) and the local Continuity of Operations Plan to score generator coverage at hospitals, water plants, and dialysis centers. Combine with the extreme-heat and winter-storm composite scores for cascading-failure planning.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mass-gathering medical (festivals, sporting events, large worship services)</strong></td>
+                            <td>Not modeled. Event-driven medical-surge demand is not in the PHRAT composite.</td>
+                            <td>Score qualitatively per recurring event: peak attendance, transport time to nearest receiving hospital, on-site EMS staffing ratio. Use as a planning overlay rather than a contribution to the composite.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small mb-0">
+                When any of these hazards is added to CARA as a quantified
+                domain, the row will move into the data-sources table
+                above and the PHRAT weight set will be re-normalized in
+                accordance with the renormalize-on-missing-domain logic
+                already documented for the existing seven domains.
+            </p>
         </div>
     </div>
 
@@ -211,12 +299,23 @@
 
     <div class="card mb-4" id="evr-framework">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Residual Risk Formula (EVR Framework)</h2>
+            <h2 class="h5 mb-0">Residual Risk Formula (CARA EVR Transform)</h2>
         </div>
         <div class="card-body">
-            <p>Individual risk domains are calculated using the <strong>Exposure-Vulnerability-Resilience (EVR)</strong> framework. This formula is applied consistently across natural hazards, utilities, and extreme heat domains.</p>
+            <p>Individual risk domains are calculated using the <strong>CARA-specific Exposure-Vulnerability-Resilience (EVR) transform</strong>. This formula is applied consistently across natural hazards, utilities, and extreme heat domains.</p>
             <div class="alert alert-info">
                 <p class="font-monospace mb-0"><strong>Residual Risk = (Exposure × Vulnerability) × (2.0 - Resilience) × Health Impact Factor</strong></p>
+            </div>
+            <div class="alert alert-warning">
+                <h6 class="mb-2">CARA EVR Transform vs FEMA NRI: Not the Same Formula</h6>
+                <p class="mb-2">The CARA EVR transform above is <strong>not</strong> the FEMA National Risk Index residual-risk formula. The FEMA NRI form is:</p>
+                <p class="font-monospace mb-2"><strong>Risk (FEMA NRI) = Exposure × AnnualLossRate × (1 + SVI) / (1 + ResilienceRating)</strong></p>
+                <p class="mb-1">The two formulas differ in two material ways and will produce different numbers even given identical inputs:</p>
+                <ol class="mb-2">
+                    <li>CARA uses <span class="font-monospace">(2.0 - Resilience)</span> as a multiplicative amplifier in the numerator. With Resilience in [0.1, 0.9] this amplifier is always between 1.1x and 1.9x, so resilience can only <em>reduce the amount of amplification</em>; it can never attenuate risk below the <span class="font-monospace">E × V</span> baseline. FEMA NRI's <span class="font-monospace">(1 + R)</span> denominator can attenuate risk below the baseline because raising R divides the numerator down.</li>
+                    <li>CARA folds vulnerability (including CDC SVI themes) directly into the <span class="font-monospace">E × V</span> product as a multiplier in [0, 1]. FEMA NRI uses <span class="font-monospace">(1 + SVI)</span>, a multiplier in [1, 2].</li>
+                </ol>
+                <p class="small mb-0">FEMA NRI Expected Annual Loss Score (EALS) data <em>is</em> used as the source for the CARA Health Impact Factor surface below, so FEMA NRI inputs do feed CARA scores; the residual-risk transform itself is CARA-specific. An EM planner cross-walking county scores between CARA and FEMA NRI should expect different numbers.</p>
             </div>
             <div class="row">
                 <div class="col-md-6">
@@ -224,19 +323,19 @@
                     <ul>
                         <li><strong>Exposure (0&ndash;1):</strong> Hazard likelihood based on historical data and geographic factors</li>
                         <li><strong>Vulnerability (0&ndash;1):</strong> Population and infrastructure susceptibility; incorporates CDC SVI themes and Census demographics</li>
-                        <li><strong>Resilience (0&ndash;1):</strong> Community adaptive capacity; acts as an <em>amplifier</em> rather than a simple divisor</li>
-                        <li><strong>Health Impact Factor (0.8&ndash;1.5):</strong> Derived from FEMA NRI data; adjusts for health consequences of the specific hazard</li>
+                        <li><strong>Resilience (0&ndash;1):</strong> Community adaptive capacity; acts as an <em>amplifier reduction</em> in the numerator, not a denominator divisor</li>
+                        <li><strong>Health Impact Factor (0.8&ndash;1.5):</strong> Derived from FEMA NRI EALS data via <code>_calculate_normalized_health_factor</code>; adjusts for health consequences of the specific hazard</li>
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <h6>Resilience as Amplifier</h6>
+                    <h6>Resilience as Amplifier Reduction</h6>
                     <p>The <span class="font-monospace">(2.0 - Resilience)</span> term means:</p>
                     <ul>
                         <li>Low resilience (0.1) &rarr; <strong>1.9&times;</strong> amplifier</li>
                         <li>Medium resilience (0.5) &rarr; <strong>1.5&times;</strong> amplifier</li>
                         <li>High resilience (0.9) &rarr; <strong>1.1&times;</strong> amplifier</li>
                     </ul>
-                    <p class="small mb-0">This ensures that resilience never fully eliminates risk, but communities with lower resilience face meaningfully amplified risk scores.</p>
+                    <p class="small mb-0">High resilience reduces the amplifier toward 1.1x but never below it, so the CARA transform does not allow resilience to attenuate risk below the <span class="font-monospace">E × V</span> baseline. This is deliberate (it preserves the floor of structural hazard exposure) and is one of the differences from FEMA NRI noted above.</p>
                 </div>
             </div>
             <hr>
@@ -279,12 +378,12 @@
 
             <h6>EVR Components by Hazard</h6>
             <ul>
-                <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and OpenFEMA NFIP claims. Climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code> are applied per hazard type. For flood, proximity to major water bodies contributes 20% of the exposure score; NRI contributes 45%, storm events 25%, and NFIP claims 10%.</li>
+                <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and OpenFEMA NFIP claims. Climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code> are applied per hazard type. Each exposure component is held on its native 0-1 scale with a single layer of documented weights (no hidden pre-scaling). NOAA event counts and NFIP claim counts are normalized to events-per-year and percentile-ranked across all 72 Wisconsin counties so large urban counties do not dominate by area alone. For flood: NRI 30%, NOAA storm-events percentile 20%, NFIP claims percentile 10%, water body proximity 15%, flat terrain 5%, precipitation 5%, climate trend 5%. Tornado, winter storm, and thunderstorm exposures use the same single-weight-layer pattern, each with a NOAA storm-events percentile term (tornado 25%, winter storm 15%, thunderstorm 20%).</li>
                 <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (population aged 65+ (%), mobile home %, population density)</li>
-                <li><strong>Resilience:</strong> Inverse SVI socioeconomic and housing scores as proxies for community adaptive capacity. The EVR formula uses a <code>(2.0 - Resilience)</code> amplifier rather than a simple divisor, so low resilience magnifies risk and high resilience attenuates it without eliminating it entirely. For flood specifically, EOC county capacity is not included as a resilience bonus: emergency operations center readiness improves coordinated disaster response but does not reduce the frequency of stormwater events, riverine flooding, or combined sewer overflows.</li>
+                <li><strong>Resilience:</strong> Inverse SVI socioeconomic and housing scores as proxies for community adaptive capacity, with no hard-coded county adjustments. The EVR formula uses a <code>(2.0 - Resilience)</code> amplifier rather than a simple divisor, so low resilience magnifies risk and high resilience attenuates it without eliminating it entirely. Earlier versions of CARA applied flat bonuses to short lists of "well-resourced" or "EOC-capable" counties; those lists have been removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. A continuous capacity index can be reintroduced in the future if a defensible data source (e.g. emergency-management staffing per capita, hospital beds per capita) becomes available.</li>
             </ul>
             <div class="alert alert-secondary mb-0 mt-2">
-                <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. A 0.25 urban stormwater exposure factor is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. NRI weight is held at 45% (rather than 55%) to account for this structural gap, and proximity to water body is weighted at 20%.
+                <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. An additive +0.10 urban stormwater boost (capped at the 1.0 exposure ceiling) is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. When the NFIP cross-county cache is empty, the NFIP weight is dropped and the remaining flood weights renormalize so missing data does not silently lower every county's flood score.
             </div>
 
             <h6 class="mt-3">SVI Vulnerability Weights by Hazard Type</h6>
@@ -530,26 +629,44 @@
             <h2 class="h5 mb-0">Extreme Heat Domain (11% of Overall)</h2>
         </div>
         <div class="card-body">
-            <p>Extreme heat risk combines the EVR residual risk calculation with wet bulb temperature and climate trend adjustments.</p>
+            <p>Extreme heat risk combines the EVR residual risk calculation with wet bulb temperature and climate trend adjustments. As of the 2026-05-20 horizon reconciliation (review finding Q7), the calculator returns TWO horizons in the same payload and they are kept strictly separated downstream.</p>
+
+            <div class="alert alert-warning">
+                <strong>Horizon separation (Q7 fix, 2026-05-20).</strong>
+                The PHRAT composite is labeled "Annual Strategic (12-month)" on
+                the dashboard. The prior implementation silently baked three
+                2050 mid-century multipliers (heat-day frequency &times;1.4,
+                wet-bulb humidity &times;1.2, NOAA WICCI warming &times;1.35)
+                into that 12-month score. Because the base heat HIF (1.3)
+                multiplied by the trend (1.35) exceeded the 1.6 cap, every
+                county silently received the maximum climate-trajectory HIF
+                regardless of present conditions. That horizon mismatch has
+                been corrected: the value composited into PHRAT now uses
+                present-day multipliers (1.0 across the board), and the 2050
+                trajectory is surfaced as a separate planning panel that is
+                NOT part of the composite.
+            </div>
+
             <h6>Five Components</h6>
             <ol>
-                <li><strong>Exposure:</strong> Historical heat event frequency and geographic heat island factors</li>
-                <li><strong>Vulnerability:</strong> CDC SVI themes, population aged 65+ (%), outdoor worker density</li>
-                <li><strong>Resilience:</strong> Cooling center access, healthcare capacity, community preparedness</li>
-                <li><strong>Wet Bulb Temperature:</strong> Humidity-adjusted temperature danger thresholds</li>
-                <li><strong>Climate Trend:</strong> Long-term warming trajectory for the jurisdiction</li>
+                <li><strong>Exposure:</strong> NOAA annual heat-day count normalized to [0, 0.95]. For the present-day 12-month score the NOAA frequency multiplier is 1.0; the 2050 trajectory applies the 1.4 multiplier.</li>
+                <li><strong>Vulnerability:</strong> Weighted CDC SVI 2022 themes (socioeconomic 30%, housing-transportation 20%, household-composition 15%, minority-status 10%) plus Census ACS population aged 65+ factor (25%). Same value for both horizons.</li>
+                <li><strong>Resilience:</strong> Inverse CDC SVI socioeconomic and housing-transportation themes from a 0.5 baseline, clamped to [0.1, 0.9]. Same value for both horizons.</li>
+                <li><strong>Wet Bulb Temperature:</strong> Statewide NOAA Great Lakes baseline of 0.60. Present-day horizon applies humidity factor 1.0; 2050 trajectory applies 1.2.</li>
+                <li><strong>Climate Trend:</strong> Present-day horizon uses 1.0 (no mid-century warming applied). 2050 trajectory uses the NOAA WICCI mid-century warming midpoint of 1.35.</li>
             </ol>
             <div class="alert alert-info">
-                <p class="font-monospace mb-1"><strong>Heat Risk = calculate_residual_risk(exposure, vulnerability, resilience)</strong></p>
-                <p class="font-monospace mb-0"><strong>&nbsp;&nbsp;adjusted by wet_bulb_factor and climate_trend_factor</strong></p>
+                <p class="font-monospace mb-1"><strong>Present-day (PHRAT-composited) Heat Risk = (0.7 x Exposure + 0.3 x WetBulb) x Vulnerability x (2.0 - Resilience) x 1.3</strong></p>
+                <p class="font-monospace mb-1"><strong>Trajectory 2050 (planning panel only) Heat Risk = (0.7 x Exposure_2050 + 0.3 x WetBulb_2050) x V x (2.0 - R) x min(1.6, 1.3 x 1.35)</strong></p>
+                <p class="font-monospace mb-0 small">The trend multiplier is capped at 1.6 on the trajectory horizon to prevent runaway compounding.</p>
             </div>
-            <h6>Climate Adjustments (NOAA/IPCC)</h6>
+            <h6>Climate Adjustments (NOAA/IPCC) &mdash; applied ONLY to the 2050 trajectory panel</h6>
             <ul>
-                <li><strong>40% increase</strong> in heat event frequency by 2050 (RCP4.5)</li>
-                <li><strong>2&ndash;4&deg;F warming</strong> projected for Wisconsin by 2050</li>
-                <li><strong>60% increase</strong> in heat wave duration (IPCC AR6)</li>
+                <li><strong>40% increase</strong> in heat event frequency by 2050 (RCP4.5) applied as the NOAA frequency multiplier in the trajectory exposure component</li>
+                <li><strong>2&ndash;4&deg;F warming</strong> projected for Wisconsin by 2050 (NOAA WICCI midpoint 1.35 used as the trajectory climate-trend factor)</li>
+                <li><strong>20% wet-bulb humidity rise</strong> applied to a statewide NOAA Great Lakes baseline of 0.60 in the trajectory wet-bulb component</li>
             </ul>
-            <p class="small mb-0"><strong>Data Sources:</strong> NOAA climate summaries, EPA heat island reports, CDC SVI, WICCI 2021 Assessment.</p>
+            <p class="small mb-0"><strong>Data Sources:</strong> NOAA climate normals, CDC SVI 2022, U.S. Census ACS, WICCI 2021 Assessment. Per-county wet-bulb grid and a continuous urban-heat-island signal are not yet integrated; both currently use statewide values.</p>
         </div>
     </div>
 
@@ -717,14 +834,16 @@
             <h2 class="h5 mb-0">Temporal Framework (BSTA)</h2>
         </div>
         <div class="card-body">
-            <p>CARA provides a <strong>Baseline-Seasonal-Trend-Acute (BSTA)</strong> temporal framework as a complementary analytical lens for each risk domain. BSTA decomposes domain risk into four time-horizon components to support strategic planning context. It is displayed alongside the primary PHRAT score but does not modify the PHRAT calculation directly. Temporal factors such as long-term storm event trends, climate projections, and seasonal patterns are embedded within each domain's underlying data inputs. The BSTA display shows how those temporal dimensions break down for each hazard type.</p>
+            <p>CARA provides a <strong>Baseline-Seasonal-Trend-Acute (BSTA)</strong> temporal framework as a complementary analytical lens for each risk domain. BSTA decomposes domain risk into time-horizon components to support strategic planning context. It is displayed alongside the primary PHRAT score but does not modify the PHRAT calculation directly. Temporal factors such as long-term storm event trends, climate projections, and seasonal patterns are embedded within each domain's underlying data inputs. The BSTA display shows how those temporal dimensions break down for each hazard type.</p>
+            <p>As of 2026-05 the Acute component was formally retired from every non-infectious domain. CARA is a strategic planning tool, not an emergency-response dashboard, and the previous acute signals (active weather alerts, current AQI, recent storm event counts) duplicated real-time situational-awareness tools that public health departments already use. Non-infectious domains now use a three-component <strong>Baseline-Seasonal-Trend (BST)</strong> model. Infectious disease retains the Acute component because emerging-pathogen risk genuinely manifests in waves rather than smooth multi-year trends, and CDC NSSP respiratory surveillance provides a defensible weekly signal.</p>
             <p>In strategic planning mode, long-term structural risks receive the highest emphasis.</p>
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead class="table-light">
                         <tr>
                             <th>Component</th>
-                            <th>Weight</th>
+                            <th>Non-infectious domains</th>
+                            <th>Infectious disease</th>
                             <th>Description</th>
                         </tr>
                     </thead>
@@ -732,22 +851,26 @@
                         <tr>
                             <td><strong>Baseline</strong></td>
                             <td><strong>60%</strong></td>
-                            <td>Long-term structural risks (1&ndash;10 year horizon)</td>
+                            <td><strong>60%</strong></td>
+                            <td>Long-term structural risks (1&ndash;10 year horizon), from historical data trimmed-mean (median 60% of values)</td>
                         </tr>
                         <tr>
                             <td><strong>Seasonal</strong></td>
                             <td><strong>25%</strong></td>
-                            <td>Predictable cyclical variations</td>
+                            <td><strong>25%</strong></td>
+                            <td>Predictable cyclical variations; 70% canonical hazard pattern + 30% jurisdiction-specific historical adjustment</td>
                         </tr>
                         <tr>
                             <td><strong>Trend</strong></td>
                             <td><strong>15%</strong></td>
-                            <td>Medium-term directional changes calculated from real data: NOAA Storm Events (event frequency trends over 10-20 years), OpenFEMA NFIP claims, NOAA/WICCI/IPCC climate projections, and Census ACS demographic aging trends. Not applicable to infectious disease (see Acute).</td>
+                            <td>Not used</td>
+                            <td>Medium-term directional changes from NOAA Storm Events (10-20 year event-frequency trends), OpenFEMA NFIP claims, NOAA/WICCI/IPCC climate projections, and Census ACS demographic aging. Infectious disease replaces Trend with Acute (county-level multi-year ID trend signal is too noisy to be useful).</td>
                         </tr>
                         <tr>
                             <td><strong>Acute</strong></td>
-                            <td><strong>0% / 15%</strong></td>
-                            <td>0% weight for most domains in strategic planning mode. Exception: Infectious disease uses 15% acute weight based on CDC NSSP respiratory surveillance data (flu, COVID-19, RSV ED visit activity levels) and MMR/flu vaccination coverage gaps.</td>
+                            <td>Retired</td>
+                            <td><strong>15%</strong></td>
+                            <td>Active surveillance: CDC NSSP respiratory ED visit activity levels (flu, COVID-19, RSV), MMR / flu vaccination coverage gaps, outbreak alerts. Retired from non-infectious domains 2026-05 along with the Operational Alert Overlay.</td>
                         </tr>
                     </tbody>
                 </table>

@@ -16,6 +16,7 @@ from werkzeug.exceptions import NotFound
 from core import db
 from models import ExportJob
 from utils.gis_export import CARAGISExporter
+from utils.security_manager import require_same_origin_or_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ def _classify_risk_level(score: float) -> str:
 gis_export_bp = Blueprint('gis_export', __name__, url_prefix='/api/gis')
 
 @gis_export_bp.route('/export/all', methods=['GET', 'POST'])
+@require_same_origin_or_api_key('write')
 def export_all_data():
     """
     Synchronously generate CSV export for all jurisdiction risk data.
@@ -249,6 +251,7 @@ def download_geojson(filename):
         abort(500, description="Error retrieving export file")
 
 @gis_export_bp.route('/export/jurisdiction/<jurisdiction_id>', methods=['GET', 'POST'])
+@require_same_origin_or_api_key('write')
 def export_single_jurisdiction(jurisdiction_id):
     """
     Start an asynchronous export job for a single jurisdiction.
@@ -338,6 +341,7 @@ def get_export_fields():
     })
 
 @gis_export_bp.route('/jobs', methods=['POST'])
+@require_same_origin_or_api_key('write')
 def create_export_job():
     """
     Create a new export job (alternative endpoint).
@@ -393,6 +397,7 @@ def get_job_status(job_id):
         }), 500
 
 @gis_export_bp.route('/jobs/<job_id>/cancel', methods=['POST'])
+@require_same_origin_or_api_key('write')
 def cancel_job(job_id):
     """
     Cancel an export job.

@@ -179,6 +179,13 @@ def fetch_bulk_svi_data() -> Dict[str, Dict[str, Any]]:
         Dictionary keyed by lowercase county name with SVI data for each county.
         On failure, returns an empty dict.
     """
+    # Cache-only enforcement: bulk SVI must be pre-fetched by the
+    # scheduler annual job. See utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_svi_bulk")
+        return {}
+
     try:
         url = ("https://onemap.cdc.gov/OneMapServices/rest/services/SVI/"
                "CDC_ATSDR_Social_Vulnerability_Index_2022_USA/"
@@ -294,6 +301,12 @@ def fetch_real_svi_data(county_name: str) -> Optional[Dict[str, Any]]:
     Returns:
         Dictionary with SVI data from CDC, or None if failed
     """
+    # Cache-only enforcement: see utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_svi_per_county")
+        return None
+
     try:
         # Normalize county name and get FIPS code
         county_key = county_name.strip().lower()
@@ -502,6 +515,12 @@ def fetch_svi_data_from_api(county_fips: str) -> Optional[Dict[str, Any]]:
     Returns:
         Dictionary with SVI data or None if unavailable
     """
+    # Cache-only enforcement: see utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_svi_legacy_api")
+        return None
+
     try:
         # CDC SVI API endpoint (example - actual endpoint may vary)
         url = f"https://www.atsdr.cdc.gov/placeandhealth/hvi/api/svi/{county_fips}"

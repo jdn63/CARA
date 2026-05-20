@@ -48,7 +48,7 @@ Weights are defined in `config/risk_weights.yaml` and hard-coded in `utils/data_
 | Social Vulnerability | CDC/ATSDR SVI 2022 ArcGIS REST API | Annual | County level (all 72 WI counties) |
 | Air Quality | EPA AirNow API | Daily | Monitoring stations |
 | Heat Forecasts | NOAA/NWS API | Daily | County level |
-| Disease Surveillance | WI DHS respiratory illness pages (web scraper) | Weekly | Statewide |
+| Respiratory Disease Surveillance | CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, keyless Socrata API) | Weekly (Friday) | Statewide (Wisconsin) |
 | Vector-Borne Disease | WI DHS EPHT CSV downloads (Lyme, WNV county-level incidence) | Weekly | County level (all 72 counties) |
 | Flu Vaccination Rate | County Health Rankings 2025 CSV (BRFSS survey, all-ages seasonal) | Annual | County level (all 72 WI counties) |
 | Primary Care Access | County Health Rankings 2025 CSV (physicians per 100k) | Annual | County level (all 72 WI counties) |
@@ -75,9 +75,9 @@ Residual Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_
 ```
 
 Where:
-- Exposure incorporates NOAA Storm Events historical counts, OpenFEMA disaster declarations/NFIP claims, and FEMA NRI baseline scores. For flood: NRI 45%, storm events 25%, NFIP claims 10%, proximity to major water bodies 20%. High-impervious-surface urban counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) receive an additional 0.25 urban stormwater exposure factor reflecting combined sewer overflow risk not captured by NRI.
+- Exposure incorporates NOAA Storm Events historical counts, OpenFEMA disaster declarations/NFIP claims, and FEMA NRI baseline scores. Each exposure component is held on its native 0-1 scale and combined with a single layer of documented weights (no hidden pre-scaling). Raw NOAA event counts and NFIP claim counts are first normalized to events-per-year and then percentile-ranked across all 72 Wisconsin counties so that larger urban counties do not dominate every hazard purely by virtue of size. For flood: NRI 30%, NOAA storm-events percentile 20%, NFIP claims percentile 10%, proximity to major water bodies 15%, flat terrain 5%, precipitation patterns 5%, climate trend 5%, plus an additive +0.10 urban-stormwater boost (capped at 1.0) for high-impervious-surface counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) to reflect combined sewer overflow and runoff flooding that FEMA NRI does not capture. When the NFIP cross-county cache is empty, the NFIP weight is dropped and the remaining weights renormalize, so missing data does not silently depress every county's flood score. Tornado, winter storm, and thunderstorm exposures use the same single-weight-layer pattern, each including a NOAA storm-events percentile term (tornado 25%, winter storm 15%, thunderstorm 20%).
 - Vulnerability uses SVI theme percentiles with hazard-specific sub-weights from `config/risk_weights.yaml`
-- Resilience uses inverse SVI socioeconomic and housing scores as proxies. The (2.0 - Resilience) amplifier means low resilience (0.1) produces a 1.9x multiplier; high resilience (0.9) produces a 1.1x multiplier — resilience attenuates risk but never eliminates it. For flood, EOC county capacity is not applied as a resilience bonus because emergency operations center readiness does not reduce the frequency of stormwater events or riverine flooding.
+- Resilience uses inverse SVI socioeconomic and housing scores as proxies, with no hard-coded county adjustments. The (2.0 - Resilience) amplifier means low resilience (0.1) produces a 1.9x multiplier; high resilience (0.9) produces a 1.1x multiplier — resilience attenuates risk but never eliminates it. Earlier versions of CARA applied flat bonuses to short lists of "well-resourced" or "EOC-capable" counties (typically Milwaukee, Dane, Brown, Waukesha and a few others); those lists were removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. If a continuous capacity index (e.g. emergency-management staffing FTE per capita, hospital beds per capita, training-program participation) becomes available, it can be reintroduced as a smooth term rather than a list lookup.
 - Health Impact Factor (0.80–1.50) is derived from the FEMA NRI Expected Annual Loss Score (EALS) for each hazard type, mapping county EALS percentile linearly to the adjustment range
 - The four EVR scores (flood, tornado, winter storm, thunderstorm) are combined into the natural hazards domain score using an equal-weighted quadratic mean (RMS, p=2), consistent with the outer PHRAT formula. A county with one high-severity sub-hazard scores higher than one with uniformly moderate sub-domain scores.
 
@@ -117,6 +117,14 @@ CDC/ATSDR Social Vulnerability Index 2022 data for all 72 Wisconsin counties. Fo
 | High | 0.5 to 0.7 |
 | Very High | Above 0.7 |
 
+## PHRAT Domain Dropout and Confidence Intervals
+
+When data for a domain is unavailable or below quality thresholds for a given county, the PHRAT composite (`utils/data_processor.py`) excludes that domain, renormalizes the remaining weights to sum to 1.0, and reports a confidence interval that widens as coverage decreases. The result object exposes `original_weights`, `renormalized_weights`, `included_domains`, `excluded_domains`, `coverage_fraction`, `composite_confidence`, `confidence_interval` (lower/upper), and a human-readable `banner` summarizing any dropped domains. The dashboard surfaces this information as a data-quality banner and a confidence gauge so users can see when a composite score is built on partial coverage.
+
+## Temporal Baseline Fallback
+
+The Baseline-Seasonal-Trend-Acute (BSTA) temporal framework in `utils/temporal_risk.py` requires at least 12 historical data points per jurisdiction/hazard pair to compute a locally-derived baseline (trimmed mean of the middle 60 percent of historical values). When fewer than 12 points are available, the baseline component substitutes a generic 0.5 moderate-risk default; the seasonal, trend, and acute components remain locally-derived. This substitution is now exposed through the `data_quality` block returned by `analyze_temporal_risk()` (`baseline_used_fallback`, `baseline_sample_size`, `classification` of `partial` vs `full`) so the dashboard can disclose when a temporal score is built on partial coverage. This matters most for smaller counties and for tribal/regional entries that have shorter or sparser historical records.
+
 ## Predictive Analysis Limitations
 
 The predictive analysis module (`utils/predictive_analysis.py`) uses a deterministic linear projection (±0.01 per year, converging toward 0.5) and fixed ±0.10 confidence intervals. These are illustrative planning projections, not statistically modeled forecasts. The "historical" values displayed are anchored to current risk minus a small offset. These projections should not be cited as empirical data-driven forecasts.
@@ -132,7 +140,7 @@ The predictive analysis module (`utils/predictive_analysis.py`) uses a determini
 7. USACE National Inventory of Dams (NID, ArcGIS FeatureServer)
 8. EPA AirNow API
 9. NOAA/NWS Heat Forecast API
-10. Wisconsin DHS Respiratory Illness Surveillance (web scraper)
+10. CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm) - Wisconsin-specific Influenza, COVID-19, and RSV percent of ED visits; same NSSP/ESSENCE feed that underlies the WI DHS Tableau respiratory dashboards
 11. WI DHS Environmental Public Health Tracking (EPHT) - Lyme/WNV county CSVs
 12. Gun Violence Archive
 13. NCES School Safety and Climate Survey (SSOCS) 2019-2020

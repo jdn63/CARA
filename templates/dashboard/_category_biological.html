@@ -1,0 +1,363 @@
+    {% import "dashboard/_freshness_badge.html" as fb %}
+    <!-- Category: Disease and Biological -->
+    <div class="category-section">
+        <div class="category-header category-disease">Biological (24% combined weight)</div>
+        {{ fb.badge_row(risk_data.data_quality, [
+            ('nssp', 'CDC NSSP ED visits'),
+            ('nndss', 'CDC NNDSS notifiable diseases'),
+            ('nhsn', 'CDC NHSN hospital'),
+            ('vbd', 'WI DHS EPHT vector-borne'),
+            ('mmr', 'WI DHS WIR immunization'),
+            ('chr', 'County Health Rankings'),
+            ('places_copd', 'CDC PLACES COPD'),
+            ('dhs_health', 'WI DHS health metrics')
+        ]) }}
+        <div class="row g-2">
+        <!-- Infectious Disease Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Infectious Disease Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        {% if risk_data.health_risk is defined and risk_data.health_risk is number %}
+                            <h3>{{ "%.2f"|format(risk_data.health_risk) }}
+                            {{ show_work_btn('health-info', 'Health Risk Calculation',
+                            '<ul class="component-list">'
+                            ~ '<li>Influenza Activity (30%): CDC NSSP/ESSENCE ED visits % for Wisconsin (activity level + trajectory)</li>'
+                            ~ '<li>COVID-19 Activity (30%): CDC NSSP/ESSENCE ED visits % for Wisconsin (endemic respiratory tracking; ED burden + trajectory)</li>'
+                            ~ '<li>RSV Activity (20%): CDC NSSP/ESSENCE ED visits % for Wisconsin (activity level + trajectory)</li>'
+                            ~ '<li>Vaccination Coverage (20%): MMR (24-month) from WI DHS WIR county-immunization-data.csv; flu (all-ages seasonal) from County Health Rankings BRFSS. COVID-19 vaccination not included (no reliable county-level current data source).</li>'
+                            ~ '</ul>'
+                            ~ '<div class="formula-line">Score = ' ~ "%.3f"|format(risk_data.health_risk) ~ '</div>'
+                            ~ '<div class="data-source">Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, weekly); WI DHS WIR immunization data; County Health Rankings 2025</div>'
+                            ) }}
+                            </h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.health_risk > 0.6 else 'warning' if risk_data.health_risk > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.health_risk > 0.6 else 'Medium Risk' if risk_data.health_risk > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% elif risk_data.health_metrics is defined and risk_data.health_metrics.risk_score is defined and risk_data.health_metrics.risk_score is number %}
+                            <h3>{{ "%.2f"|format(risk_data.health_metrics.risk_score) }}</h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.health_metrics.risk_score > 0.6 else 'warning' if risk_data.health_metrics.risk_score > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.health_metrics.risk_score > 0.6 else 'Medium Risk' if risk_data.health_metrics.risk_score > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% else %}
+                            <h3>0.45</h3>
+                            <span class="badge bg-warning">Medium Risk</span>
+                        {% endif %}
+                    </div>
+                    {% if risk_data.health_metrics and risk_data.health_metrics.metrics is defined and risk_data.health_metrics.metrics.signal_granularity_note is defined %}
+                    <div class="alert alert-secondary py-2 px-3 mb-2 small mb-3" role="note">
+                        <strong>Signal scope:</strong> {{ risk_data.health_metrics.metrics.signal_granularity_note }}
+                        ILI, COVID-19, RSV activity, and ED-visit percentages below are the same statewide value for every Wisconsin county; only vaccination rates are county-specific.
+                    </div>
+                    {% endif %}
+                    {# Pertussis alert method caveat (review finding H3).
+                       The pertussis_elevated flag in outbreak_flags below
+                       fires on a CARA-specific operational heuristic, not
+                       a CDC- or CSTE-published outbreak threshold. Surface
+                       the method label, the actual alert floor that fired
+                       (or would fire), and the citation status so users
+                       can interpret the flag honestly. See
+                       config/risk_weights.yaml disease_alert_thresholds
+                       for full rationale. #}
+                    {% set pam = risk_data.nndss_data.pertussis_alert_method if risk_data.nndss_data is mapping and risk_data.nndss_data.pertussis_alert_method is mapping else None %}
+                    {% if pam and pam.method_label %}
+                    <div class="alert alert-secondary py-2 px-3 mb-3 small" role="note">
+                        <strong>Pertussis alert method:</strong> {{ pam.method_label }}.
+                        {% if pam.alert_floor_cases is not none
+                              and pam.five_year_median is not none
+                              and pam.median_multiplier is not none
+                              and pam.min_cases_floor is not none %}
+                        Current trigger: weekly cases at or above
+                        <strong>{{ pam.alert_floor_cases }}</strong>
+                        (5-year weekly median
+                        <strong>{{ "%.1f"|format(pam.five_year_median) }}</strong>,
+                        multiplier
+                        <strong>{{ "%.2f"|format(pam.median_multiplier) }}x</strong>,
+                        floor
+                        <strong>{{ pam.min_cases_floor }}</strong>
+                        cases).
+                        {% endif %}
+                        {% if pam.citation_status %}
+                        <span class="text-muted">{{ pam.citation_status }}.</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Disease Activity</th>
+                                    <th>Score</th>
+                                    <th>Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_data.health_metrics and (risk_data.health_metrics.metrics is defined) %}
+                                    {% for metric, score in risk_data.health_metrics.metrics.items() %}
+                                    {% if metric not in ('last_updated', 'themes', 'data_sources', 'signal_scope', 'signal_granularity_note') %}
+                                    {% set is_statewide_nssp = metric in ('ili_activity', 'covid_activity', 'rsv_activity', 'ed_visit_pct') %}
+                                    <tr>
+                                        <td>
+                                            {{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'ED Visits (%)' if metric == 'ed_visit_pct' else 'Vaccination Rates' if metric == 'vaccination_rates' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}
+                                            {% if is_statewide_nssp %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Statewide CDC NSSP signal, applied uniformly to all 72 WI counties">WI statewide</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if metric == 'ed_visit_pct' and score is mapping %}
+                                                <span class="fw-bold text-primary">
+                                                    Flu: {{ "%.1f"|format(score.influenza) }}% | COVID: {{ "%.1f"|format(score.covid19) }}% | RSV: {{ "%.1f"|format(score.rsv) }}%
+                                                </span>
+                                            {% elif metric == 'vaccination_rates' and score is mapping %}
+                                                <span class="fw-bold text-warning">
+                                                    MMR: {{ "%.1f"|format(score.mmr_school_age) }}% | Flu: {{ "%.1f"|format(score.flu_overall) }}%
+                                                </span>
+                                            {% else %}
+                                                {{ "%.2f"|format(score) if score is number else '0.00' }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if metric == 'ed_visit_pct' and score is mapping %}
+                                                <span class="badge bg-{{ 'danger' if score.influenza > 5 else 'warning' if score.influenza > 2 else 'success' }}">
+                                                    {{ 'High' if score.influenza > 5 else 'Medium' if score.influenza > 2 else 'Low' }}
+                                                </span>
+                                            {% elif metric == 'vaccination_rates' and score is mapping %}
+                                                <span class="badge bg-{{ 'danger' if score.mmr_school_age < 90 else 'warning' if score.mmr_school_age < 95 else 'success' }}">
+                                                    {{ 'Critical' if score.mmr_school_age < 90 else 'Below Herd Immunity' if score.mmr_school_age < 95 else 'Adequate' }}
+                                                </span>
+                                            {% else %}
+                                                {% set num_score = score if score is number else 0 %}
+                                                <span class="badge bg-{{ 'danger' if num_score > 0.6 else 'warning' if num_score > 0.3 else 'success' }}">
+                                                    {{ 'High' if num_score > 0.6 else 'Medium' if num_score > 0.3 else 'Low' }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                {% elif risk_data.health_metrics is mapping %}
+                                    {% for metric, score in risk_data.health_metrics.items() if metric != 'risk_score' and metric != 'data_sources' and metric != 'last_updated' and metric != 'themes' %}
+                                    {% if score is number %}
+                                    <tr>
+                                        <td>{{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}</td>
+                                        <td>{{ "%.2f"|format(score) }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
+                                                {{ 'High' if score > 0.6 else 'Medium' if score > 0.3 else 'Low' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">Health metrics data unavailable</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, updated weekly); WI DHS WIR county immunization data; County Health Rankings 2025
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Vector-Borne Disease Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Vector-Borne Disease Risk
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        {% if risk_data.vector_borne_disease_risk is defined and risk_data.vector_borne_disease_risk is number %}
+                            <h3>{{ "%.2f"|format(risk_data.vector_borne_disease_risk) }}
+                            {% if risk_data.vbd_components is defined %}
+                            {{ show_work_btn('vbd-info', 'Vector-Borne Disease Risk Calculation',
+                            '<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
+                            ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ')</div>'
+                            ~ '<ul class="component-list">'
+                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' (Lyme/WNV incidence rates, land cover, climate trend)</li>'
+                            ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ' (outdoor workforce, elderly, rural, SVI)</li>'
+                            ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ' (surveillance programs, public awareness)</li>'
+                            ~ '<li>Climate Multiplier: ' ~ "%.2f"|format(risk_data.vbd_components.climate_multiplier|default(1.0)) ~ '</li>'
+                            ~ '<li>Seasonal Factor: ' ~ "%.2f"|format(risk_data.vbd_components.seasonal_factor|default(1.0)) ~ '</li>'
+                            ~ '</ul>'
+                            ~ '<div class="data-source">Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates</div>'
+                            ) }}
+                            {% endif %}
+                            </h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.vector_borne_disease_risk > 0.6 else 'warning' if risk_data.vector_borne_disease_risk > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.vector_borne_disease_risk > 0.6 else 'Medium Risk' if risk_data.vector_borne_disease_risk > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% else %}
+                            <h3>0.30</h3>
+                            <span class="badge bg-warning">Medium Risk</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if risk_data.vbd_components is defined %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.vbd_components.exposure) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-danger" style="width: {{ risk_data.vbd_components.exposure * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.vbd_components.vulnerability) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-warning" style="width: {{ risk_data.vbd_components.vulnerability * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-success mb-1">Resilience</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.vbd_components.resilience) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-success" style="width: {{ risk_data.vbd_components.resilience * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_data.vbd_metrics is defined %}
+                                {% set vbm = risk_data.vbd_metrics %}
+                                <tr>
+                                    <td>Lyme Disease Risk</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if vbm.lyme_disease_tier == 'very_high' else 'warning' if vbm.lyme_disease_tier == 'high' else 'info' if vbm.lyme_disease_tier == 'moderate' else 'success' }}">{{ vbm.lyme_disease_tier|default('unknown')|replace('_', ' ')|title }}</span>
+                                        {% if vbm.lyme_reliability is defined %}
+                                        <span class="badge bg-{{ 'success' if vbm.lyme_reliability == 'high' else 'warning text-dark' if vbm.lyme_reliability == 'medium' else 'secondary' }} ms-1" title="Statistical reliability of the observed county rate based on case count over the lookback window. Low-reliability rates are shrunk toward the statewide rate before they drive the score.">{{ vbm.lyme_reliability|title }} reliability</span>
+                                        {% endif %}
+                                        {% if vbm.lyme_incidence_rate_observed is defined and vbm.lyme_incidence_rate_observed is not none %}
+                                        <br><small class="text-muted">Observed: {{ "%.1f"|format(vbm.lyme_incidence_rate_observed) }}/100k avg annual rate{% if vbm.lyme_rate_ci_low is defined and vbm.lyme_rate_ci_low is not none and vbm.lyme_rate_ci_high is not none %} (95% CI {{ "%.1f"|format(vbm.lyme_rate_ci_low) }}-{{ "%.1f"|format(vbm.lyme_rate_ci_high) }}){% endif %}</small>
+                                        {% if vbm.lyme_incidence_rate_shrunk is defined and vbm.lyme_incidence_rate_shrunk is not none and vbm.lyme_shrinkage_weight is defined %}
+                                        <br><small class="text-muted">Shrunk: {{ "%.1f"|format(vbm.lyme_incidence_rate_shrunk) }}/100k (credibility weight {{ "%.2f"|format(vbm.lyme_shrinkage_weight) }}; drives score)</small>
+                                        {% endif %}
+                                        {% elif vbm.lyme_incidence_rate is defined and vbm.lyme_incidence_rate is not none %}
+                                        <br><small class="text-muted">{{ "%.1f"|format(vbm.lyme_incidence_rate) }}/100k avg annual rate</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if vbm.lyme_avg_annual_cases is defined and vbm.lyme_avg_annual_cases is not none %}
+                                <tr>
+                                    <td>Lyme Avg Annual Cases</td>
+                                    <td>{{ vbm.lyme_avg_annual_cases }} cases/yr</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>West Nile Virus Risk</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if vbm.west_nile_virus_tier == 'high' else 'warning' if vbm.west_nile_virus_tier == 'moderate' else 'success' }}">{{ vbm.west_nile_virus_tier|default('unknown')|replace('_', ' ')|title }}</span>
+                                        {% if vbm.wnv_reliability is defined %}
+                                        <span class="badge bg-{{ 'success' if vbm.wnv_reliability == 'high' else 'warning text-dark' if vbm.wnv_reliability == 'medium' else 'secondary' }} ms-1" title="Statistical reliability of the observed county rate. WNV is a rare event in WI so most counties will be 'low' reliability.">{{ vbm.wnv_reliability|title }} reliability</span>
+                                        {% endif %}
+                                        {% if vbm.wnv_incidence_rate_observed is defined and vbm.wnv_incidence_rate_observed is not none %}
+                                        <br><small class="text-muted">Observed: {{ "%.2f"|format(vbm.wnv_incidence_rate_observed) }}/100k avg annual rate{% if vbm.wnv_rate_ci_low is defined and vbm.wnv_rate_ci_low is not none and vbm.wnv_rate_ci_high is not none %} (95% CI {{ "%.2f"|format(vbm.wnv_rate_ci_low) }}-{{ "%.2f"|format(vbm.wnv_rate_ci_high) }}){% endif %}</small>
+                                        {% if vbm.wnv_incidence_rate_shrunk is defined and vbm.wnv_incidence_rate_shrunk is not none and vbm.wnv_shrinkage_weight is defined %}
+                                        <br><small class="text-muted">Shrunk: {{ "%.2f"|format(vbm.wnv_incidence_rate_shrunk) }}/100k (credibility weight {{ "%.2f"|format(vbm.wnv_shrinkage_weight) }}; drives score)</small>
+                                        {% endif %}
+                                        {% elif vbm.wnv_incidence_rate is defined and vbm.wnv_incidence_rate is not none %}
+                                        <br><small class="text-muted">{{ "%.2f"|format(vbm.wnv_incidence_rate) }}/100k avg annual rate</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if vbm.wnv_total_cases_5yr is defined and vbm.wnv_total_cases_5yr is not none %}
+                                <tr>
+                                    <td>WNV Cases (5-yr total)</td>
+                                    <td>{{ vbm.wnv_total_cases_5yr }} cases</td>
+                                </tr>
+                                {% endif %}
+                                {% if vbm.vbd_reliability_combined is defined %}
+                                <tr>
+                                    <td>Rate Reliability (combined)</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if vbm.vbd_reliability_combined == 'high' else 'warning text-dark' if vbm.vbd_reliability_combined == 'medium' else 'secondary' }}">{{ vbm.vbd_reliability_combined|title }}</span>
+                                        {% if vbm.vbd_climate_gate is defined %}
+                                        <small class="text-muted ms-2">Climate trend boost: {{ vbm.vbd_climate_gate }}</small>
+                                        {% endif %}
+                                        <br><small class="text-muted">County rates with low case counts are shrunk toward the statewide rate (Buhlmann/Poisson-Gamma empirical Bayes). When combined reliability is low, the climate trend amplifier is suppressed to avoid stacking model noise on small-sample noise.</small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>Forest Cover</td>
+                                    <td>{{ vbm.forest_cover_pct|default(0) }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>Deer Density</td>
+                                    <td>{{ vbm.deer_density|default('unknown')|replace('_', ' ')|title }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Outdoor Workforce</td>
+                                    <td>{{ vbm.outdoor_workforce_pct|default(0) }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>Current Season Risk</td>
+                                    <td><span class="badge bg-{{ 'danger' if vbm.seasonal_risk_level == 'Peak' else 'warning' if vbm.seasonal_risk_level == 'High' else 'info' if vbm.seasonal_risk_level == 'Moderate' else 'success' }}">{{ vbm.seasonal_risk_level|default('Unknown') }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Climate Trend Impact</td>
+                                    <td>{{ vbm.climate_trend_impact|default('N/A') }}</td>
+                                </tr>
+                                {% if vbm.data_period is defined %}
+                                <tr>
+                                    <td>Data Period</td>
+                                    <td>{{ vbm.data_period }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>Diseases Assessed</td>
+                                    <td><small>{{ vbm.diseases_assessed|default([])|join(', ') }}</small></td>
+                                </tr>
+                                {% if vbm.using_real_data is defined and vbm.using_real_data %}
+                                <tr>
+                                    <td colspan="2">
+                                        <span class="badge bg-primary">WI DHS Surveillance Data</span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-muted">Data loading...</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>

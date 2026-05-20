@@ -1,0 +1,258 @@
+        <!-- Active Shooter Risk -->
+        <div class="col-md-6 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Active Shooter Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        {% if risk_data.active_shooter_risk is defined and risk_data.active_shooter_risk is number %}
+                            <h3>{{ "%.2f"|format(risk_data.active_shooter_risk) }}
+                            {% if risk_data.active_shooter_components is defined %}
+                            {{ show_work_btn('shooter-info', 'Active Shooter Risk Calculation',
+                            '<div class="formula-line">Score = Weighted sum of 5 domains</div>'
+                            ~ '<ul class="component-list">'
+                            ~ '<li>Historical Incidents (25%): ' ~ "%.3f"|format(risk_data.active_shooter_components.historical_incident_density) ~ '</li>'
+                            ~ '<li>School/Youth Vuln (20%): ' ~ "%.3f"|format(risk_data.active_shooter_components.school_youth_vulnerability) ~ '</li>'
+                            ~ '<li>Social Fragility (20%): ' ~ "%.3f"|format(risk_data.active_shooter_components.social_community_fragility) ~ '</li>'
+                            ~ '<li>Mental Health (20%): ' ~ "%.3f"|format(risk_data.active_shooter_components.mental_behavioral_health) ~ '</li>'
+                            ~ '<li>Lethal Means Access (15%): ' ~ "%.3f"|format(risk_data.active_shooter_components.access_to_lethal_means) ~ '</li>'
+                            ~ '</ul>'
+                            ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.active_shooter_risk) ~ '</div>'
+                            ~ '<div class="data-source">Sources: GVA 2023 (historical incidents); NCES SSOCS 2019-2020 (static microdata); Census ACS; CDC SVI 2022; CHR 2025 (mental health providers/days); CDC PLACES MHLTH; RAND 2022 WI Firearm Law Score (static)</div>'
+                            ) }}
+                            {% endif %}
+                            </h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.active_shooter_risk > 0.6 else 'warning' if risk_data.active_shooter_risk > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.active_shooter_risk > 0.6 else 'Medium Risk' if risk_data.active_shooter_risk > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% else %}
+                            <h3>0.32</h3>
+                            <span class="badge bg-warning">Medium Risk</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Risk Component Breakdown -->
+                    {% if risk_data.active_shooter_components is defined %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">Active Shooter Risk Assessment Framework</h6>
+                            <p class="small mb-2">Based on the 5-domain active shooter risk scoring framework.</p>
+                            <div class="row g-2">
+                                <!-- First row: Historical & School -->
+                                <div class="col-6">
+                                    <div class="p-2 border rounded text-center mb-2">
+                                        <span class="d-block badge bg-danger mb-1">Historical Incident Density</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.active_shooter_components.historical_incident_density) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ risk_data.active_shooter_components.historical_incident_density * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">Weight: {{ (risk_data.weights.historical * 100)|int }}%</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 border rounded text-center mb-2">
+                                        <span class="d-block badge bg-warning mb-1">School & Youth Vulnerability</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.active_shooter_components.school_youth_vulnerability) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ risk_data.active_shooter_components.school_youth_vulnerability * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">Weight: {{ (risk_data.weights.school * 100)|int }}%</small>
+                                    </div>
+                                </div>
+                                <!-- Second row: Social & Mental -->
+                                <div class="col-6">
+                                    <div class="p-2 border rounded text-center mb-2">
+                                        <span class="d-block badge bg-info mb-1">Social & Community Fragility</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.active_shooter_components.social_community_fragility) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-info" style="width: {{ risk_data.active_shooter_components.social_community_fragility * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">Weight: {{ (risk_data.weights.social * 100)|int }}%</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 border rounded text-center mb-2">
+                                        <span class="d-block badge bg-primary mb-1">Mental & Behavioral Health</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.active_shooter_components.mental_behavioral_health) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-primary" style="width: {{ risk_data.active_shooter_components.mental_behavioral_health * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">Weight: {{ (risk_data.weights.mental * 100)|int }}%</small>
+                                    </div>
+                                </div>
+                                <!-- Third row: Access to Lethal Means -->
+                                <div class="col-12">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-secondary mb-1">Access to Lethal Means</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.active_shooter_components.access_to_lethal_means) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-secondary" style="width: {{ risk_data.active_shooter_components.access_to_lethal_means * 100 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">Weight: {{ (risk_data.weights.means * 100)|int }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Framework Version: {{ risk_data.framework_version|default('2.0') }}</small>
+                            </div>
+                            
+                            <!-- Show My Work Button - Removed as requested -->
+                        </div>
+                    {% endif %}
+                    
+                    {% if risk_data.metrics is defined and risk_data.metrics.historical is defined %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">Key Risk Metrics</h6>
+                            <div class="accordion" id="shooterMetricsAccordion">
+                                <!-- Historical Incidents -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="historicalHeader">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#historicalMetrics" aria-expanded="false" aria-controls="historicalMetrics">
+                                            Historical Incident Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="historicalMetrics" class="accordion-collapse collapse" aria-labelledby="historicalHeader" data-bs-parent="#shooterMetricsAccordion">
+                                        <div class="accordion-body p-2">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Incidents (10 yr)</td>
+                                                        <td>{{ risk_data.metrics.historical.incidents_10yr|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Per 100K Population</td>
+                                                        <td>{{ risk_data.metrics.historical.incidents_per_100k|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Trend</td>
+                                                        <td>{{ risk_data.metrics.historical.trend|default('stable')|capitalize }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- School & Youth -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="schoolHeader">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schoolMetrics" aria-expanded="false" aria-controls="schoolMetrics">
+                                            School & Youth Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="schoolMetrics" class="accordion-collapse collapse" aria-labelledby="schoolHeader" data-bs-parent="#shooterMetricsAccordion">
+                                        <div class="accordion-body p-2">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Youth Disconnected (%)</td>
+                                                        <td>{{ risk_data.metrics.school.youth_disconnected_pct|default(0) }}%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>School Safety Index</td>
+                                                        <td>{{ risk_data.metrics.school.school_safety_index|default(0) }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Social & Community -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="socialHeader">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#socialMetrics" aria-expanded="false" aria-controls="socialMetrics">
+                                            Social & Community Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="socialMetrics" class="accordion-collapse collapse" aria-labelledby="socialHeader" data-bs-parent="#shooterMetricsAccordion">
+                                        <div class="accordion-body p-2">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>SVI Score</td>
+                                                        <td>{{ risk_data.metrics.social.svi_score|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Hate Crime Index</td>
+                                                        <td>{{ risk_data.metrics.social.hate_crime_index|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Single Household (%)</td>
+                                                        <td>{{ risk_data.metrics.social.single_household_pct|default(0) }}%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mental Health -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="mentalHeader">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mentalMetrics" aria-expanded="false" aria-controls="mentalMetrics">
+                                            Mental & Behavioral Health
+                                        </button>
+                                    </h2>
+                                    <div id="mentalMetrics" class="accordion-collapse collapse" aria-labelledby="mentalHeader" data-bs-parent="#shooterMetricsAccordion">
+                                        <div class="accordion-body p-2">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Provider Shortage</td>
+                                                        <td>{{ risk_data.metrics.mental.provider_shortage_index|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Poor Mental Health Days</td>
+                                                        <td>{{ risk_data.metrics.mental.poor_mental_health_days|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Distress Prevalence (%)</td>
+                                                        <td>{{ risk_data.metrics.mental.psych_distress_prevalence|default(0) }}%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Lethal Means -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="meansHeader">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#meansMetrics" aria-expanded="false" aria-controls="meansMetrics">
+                                            Access to Lethal Means
+                                        </button>
+                                    </h2>
+                                    <div id="meansMetrics" class="accordion-collapse collapse" aria-labelledby="meansHeader" data-bs-parent="#shooterMetricsAccordion">
+                                        <div class="accordion-body p-2">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Law Permissiveness</td>
+                                                        <td>{{ risk_data.metrics.means.firearm_law_permissiveness|default(0) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Est. Ownership Rate (%)</td>
+                                                        <td>{{ risk_data.metrics.means.estimated_ownership_rate|default(0) }}%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Storage Practices</td>
+                                                        <td>{{ risk_data.metrics.means.storage_practices_index|default(0) }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: Gun Violence Archive 2023 (historical incident density, annual static download); NCES SSOCS 2019-2020 (school safety microdata, static); Census ACS (isolation, demographics); CDC SVI 2022 (social fragility); County Health Rankings 2025 (mental health providers per 100k and poor mental health days per month); CDC PLACES MHLTH crude prevalence; RAND 2022 Wisconsin Firearm Law Score (static fixed value, 0.65). FBI CJIS/UCR crime data is not used (access restricted to authorized government endpoints).
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>

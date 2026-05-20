@@ -81,7 +81,7 @@ The project includes a render.yaml configuration file for easy deployment to Ren
    - DATABASE_URL: Your PostgreSQL connection string
    - SESSION_SECRET: Secure random string
    - AIRNOW_API_KEY: Your EPA AirNow API key
-   - ENABLE_SCRAPERS: Set to 1 to enable DHS data scraping
+   - ENABLE_SCRAPERS: Set to 1 to enable scheduled CSV downloads from WI DHS (currently used for the WIR county MMR immunization CSV and the EPHT Lyme/WNV CSVs). The legacy WI DHS respiratory illness HTML page scraper has been removed; respiratory surveillance now comes from the keyless CDC NSSP Emergency Department Visits Socrata API and is unaffected by this flag.
 3. Deploy: Render will automatically deploy using the configuration in render.yaml
 
 The application uses Gunicorn with 2 workers, 4 threads, and a 180-second timeout for production-ready performance.
@@ -94,7 +94,7 @@ Risk Domains (7 Primary + 2 Supplementary):
 
 | Domain | Weight | Description |
 |--------|--------|-------------|
-| Natural Hazards | 28% | Flood, tornado, winter storm, thunderstorm (EVR framework with real NOAA/OpenFEMA data) |
+| Natural Hazards | 28% | Flood, tornado, winter storm, thunderstorm (CARA EVR transform with real NOAA/OpenFEMA data; not the FEMA NRI residual-risk formula - see methodology page for the comparison) |
 | Health Metrics | 17% | Infectious disease surveillance and vaccination rates |
 | Active Shooter | 18% | Community violence risk assessment |
 | Extreme Heat | 11% | Heat vulnerability and climate-adjusted risk |
@@ -139,8 +139,11 @@ CARA integrates with multiple authoritative data sources, all pre-fetched by sch
 
 - OpenFEMA APIs (keyless): Disaster Declarations Summaries v2, NFIP Redacted Claims v2, Hazard Mitigation Assistance Projects v4. Weekly refresh, PostgreSQL cache.
 - NOAA NCEI Storm Events Database: Bulk CSV downloads of Wisconsin storm events (tornado, flood, thunderstorm, winter storm) with property damage, injuries, fatalities. Weekly refresh, local file cache.
-- Wisconsin DHS: Disease surveillance and health metrics via Tableau dashboard scraping (cached).
-- CDC: Social Vulnerability Index and PHEP guidelines.
+- CDC NSSP Emergency Department Visits (keyless Socrata API): Wisconsin-specific percent of ED visits for Influenza, COVID-19, and RSV. Weekly Friday refresh, PostgreSQL cache. Same NSSP/ESSENCE feed that underlies the WI DHS Tableau respiratory dashboards; CARA pulls from CDC directly rather than scraping the downstream WI DHS pages.
+- CDC NNDSS Weekly Data (keyless Socrata API): Wisconsin state-level weekly case counts for reportable communicable diseases - Measles (Indigenous and Imported), Pertussis, Meningococcal disease. Weekly Tuesday refresh. Drives the active_measles_outbreak flag and elevated-disease indicators in the infectious disease domain. State-level signal applied uniformly to all 72 counties; county-level WEDSS data is not publicly accessible.
+- CDC NHSN Hospital Respiratory Data (keyless Socrata API): Wisconsin state-level weekly ICU bed counts and occupancy, plus confirmed COVID-19, influenza, and RSV hospitalizations and ICU patients, with weekly new-admission breakdowns by age group. Weekly Wednesday refresh. Replaces HHS Protect (closed May 2024) and substitutes for the WHA Information Center capacity feed which requires a HERC partner agreement. State-level signal applied uniformly to all 72 counties.
+- Wisconsin DHS: County-level MMR immunization rates (WIR), Lyme and West Nile incidence (EPHT CSVs), and Heat Vulnerability Index (ArcGIS MapServer). All weekly to quarterly scheduler-refreshed and PostgreSQL-cached.
+- CDC: Social Vulnerability Index, PLACES county health prevalence, and PHEP guidelines.
 - FEMA NRI: National Risk Index data (local CSV files).
 - EPA AirNow: Air quality monitoring (daily scheduler cache, requires API key).
 - NOAA/NWS: Heat forecasting and weather alerts.
@@ -184,18 +187,29 @@ CARA implements comprehensive security measures:
 
 ## Data Scraping and Ethics
 
-CARA includes a scraper for publicly accessible Wisconsin DHS respiratory surveillance data. The scraper is designed to be respectful and transparent:
+CARA fetches publicly accessible state and federal surveillance data from a small number of keyless CSV and Socrata endpoints. Updated 2026-05-20 to reflect the current set of fetchers (review finding M9).
 
-- Opt-in by default: Scraping is disabled unless ENABLE_SCRAPERS=1 is explicitly set. In production, the application uses cached or fallback data.
-- Caching with TTL: Fetched data is cached locally. Cache freshness is controlled by CACHE_TTL_HOURS (default: 24 hours).
+Active scheduled CSV downloads (gated by ENABLE_SCRAPERS=1; default off):
+
+- WI DHS WIR county immunization data (`county-immunization-data.csv`) for the MMR (24-month) vaccination rate, refreshed weekly by the background scheduler.
+- WI DHS EPHT vector-borne disease CSVs (`lyme-county.csv`, `west-nile-data-county.csv`) for Lyme and West Nile incidence, refreshed weekly.
+
+Removed in 2026-05:
+
+- The WI DHS respiratory illness HTML page scraper has been removed. Respiratory surveillance (Influenza, COVID-19, RSV ED visit percentages and trajectories) now comes from the keyless CDC NSSP Emergency Department Visits Socrata endpoint (`data.cdc.gov/resource/vutn-jzwm.json`) and is unaffected by ENABLE_SCRAPERS. CDC NSSP is published from the same NSSP/ESSENCE feed that powers the WI DHS Tableau respiratory dashboards.
+
+Operating principles for the remaining CSV scrapers:
+
+- Opt-in by default: CSV downloads run only when ENABLE_SCRAPERS=1 is explicitly set. In production, the application serves whatever is in the persistent cache and never fetches from the user request path.
+- Caching with TTL: Each source has a freshness window declared in `utils/source_registry.py`. The dashboard banner surfaces every source whose cache exceeds its window.
 - Rate-limited: A configurable delay (REQUEST_DELAY_SECONDS, default: 1.5s) is applied between requests. On 429 or 503 responses, the scraper backs off with exponential retry.
-- Identified: All requests include a User-Agent header identifying the scraper and providing contact information.
-- Public data only: The scraper accesses only publicly available DHS surveillance data. No authentication or restricted resources are accessed.
+- Identified: All requests include a User-Agent header identifying the source contact (`CARA-WI-PublicHealth/1.0 (contact: github.com/jdn63)`).
+- Public data only: Only publicly accessible DHS pages are fetched; no authentication or restricted resources are accessed.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| ENABLE_SCRAPERS | 0 | Set to 1 to enable DHS scraping |
-| CACHE_TTL_HOURS | 24 | Max age of cached data before re-fetch |
+| ENABLE_SCRAPERS | 0 | Set to 1 to enable scheduled WI DHS CSV downloads (WIR MMR + EPHT Lyme/WNV). Has no effect on the CDC NSSP Socrata fetcher, which runs unconditionally on the scheduler |
+| CACHE_TTL_HOURS | 24 | Default upper bound on cache age for legacy file-backed caches; the source-registry freshness map (`utils/source_registry.py`) takes precedence for any source registered there |
 | REQUEST_DELAY_SECONDS | 1.5 | Delay between HTTP requests |
 | REQUEST_MAX_RETRIES | 3 | Max retry attempts on transient errors |
 
@@ -245,7 +259,7 @@ Version 2.5 - Dam Failure, Vector-Borne Disease, and Audit Fixes (March 2026)
 
 Version 2.4 - Real Data Integration and Performance (February 2026)
 - Replaced modeled metrics with real cached data from OpenFEMA APIs and NOAA NCEI Storm Events Database
-- EVR framework for all natural hazard types with health impact factors using real event counts and damage data
+- CARA EVR transform for all natural hazard types with health impact factors using real event counts and damage data (this is a CARA-specific transform, not the FEMA NRI `(1+SVI)/(1+R)` denominator formula; see the methodology page for the side-by-side comparison)
 - Full dashboard context caching for near-instant cached load times
 - Data freshness tracking with source-specific staleness detection
 - YAML-based county-specific baseline scores with documented proxy indicator rationale

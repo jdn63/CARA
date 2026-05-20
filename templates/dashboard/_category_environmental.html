@@ -1,0 +1,469 @@
+    {% import "dashboard/_freshness_badge.html" as fb %}
+    <!-- Category: Environmental -->
+    <div class="category-section">
+        <div class="category-header category-environmental">Environmental (30% combined weight)</div>
+        {{ fb.badge_row(risk_data.data_quality, [
+            ('airnow', 'EPA AirNow'),
+            ('hvi', 'WI DHS Heat Vulnerability Index'),
+            ('nws_heat', 'NOAA NWS heat forecast'),
+            ('dam_inventory', 'WI DNR / USACE NID dam inventory')
+        ]) }}
+        <div class="row g-2">
+        <!-- Air Quality Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Strategic Air Quality Risk Assessment
+                        <span class="badge bg-info ms-2">
+                            Long-term Planning
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="mb-1">
+                                    {% if risk_data.air_quality_risk is defined and risk_data.air_quality_risk is number %}
+                                        {{ "%.2f"|format(risk_data.air_quality_risk) }}
+                                        {{ show_work_btn('aq-info', 'Air Quality Risk Calculation',
+                                        '<ul class="component-list">'
+                                        ~ '<li>Ozone Trend: Projected +40% by 2050 (NOAA/WICCI regional climate projection)</li>'
+                                        ~ '<li>Wildfire Smoke: +110% increase in episodes (NOAA/WICCI regional climate projection)</li>'
+                                        ~ '<li>PM2.5 / AQI Baseline: EPA AirNow API (pre-cached weekly by scheduler)</li>'
+                                        ~ '<li>SVI Adjustment: Housing/socioeconomic vulnerability (CDC SVI 2022)</li>'
+                                        ~ '</ul>'
+                                        ~ '<div class="data-source">Sources: EPA AirNow API (scheduler-cached); NOAA/WICCI climate projections (local); CDC SVI 2022</div>'
+                                        ) }}
+                                    {% else %}
+                                        0.30
+                                    {% endif %}
+                                </h3>
+                                <span class="badge bg-{{ 'danger' if risk_data.air_quality_risk > 0.6 else 'warning' if risk_data.air_quality_risk > 0.3 else 'success' }}">
+                                    {{ 'High Risk' if risk_data.air_quality_risk > 0.6 else 'Medium Risk' if risk_data.air_quality_risk > 0.3 else 'Low Risk' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <!-- Strategic Air Quality Assessment Display -->
+                            {% if risk_data.air_quality_components is defined %}
+                                <div class="mb-2">
+                                    <h6 class="text-muted mb-1">Regional Wildfire Smoke Trends (NOAA/WICCI)</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Regional Increase (2019-2024 est.):</span>
+                                        <span class="badge bg-warning">+110% episodes</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Episode Duration:</span>
+                                        <span class="badge bg-info">4.1 days avg</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Projected by 2040:</span>
+                                        <span class="badge bg-danger">+110% episodes</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Sources: EPA AirNow API, CDC Social Vulnerability Index
+                        </small>
+                    </div>
+                    <div class="alert alert-warning p-2 mt-2 mb-0">
+                        <small>
+                            <strong>Strategic Planning Focus:</strong>
+                            Canadian wildfire smoke episodes now occur 2.5x more frequently than historical baseline (2010-2018).
+                            Peak season has extended from July-August to May-September.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Extreme Heat Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Extreme Heat Risk
+                        <span class="badge bg-primary ms-2">
+                            Multi-Dimensional
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        {% if risk_data.extreme_heat_risk is defined and risk_data.extreme_heat_risk is number %}
+                            <h3>{{ "%.2f"|format(risk_data.extreme_heat_risk) }}
+                            {% if risk_data.extreme_heat_components is defined %}
+                            {{ show_work_btn('heat-info', 'Extreme Heat Risk Calculation',
+                            '<div class="formula-line">Risk = (0.7 x Exp + 0.3 x WetBulb) x Vuln x (2.0 - Resil) x min(1.6, 1.3 x ClimateTrend)</div>'
+                            ~ '<div class="formula-line">= Exp ' ~ "%.3f"|format(risk_data.extreme_heat_components.exposure) ~ ', Vuln ' ~ "%.3f"|format(risk_data.extreme_heat_components.vulnerability) ~ ', Resil ' ~ "%.3f"|format(risk_data.extreme_heat_components.resilience) ~ '</div>'
+                            ~ '<ul class="component-list">'
+                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.extreme_heat_components.exposure) ~ ' (NOAA annual heat-day count, normalized and climate-adjusted)</li>'
+                            ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.extreme_heat_components.vulnerability) ~ ' (4 CDC SVI themes + Census aged 65+ %)</li>'
+                            ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.extreme_heat_components.resilience) ~ ' (inverse SVI socioeconomic + housing-transportation)</li>'
+                            ~ '</ul>'
+                            ~ '<div class="formula-line">Heat risk score = ' ~ "%.3f"|format(risk_data.extreme_heat_risk) ~ '</div>'
+                            ~ '<div class="data-source">Sources: NOAA climate normals, CDC SVI 2022, U.S. Census ACS</div>'
+                            ) }}
+                            {% endif %}
+                            </h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.extreme_heat_risk > 0.6 else 'warning' if risk_data.extreme_heat_risk > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.extreme_heat_risk > 0.6 else 'Medium Risk' if risk_data.extreme_heat_risk > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% else %}
+                            <h3>0.38</h3>
+                            <span class="badge bg-warning">Medium Risk</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Risk Component Breakdown -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
+                        <div class="row g-2">
+                            {% if risk_data.extreme_heat_components is defined %}
+                                <!-- Exposure Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.extreme_heat_components.exposure) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ risk_data.extreme_heat_components.exposure * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Vulnerability Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.extreme_heat_components.vulnerability) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ risk_data.extreme_heat_components.vulnerability * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Resilience Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-success mb-1">Resilience</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.extreme_heat_components.resilience) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-success" style="width: {{ risk_data.extreme_heat_components.resilience * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Fallback display -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                        <span class="h5">0.55</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: 55%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                        <span class="h5">0.48</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: 48%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-success mb-1">Resilience</span>
+                                        <span class="h5">0.62</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-success" style="width: 62%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics Table -->
+                    <h6 class="text-muted mb-2">Key Metrics</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_data.extreme_heat_metrics is defined %}
+                                <tr>
+                                    <td>Annual Heat Days (>90°F)</td>
+                                    <td>{{ risk_data.extreme_heat_metrics.annual_heat_days if risk_data.extreme_heat_metrics.annual_heat_days is defined and risk_data.extreme_heat_metrics.annual_heat_days is not none and risk_data.extreme_heat_metrics.annual_heat_days != "N/A" else "14" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Annual Heat-Related ED Visits</td>
+                                    <td>{{ risk_data.extreme_heat_metrics.ed_visits if risk_data.extreme_heat_metrics.ed_visits is defined and risk_data.extreme_heat_metrics.ed_visits is not none and risk_data.extreme_heat_metrics.ed_visits != "N/A" else "45" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Heat Advisories (Annual)</td>
+                                    <td>{{ risk_data.extreme_heat_metrics.heat_advisories if risk_data.extreme_heat_metrics.heat_advisories is defined and risk_data.extreme_heat_metrics.heat_advisories is not none and risk_data.extreme_heat_metrics.heat_advisories != "N/A" else "4" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Population Aged 65+ (%)</td>
+                                    <td>{{ risk_data.extreme_heat_metrics.elderly_percentage if risk_data.extreme_heat_metrics.elderly_percentage is defined and risk_data.extreme_heat_metrics.elderly_percentage is not none and risk_data.extreme_heat_metrics.elderly_percentage != "N/A" else "13.8" }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td>Annual Heat Days (>90°F)</td>
+                                    <td>24</td>
+                                </tr>
+                                <tr>
+                                    <td>Annual Heat-Related ED Visits</td>
+                                    <td>176</td>
+                                </tr>
+                                <tr>
+                                    <td>Heat Advisories (Annual)</td>
+                                    <td>4</td>
+                                </tr>
+                                <tr>
+                                    <td>Population Aged 65+ (%)</td>
+                                    <td>17.5%</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info p-2 mt-3">
+                        <small>
+                            <strong>Note:</strong> 
+                            Risk increases with higher annual heat days, more heat advisories, and higher percentages of adults aged 65 and older.
+                            Adults aged 65 and older, outdoor workers, and those without air conditioning are most vulnerable.
+                        </small>
+                    </div>
+
+                    {#
+                        Climate trajectory panel (Q7 remediation, 2026-05-20).
+                        Reads the trajectory_2050 sub-block computed by
+                        utils/climate_adjusted_risk and surfaces it as a
+                        separate planning-horizon view. The score above is
+                        the present-day 12-month value used by PHRAT; the
+                        2025-2050 projection here is informational only.
+                    #}
+                    {% set _traj = risk_data.extreme_heat_metrics.trajectory_2050 if risk_data.extreme_heat_metrics is defined else None %}
+                    {% if _traj and _traj.overall_risk is not none %}
+                    <div class="card mt-3 border-0" style="background-color: #f4f7fb;">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="small" style="color: #1f4788;">
+                                    Climate Trajectory (2025&ndash;2050)
+                                </strong>
+                                <span class="badge bg-secondary small">Planning horizon, not in PHRAT</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small">
+                                <span>Projected heat risk score:</span>
+                                <span>
+                                    <strong>{{ "%.2f"|format(_traj.overall_risk) }}</strong>
+                                    {% if _traj.delta_vs_present_day is not none %}
+                                        <span class="text-muted">
+                                            ({{ '+' if _traj.delta_vs_present_day >= 0 else '' }}{{ "%.2f"|format(_traj.delta_vs_present_day) }} vs present-day)
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Applies NOAA mid-century multipliers: heat-day
+                                frequency &times;{{ _traj.multipliers_applied.noaa_frequency_multiplier }},
+                                wet-bulb humidity &times;{{ _traj.multipliers_applied.wet_bulb_humidity_factor }},
+                                NOAA WICCI warming trend &times;{{ _traj.multipliers_applied.noaa_wicci_warming_trend }}.
+                                The present-day 12-month score above uses 1.0 for all
+                                three so the strategic composite reflects current
+                                conditions, not 2050 projections.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: NOAA Climate at a Glance API, NWS Weather Alerts API, WI DHS Heat Vulnerability Index (ArcGIS MapServer, county-aggregated), CDC SVI 2022, Census ACS
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Dam Failure Risk -->
+        <div class="col-md-4 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Dam Failure Risk
+                        <span class="badge bg-primary ms-2">
+                            Infrastructure
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        {% if risk_data.dam_failure_risk is defined and risk_data.dam_failure_risk is number %}
+                            <h3>{{ "%.2f"|format(risk_data.dam_failure_risk) }}
+                            {% if risk_data.dam_failure_components is defined %}
+                            {{ show_work_btn('dam-info', 'Dam Failure Risk Calculation',
+                            '<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
+                            ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.dam_failure_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.dam_failure_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.dam_failure_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.dam_failure_components.health_impact) ~ '</div>'
+                            ~ '<ul class="component-list">'
+                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.dam_failure_components.exposure) ~ ' (dam density, hazard classification, flood zone overlap)</li>'
+                            ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.dam_failure_components.vulnerability) ~ ' (est. % population in inundation zones, SVI themes)</li>'
+                            ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.dam_failure_components.resilience) ~ ' (emergency action plans, socioeconomic capacity)</li>'
+                            ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.dam_failure_components.health_impact) ~ '</li>'
+                            ~ '</ul>'
+                            ~ '<div class="data-source">Sources: WI DNR Dam Safety Database, USACE NID, OpenFEMA NFIP, CDC SVI, U.S. Census</div>'
+                            ) }}
+                            {% endif %}
+                            </h3>
+                            <span class="badge bg-{{ 'danger' if risk_data.dam_failure_risk > 0.6 else 'warning' if risk_data.dam_failure_risk > 0.3 else 'success' }}">
+                                {{ 'High Risk' if risk_data.dam_failure_risk > 0.6 else 'Medium Risk' if risk_data.dam_failure_risk > 0.3 else 'Low Risk' }}
+                            </span>
+                        {% else %}
+                            <h3>0.30</h3>
+                            <span class="badge bg-warning">Medium Risk</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if risk_data.dam_failure_components is defined %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.dam_failure_components.exposure) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-danger" style="width: {{ risk_data.dam_failure_components.exposure * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.dam_failure_components.vulnerability) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-warning" style="width: {{ risk_data.dam_failure_components.vulnerability * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-success mb-1">Resilience</span>
+                                    <span class="h5">{{ "%.2f"|format(risk_data.dam_failure_components.resilience) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-success" style="width: {{ risk_data.dam_failure_components.resilience * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_data.dam_failure_metrics is defined %}
+                                {% set dfm = risk_data.dam_failure_metrics %}
+                                <tr>
+                                    <td>Total Dams</td>
+                                    <td>{{ dfm.total_dams|default(0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>High Hazard Dams</td>
+                                    <td><span class="text-danger fw-bold">{{ dfm.high_hazard_dams|default(0) }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Significant Hazard Dams</td>
+                                    <td><span class="text-warning fw-bold">{{ dfm.significant_hazard_dams|default(0) }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Flood Zone Overlap</td>
+                                    <td>{{ dfm.flood_zone_overlap_pct|default(0) }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>Emergency Action Plan</td>
+                                    <td>
+                                        {% if dfm.has_emergency_action_plan %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Est. Population Exposed</td>
+                                    <td>
+                                        {{ dfm.estimated_pct_population_exposed|default(0) }}%
+                                        {% if dfm.modeled_population_at_risk is defined and dfm.modeled_population_at_risk %}
+                                        <br><small class="text-muted">Unclamped modeled PAR: ~{{ "{:,}".format(dfm.modeled_population_at_risk) }} persons (storage scale {{ "%.2f"|format(dfm.par_storage_scale_factor|default(1.0)) }}, height scale {{ "%.2f"|format(dfm.par_height_scale_factor|default(1.0)) }}). Percent figure is floored at 2.0%.</small>
+                                        {% endif %}
+                                        {% if dfm.downstream_exposure_method is defined %}
+                                        <br><span class="badge bg-secondary" title="{{ dfm.methodology_caveat|default('') }}">Method: {{ dfm.downstream_exposure_method|replace('_', ' ')|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if dfm.methodology_caveat is defined %}
+                                <tr>
+                                    <td>PAR Methodology</td>
+                                    <td><small class="text-muted">{{ dfm.methodology_caveat }}</small></td>
+                                </tr>
+                                {% endif %}
+                                {% if dfm.total_storage_acre_ft is defined and dfm.total_storage_acre_ft %}
+                                <tr>
+                                    <td>Total Storage Capacity</td>
+                                    <td>{{ "{:,.0f}".format(dfm.total_storage_acre_ft) }} acre-ft</td>
+                                </tr>
+                                {% endif %}
+                                {% if dfm.max_dam_height_ft is defined and dfm.max_dam_height_ft %}
+                                <tr>
+                                    <td>Max Dam Height</td>
+                                    <td>{{ dfm.max_dam_height_ft }} ft</td>
+                                </tr>
+                                {% endif %}
+                                {% if dfm.eap_count is defined %}
+                                <tr>
+                                    <td>Dams with EAPs</td>
+                                    <td>{{ dfm.eap_count }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if dfm.dam_data_source is defined %}
+                                <tr>
+                                    <td>Data Source</td>
+                                    <td><span class="badge bg-info">{{ dfm.dam_data_source }}</span></td>
+                                </tr>
+                                {% endif %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-muted">Data loading...</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: WI DNR Dam Safety Database, USACE NID, OpenFEMA NFIP, CDC SVI, U.S. Census
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>

@@ -1,0 +1,69 @@
+    <!-- Header Section -->
+    {% set dq_hdr = risk_data.data_quality if risk_data.data_quality is mapping else None %}
+    {% if dq_hdr and (dq_hdr.banner or dq_hdr.blocked_fetches) %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning py-2 mb-3 small" role="alert">
+                {% if dq_hdr.banner %}
+                <strong>Data coverage notice.</strong> {{ dq_hdr.banner }}
+                {% if dq_hdr.coverage_fraction is not none %}
+                <span class="ms-2">
+                    (data coverage
+                    <strong>{{ "%.0f"|format(dq_hdr.coverage_fraction * 100) }}%</strong>;
+                    {{ dq_hdr.included_domains|length }} of
+                    {{ (dq_hdr.included_domains|length) + (dq_hdr.excluded_domains|length) }}
+                    domains contributing)
+                </span>
+                {% endif %}
+                {% endif %}
+                {# Blocked fetches: any fetcher that attempted a live HTTP
+                   call during this request but was short-circuited by
+                   the cache-only request-path guarantee. These are not
+                   errors; they indicate the source's cache was empty
+                   and the request returned the fetcher's fallback
+                   shape instead of going to the network. Scheduler
+                   refresh will repopulate the cache. #}
+                {% if dq_hdr.blocked_fetches %}
+                <div class="{% if dq_hdr.banner %}mt-2 pt-2 border-top{% endif %}">
+                    <strong>Cache-only mode:</strong>
+                    {{ dq_hdr.blocked_fetches|length }} source(s) had no cached
+                    data at request time and returned fallback values rather
+                    than making a live network call:
+                    <span class="text-muted">{{ dq_hdr.blocked_fetches|join(', ') }}</span>.
+                    Live refresh runs on the scheduler, not during user requests.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Risk Analysis Dashboard</h2>
+                <p class="text-muted">Public Health analysis for {{ risk_data.location }}</p>
+
+                <a href="/methodology" class="btn btn-sm btn-outline-info" target="_blank" rel="noopener noreferrer">
+                    View Risk Assessment Methodology
+                </a>
+                <a href="/print-summary/{{ risk_data.jurisdiction_id }}" class="btn btn-sm btn-outline-secondary ms-2" target="_blank" rel="noopener noreferrer">
+                    Print Risk Summary
+                </a>
+                <a href="/action-plan/{{ risk_data.jurisdiction_id }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank" rel="noopener noreferrer">
+                    Generate Action Plan
+                </a>
+                <button class="btn btn-sm btn-outline-success ms-2" onclick="exportSingleJurisdiction('{{ risk_data.jurisdiction_id }}')">
+                    <i class="fas fa-download me-1"></i>Export GIS Data
+                </button>
+                <a href="/kp-hva-export/{{ risk_data.jurisdiction_id }}" class="btn btn-sm btn-outline-warning ms-2">
+                    <i class="fas fa-file-excel me-1"></i>Export KP HVA
+                </a>
+
+            </div>
+            <div>
+                <a href="/" class="btn btn-outline-secondary">
+                    Back to Jurisdictions
+                </a>
+            </div>
+        </div>
+    </div>

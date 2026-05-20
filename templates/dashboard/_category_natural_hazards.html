@@ -1,0 +1,19 @@
+    {% import "dashboard/_freshness_badge.html" as fb %}
+    <!-- Category: Natural Hazards (28% combined weight) -->
+    <div class="category-section">
+        <div class="category-header category-hazards">Natural Hazards (28% combined weight)</div>
+        {{ fb.badge_row(risk_data.data_quality, [
+            ('storm_events', 'NOAA Storm Events'),
+            ('nri', 'FEMA NRI'),
+            ('fema_declarations', 'OpenFEMA disaster declarations'),
+            ('fema_nfip', 'NFIP claims'),
+            ('svi', 'CDC SVI')
+        ]) }}
+        <div class="row g-2">
+        {% include "dashboard/_tile_tornado.html" %}
+        {% include "dashboard/_tile_thunderstorm.html" %}
+        {% include "dashboard/_tile_flood.html" %}
+        {% include "dashboard/_tile_winter_storm.html" %}
+        </div>
+    </div>
+    </div>

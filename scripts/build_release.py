@@ -29,30 +29,51 @@ EXCLUDE_DIRS = {
     '__pycache__',
     'artifacts',
     'attached_assets',
+    'cara_template',
     'exports',
+    'logs',
 }
 
 EXCLUDE_FILES = {
     'CODE_REVIEW_ANALYSIS.md',
     '.DS_Store',
+    'replit.md',
+    'replit.nix',
+    'uv.lock',
 }
 
 EXCLUDE_EXTENSIONS = {
     '.pyc',
     '.pyo',
     '.xlsx',
+    '.zip',
 }
 
 EXCLUDE_PATTERNS = {
     'all_direct_imports.txt',
     'existing_routes.txt',
     'existing_utils.txt',
+    'imported_routes.txt',
+    'imported_utils.txt',
+    'mod_direct.txt',
+    'mod_from.txt',
+    'pu_ssocs20.sas7bdat',
+    'pu_ssocs20_ASCII.dat',
 }
 
+ALLOWED_HIDDEN_NAMES = {'.env.example', '.gitignore', '.gitattributes', '.github'}
+
+
 def should_exclude(rel_path: Path) -> bool:
-    parts = set(rel_path.parts)
-    if parts & EXCLUDE_DIRS:
+    parts = rel_path.parts
+    if set(parts) & EXCLUDE_DIRS:
         return True
+    # Exclude anything inside a hidden directory (any path part starting
+    # with '.' that isn't an allowlisted name). Catches .cache, .config,
+    # .pythonlibs, .upm, .pytest_cache, etc. without needing to enumerate.
+    for part in parts[:-1]:
+        if part.startswith('.') and part not in ALLOWED_HIDDEN_NAMES:
+            return True
     name = rel_path.name
     if name in EXCLUDE_FILES:
         return True
@@ -60,7 +81,7 @@ def should_exclude(rel_path: Path) -> bool:
         return True
     if name in EXCLUDE_PATTERNS:
         return True
-    if name.startswith('.') and name not in {'.env.example', '.gitignore'}:
+    if name.startswith('.') and name not in ALLOWED_HIDDEN_NAMES:
         return True
     if rel_path.name == 'tribal_territories.json':
         stat = (ROOT / rel_path).stat()
@@ -83,9 +104,24 @@ def collect_files():
 
 def build_zip(output_name: str, files: list, version: str) -> Path:
     out_path = ROOT / output_name
+    skipped = 0
     with zipfile.ZipFile(out_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for abs_path, rel_path in files:
-            zf.write(abs_path, rel_path)
+            try:
+                zf.write(abs_path, rel_path)
+            except ValueError as e:
+                # zipfile rejects timestamps before 1980. Rewrite using
+                # the current mtime instead of dropping the file.
+                if 'timestamps before 1980' in str(e):
+                    with open(abs_path, 'rb') as src:
+                        info = zipfile.ZipInfo(str(rel_path))
+                        info.compress_type = zipfile.ZIP_DEFLATED
+                        zf.writestr(info, src.read())
+                    skipped += 1
+                else:
+                    raise
+    if skipped:
+        print(f'  Note: rewrote {skipped} files with pre-1980 timestamps.')
     return out_path
 
 

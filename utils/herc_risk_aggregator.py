@@ -10,6 +10,7 @@ background pre-computation to prevent timeout issues.
 
 import logging
 import time
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from statistics import mean, median
@@ -129,41 +130,64 @@ class HERCRiskAggregator:
                 logger.warning(f"No jurisdictions found for HERC region {herc_id}")
                 return None
             
-            # Calculate risk for each jurisdiction
-            jurisdiction_risks = []
-            natural_hazards_scores = []
-            health_scores = []
-            active_shooter_scores = []
-            extreme_heat_scores = []
-            air_quality_scores = []
-            cybersecurity_scores = []
-            utilities_scores = []
-            dam_failure_scores = []
-            vector_borne_disease_scores = []
-            
-            # Natural hazard components
-            flood_scores = []
-            tornado_scores = []
-            winter_storm_scores = []
-            thunderstorm_scores = []
-            
-            # Temporal risk data structure
-            temporal_data = {
-                'flood': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'tornado': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'winter_storm': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'extreme_heat': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'thunderstorm': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'health': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []},
-                'active_shooter': {'composite_scores': [], 'baseline': [], 'seasonal': [], 'trend': [], 'acute': []}
-            }
-            
+            # Two-stage mean aggregation (review finding H7): group
+            # jurisdictions by county, average within each county, then
+            # average across unique counties. This ensures every county
+            # in the HERC region contributes once to the regional mean
+            # regardless of how many local health departments cover it.
+            # Prior code averaged across raw jurisdictions, which biased
+            # regional scores toward counties with fragmented governance
+            # (e.g. Milwaukee County has 10 jurisdictions in the HERC
+            # rollup but only one county worth of actual exposure).
+            #
+            # Each per-domain bucket is keyed by county; we collect
+            # jurisdiction-level scores inside each bucket and reduce
+            # twice at the end (within-county mean, then across-county
+            # mean). Natural-hazard subcomponents and temporal-risk
+            # components use the same two-stage approach.
+            DOMAINS = (
+                'natural_hazards', 'health_metrics', 'active_shooter',
+                'extreme_heat', 'air_quality', 'cybersecurity',
+                'utilities', 'dam_failure', 'vector_borne_disease',
+            )
+            NH_COMPONENTS = ('flood', 'tornado', 'winter_storm', 'thunderstorm')
+            TEMPORAL_HAZARDS = (
+                'flood', 'tornado', 'winter_storm', 'extreme_heat',
+                'thunderstorm', 'health', 'active_shooter',
+            )
+            TEMPORAL_COMPONENTS = ('baseline', 'seasonal', 'trend', 'acute')
+
+            # county -> domain -> list[float]
+            domain_by_county: Dict[str, Dict[str, List[float]]] = defaultdict(
+                lambda: defaultdict(list)
+            )
+            # county -> nh_component -> list[float]
+            nh_by_county: Dict[str, Dict[str, List[float]]] = defaultdict(
+                lambda: defaultdict(list)
+            )
+            # county -> hazard -> {composite_scores: [], baseline: [], ...}
+            temporal_by_county: Dict[str, Dict[str, Dict[str, List[float]]]] = defaultdict(
+                lambda: defaultdict(
+                    lambda: {k: [] for k in ('composite_scores',) + TEMPORAL_COMPONENTS}
+                )
+            )
+            # county -> list of jurisdiction total_risk_scores
+            total_by_county: Dict[str, List[float]] = defaultdict(list)
+
             successful_calculations = 0
-            
+
             for jurisdiction in region_jurisdictions:
                 try:
                     jurisdiction_id = jurisdiction['id']
-                    
+                    # Use the canonical county mapping so a jurisdiction's
+                    # bucket survives any cosmetic name differences between
+                    # jurisdictions_code and herc_data.
+                    county = (
+                        jurisdiction_mapping.get(jurisdiction_id)
+                        or jurisdiction.get('county')
+                        or jurisdiction_id  # last-resort: unique key per jurisdiction
+                    )
+
                     # Check jurisdiction cache first
                     cached_data = _get_cached_jurisdiction_risk(jurisdiction_id)
                     if cached_data:
@@ -182,67 +206,76 @@ class HERCRiskAggregator:
                             'dam_failure': risk_data.get('dam_failure_risk', 0.0),
                             'vector_borne_disease': risk_data.get('vector_borne_disease_risk', 0.0),
                         }
-                        
+
                         # Cache for future use
                         _cache_jurisdiction_risk(jurisdiction_id, {
                             'risk_data': risk_data,
                             'domain_scores': domain_scores
                         })
-                    
-                    # Collect domain scores from domain_scores dict
-                    natural_hazards_scores.append(domain_scores.get('natural_hazards', 0.0))
-                    health_scores.append(domain_scores.get('health_metrics', 0.0))
-                    active_shooter_scores.append(domain_scores.get('active_shooter', 0.0))
-                    extreme_heat_scores.append(domain_scores.get('extreme_heat', 0.0))
-                    air_quality_scores.append(domain_scores.get('air_quality', 0.0))
-                    cybersecurity_scores.append(domain_scores.get('cybersecurity', 0.0))
-                    utilities_scores.append(domain_scores.get('utilities', 0.0))
-                    dam_failure_scores.append(domain_scores.get('dam_failure', 0.0))
-                    vector_borne_disease_scores.append(domain_scores.get('vector_borne_disease', 0.0))
-                    
-                    # Collect natural hazard components
-                    natural_hazards_detail = risk_data.get('natural_hazards', {})
-                    flood_scores.append(natural_hazards_detail.get('flood', 0.0))
-                    tornado_scores.append(natural_hazards_detail.get('tornado', 0.0))
-                    winter_storm_scores.append(natural_hazards_detail.get('winter_storm', 0.0))
-                    thunderstorm_scores.append(natural_hazards_detail.get('thunderstorm', 0.0))
-                    
-                    # Collect temporal risk data if available
-                    temporal_risk_detail = risk_data.get('temporal_risk_detail', {})
-                    for hazard_type in temporal_data.keys():
-                        if hazard_type in temporal_risk_detail:
-                            hazard_temporal = temporal_risk_detail[hazard_type]
-                            if isinstance(hazard_temporal, dict):
-                                temporal_data[hazard_type]['composite_scores'].append(
-                                    hazard_temporal.get('composite_score', 0.0)
-                                )
-                                components = hazard_temporal.get('temporal_components', {})
-                                temporal_data[hazard_type]['baseline'].append(components.get('baseline', 0.0))
-                                temporal_data[hazard_type]['seasonal'].append(components.get('seasonal', 0.0))
-                                temporal_data[hazard_type]['trend'].append(components.get('trend', 0.0))
-                                temporal_data[hazard_type]['acute'].append(components.get('acute', 0.0))
-                    
-                    jurisdiction_risks.append(risk_data.get('total_risk_score', 0.0))
+
+                    for domain in DOMAINS:
+                        domain_by_county[county][domain].append(
+                            domain_scores.get(domain, 0.0)
+                        )
+
+                    nh_detail = risk_data.get('natural_hazards', {}) or {}
+                    for comp in NH_COMPONENTS:
+                        nh_by_county[county][comp].append(nh_detail.get(comp, 0.0))
+
+                    temporal_risk_detail = risk_data.get('temporal_risk_detail', {}) or {}
+                    for hazard in TEMPORAL_HAZARDS:
+                        hazard_temporal = temporal_risk_detail.get(hazard)
+                        if isinstance(hazard_temporal, dict):
+                            bucket = temporal_by_county[county][hazard]
+                            bucket['composite_scores'].append(
+                                hazard_temporal.get('composite_score', 0.0)
+                            )
+                            components = hazard_temporal.get('temporal_components', {}) or {}
+                            for comp_key in TEMPORAL_COMPONENTS:
+                                bucket[comp_key].append(components.get(comp_key, 0.0))
+
+                    total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
                     successful_calculations += 1
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to calculate risk for jurisdiction {jurisdiction.get('id')}: {e}")
                     continue
-            
+
             if successful_calculations == 0:
                 logger.error(f"No successful risk calculations for HERC region {herc_id}")
                 return None
-            
-            # Calculate aggregated domain scores
-            natural_hazards_avg = mean(natural_hazards_scores) if natural_hazards_scores else 0.0
-            health_avg = mean(health_scores) if health_scores else 0.0
-            active_shooter_avg = mean(active_shooter_scores) if active_shooter_scores else 0.0
-            extreme_heat_avg = mean(extreme_heat_scores) if extreme_heat_scores else 0.0
-            air_quality_avg = mean(air_quality_scores) if air_quality_scores else 0.0
-            cybersecurity_avg = mean(cybersecurity_scores) if cybersecurity_scores else 0.0
-            utilities_avg = mean(utilities_scores) if utilities_scores else 0.0
-            dam_failure_avg = mean(dam_failure_scores) if dam_failure_scores else 0.0
-            vector_borne_disease_avg = mean(vector_borne_disease_scores) if vector_borne_disease_scores else 0.0
+
+            def _two_stage_mean(by_county: Dict[str, Dict[str, List[float]]],
+                                key: str) -> float:
+                """Within-county mean, then across-county mean.
+
+                Counties missing the key contribute nothing. Returns 0.0
+                when no county has any value for the key (e.g. a domain
+                where every jurisdiction failed to populate it).
+                """
+                county_means = []
+                for _county, dmap in by_county.items():
+                    vals = dmap.get(key) or []
+                    if vals:
+                        county_means.append(mean(vals))
+                return mean(county_means) if county_means else 0.0
+
+            natural_hazards_avg = _two_stage_mean(domain_by_county, 'natural_hazards')
+            health_avg = _two_stage_mean(domain_by_county, 'health_metrics')
+            active_shooter_avg = _two_stage_mean(domain_by_county, 'active_shooter')
+            extreme_heat_avg = _two_stage_mean(domain_by_county, 'extreme_heat')
+            air_quality_avg = _two_stage_mean(domain_by_county, 'air_quality')
+            cybersecurity_avg = _two_stage_mean(domain_by_county, 'cybersecurity')
+            utilities_avg = _two_stage_mean(domain_by_county, 'utilities')
+            dam_failure_avg = _two_stage_mean(domain_by_county, 'dam_failure')
+            vector_borne_disease_avg = _two_stage_mean(domain_by_county, 'vector_borne_disease')
+
+            flood_avg = _two_stage_mean(nh_by_county, 'flood')
+            tornado_avg = _two_stage_mean(nh_by_county, 'tornado')
+            winter_storm_avg = _two_stage_mean(nh_by_county, 'winter_storm')
+            thunderstorm_avg = _two_stage_mean(nh_by_county, 'thunderstorm')
+
+            unique_counties_count = len(domain_by_county)
             
             # Get weights configuration for total risk calculation
             config_manager = get_config_manager()
@@ -259,18 +292,22 @@ class HERCRiskAggregator:
                 vector_borne_disease_avg * weights.get('vector_borne_disease', 0.0)
             )
             
-            # Calculate aggregated metrics (using mean for averaging)
+            # Aggregated metrics use the two-stage county mean above so
+            # counties with multiple local health departments (e.g.
+            # Milwaukee) no longer over-weight the regional rollup.
             aggregated_risk = {
                 'herc_id': herc_id,
                 'name': region.get('name'),
                 'counties': region.get('counties', []),
                 'jurisdiction_count': len(region_jurisdictions),
+                'unique_counties_count': unique_counties_count,
+                'aggregation_method': 'two_stage_county_mean',
                 'successful_calculations': successful_calculations,
-                
+
                 # Overall scores - recalculated from aggregated domain scores
                 'total_risk_score': round(total_risk, 4),
-                
-                # Domain scores
+
+                # Domain scores (within-county mean, then across-county mean)
                 'natural_hazards_risk': natural_hazards_avg,
                 'health_risk': health_avg,
                 'active_shooter_risk': active_shooter_avg,
@@ -280,36 +317,51 @@ class HERCRiskAggregator:
                 'utilities_risk': utilities_avg,
                 'dam_failure_risk': dam_failure_avg,
                 'vector_borne_disease_risk': vector_borne_disease_avg,
-                
-                # Natural hazard components
-                'flood_risk': mean(flood_scores) if flood_scores else 0.0,
-                'tornado_risk': mean(tornado_scores) if tornado_scores else 0.0,
-                'winter_storm_risk': mean(winter_storm_scores) if winter_storm_scores else 0.0,
-                'thunderstorm_risk': mean(thunderstorm_scores) if thunderstorm_scores else 0.0,
-                
+
+                # Natural hazard components (same two-stage county mean)
+                'flood_risk': flood_avg,
+                'tornado_risk': tornado_avg,
+                'winter_storm_risk': winter_storm_avg,
+                'thunderstorm_risk': thunderstorm_avg,
+
                 # Natural hazards breakdown for template
                 'natural_hazards': {
-                    'flood': mean(flood_scores) if flood_scores else 0.0,
-                    'tornado': mean(tornado_scores) if tornado_scores else 0.0,
-                    'winter_storm': mean(winter_storm_scores) if winter_storm_scores else 0.0,
-                    'thunderstorm': mean(thunderstorm_scores) if thunderstorm_scores else 0.0
+                    'flood': flood_avg,
+                    'tornado': tornado_avg,
+                    'winter_storm': winter_storm_avg,
+                    'thunderstorm': thunderstorm_avg,
                 }
             }
-            
-            # Calculate temporal risk data
+
+            # Temporal risk data: two-stage county mean per hazard and
+            # per temporal component (baseline / seasonal / trend / acute).
             temporal_risk_data = {}
-            for hazard_type, data in temporal_data.items():
-                if data['composite_scores']:
+            for hazard_type in TEMPORAL_HAZARDS:
+                # Collect per-county means for each temporal field.
+                composite_county_means = []
+                component_county_means = {k: [] for k in TEMPORAL_COMPONENTS}
+                for _county, hazard_map in temporal_by_county.items():
+                    bucket = hazard_map.get(hazard_type)
+                    if not bucket or not bucket['composite_scores']:
+                        continue
+                    composite_county_means.append(mean(bucket['composite_scores']))
+                    for comp_key in TEMPORAL_COMPONENTS:
+                        if bucket[comp_key]:
+                            component_county_means[comp_key].append(
+                                mean(bucket[comp_key])
+                            )
+                if composite_county_means:
                     temporal_risk_data[hazard_type] = {
-                        'composite_score': mean(data['composite_scores']),
+                        'composite_score': mean(composite_county_means),
                         'temporal_components': {
-                            'baseline': mean(data['baseline']) if data['baseline'] else 0.0,
-                            'seasonal': mean(data['seasonal']) if data['seasonal'] else 0.0,
-                            'trend': mean(data['trend']) if data['trend'] else 0.0,
-                            'acute': mean(data['acute']) if data['acute'] else 0.0
-                        }
+                            comp_key: (
+                                mean(component_county_means[comp_key])
+                                if component_county_means[comp_key] else 0.0
+                            )
+                            for comp_key in TEMPORAL_COMPONENTS
+                        },
                     }
-            
+
             aggregated_risk['temporal_risk_data'] = temporal_risk_data
             
             logger.info(f"Successfully calculated aggregated risk for HERC region {herc_id}: " +

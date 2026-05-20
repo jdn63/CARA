@@ -125,6 +125,31 @@ def create_app(config_overrides=None):
                 else:
                     logger.error(f"db.create_all() failed after 5 attempts: {_e}")
                     raise
+
+        # H16 boot tasks: canonicalize cached source IDs in the DB,
+        # then validate that every namespace (scheduler config, freshness
+        # defaults) only references canonical sources. Failures here are
+        # logged loudly but do not abort boot - operators may be in the
+        # middle of adding a new source.
+        try:
+            from utils.source_registry import (
+                migrate_cache_source_types,
+                validate_all_namespaces,
+            )
+            renamed = migrate_cache_source_types()
+            if renamed:
+                logger.info(
+                    "Cache canonicalization migration: renamed %d rows across %d sources: %s",
+                    sum(renamed.values()), len(renamed), renamed,
+                )
+            warnings = validate_all_namespaces()
+            if warnings:
+                for w in warnings:
+                    logger.warning("source-registry validation: %s", w)
+            else:
+                logger.info("source-registry validation: all namespaces canonical")
+        except Exception as _e:
+            logger.error(f"source-registry boot tasks failed: {_e}")
     
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"

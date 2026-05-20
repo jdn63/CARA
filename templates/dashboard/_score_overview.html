@@ -1,0 +1,118 @@
+    <!-- Risk Score Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            {% set dq = risk_data.data_quality if risk_data.data_quality is mapping else None %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-1">Overall Risk Assessment</h5>
+                    {# Review finding M13 (2026-05-20): make the planning
+                       horizon explicit so a user looking at the score
+                       knows whether it represents an annual strategic
+                       view or a short-window operational view. CARA's
+                       composite uses BSTA temporal weights drawn from
+                       the "strategic_planning" mode (see
+                       utils.config_manager.get_temporal_weights and
+                       utils.planning_mode_config.get_planning_mode
+                       which defaults to "annual_strategic"), so the
+                       displayed horizon is annual / 12-month strategic.
+                    #}
+                    <div class="mb-2">
+                        <span class="badge bg-light text-dark border"
+                              title="BSTA composite uses annual strategic-planning temporal weights; for short-window operational decisions, consult per-domain acute components.">
+                            Horizon: Annual Strategic (12-month)
+                        </span>
+                    </div>
+
+                    <!-- Absolute Risk Score -->
+                    <div class="mb-3">
+                        {% if risk_data.total_risk_score is none %}
+                        <span class="text-muted small">Absolute Risk Score:</span>
+                        <div class="display-4 mb-1 text-muted">N/A</div>
+                        <div class="badge bg-secondary mb-3">Score unavailable</div>
+                        <div class="text-muted small">
+                            No real data is currently available for any risk domain
+                            in this jurisdiction. Composite risk cannot be computed
+                            until at least one source refreshes successfully.
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Absolute Risk Score:
+                        {{ show_work_btn('overall-info', 'Overall Risk Score Calculation',
+                        '<div class="formula-line">Score = PHRAT Quadratic Mean of 7 Domains</div>'
+                        ~ '<div class="formula-line">= sqrt(Σ(w_i × domain_i²))</div>'
+                        ~ '<ul class="component-list">'
+                        ~ '<li>Natural Hazards (28%): ' ~ "%.3f"|format(risk_data.natural_hazards_risk|default(0)) ~ '</li>'
+                        ~ '<li>Active Shooter (18%): ' ~ "%.3f"|format(risk_data.active_shooter_risk|default(0)) ~ '</li>'
+                        ~ '<li>Health Metrics (17%): ' ~ "%.3f"|format(risk_data.health_risk|default(0)) ~ '</li>'
+                        ~ '<li>Air Quality (12%): ' ~ "%.3f"|format(risk_data.air_quality_risk|default(0)) ~ '</li>'
+                        ~ '<li>Extreme Heat (11%): ' ~ "%.3f"|format(risk_data.extreme_heat_risk|default(0)) ~ '</li>'
+                        ~ '<li>Dam Failure (7%): ' ~ "%.3f"|format(risk_data.dam_failure_risk|default(0)) ~ '</li>'
+                        ~ '<li>Vector-Borne Disease (7%): ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</li>'
+                        ~ '</ul>'
+                        ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.total_risk_score) ~ '</div>'
+                        ~ '<div class="data-source">7-domain weighted quadratic mean (PHRAT p=2)</div>'
+                        ) }}
+                        </span>
+                        <div class="display-4 mb-1">{{ "%.2f"|format(risk_data.total_risk_score) }}</div>
+                        <div class="badge bg-{{ 'danger' if risk_data.total_risk_score > 0.6 else 'warning' if risk_data.total_risk_score > 0.3 else 'success' }} mb-3">
+                            {{ 'High Risk' if risk_data.total_risk_score > 0.6 else 'Medium Risk' if risk_data.total_risk_score > 0.3 else 'Low Risk' }}
+                        </div>
+                        {% endif %}
+                        {% if dq and dq.confidence_interval and dq.confidence_interval.lower is not none and dq.confidence_interval.upper is not none %}
+                        <div class="text-muted small mb-2">
+                            Confidence interval:
+                            <strong>{{ "%.2f"|format(dq.confidence_interval.lower) }}</strong>
+                            &ndash;
+                            <strong>{{ "%.2f"|format(dq.confidence_interval.upper) }}</strong>
+                            {% if dq.composite_confidence is not none %}
+                                &middot; composite confidence
+                                <strong>{{ "%.0f"|format(dq.composite_confidence * 100) }}%</strong>
+                            {% endif %}
+                            {% if dq.coverage_fraction is not none %}
+                                &middot; data coverage
+                                <strong>{{ "%.0f"|format(dq.coverage_fraction * 100) }}%</strong>
+                                ({{ dq.included_domains|length }} of
+                                {{ (dq.included_domains|length) + (dq.excluded_domains|length) }} domains)
+                            {% endif %}
+                        </div>
+                        {% if dq.confidence_interval.method %}
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            {{ dq.confidence_interval.method }}
+                        </div>
+                        {% endif %}
+
+                        {# Confidence-interval gauge: visual bar showing the
+                           CI range overlaid on the 0-1 risk scale, with a
+                           tick at the point estimate. Width math is done
+                           inline in percent so no JS is needed. #}
+                        {% set _lo = dq.confidence_interval.lower %}
+                        {% set _hi = dq.confidence_interval.upper %}
+                        {% if risk_data.total_risk_score is not none and _lo is not none and _hi is not none %}
+                        {% set _lo_pct = (_lo * 100)|round(1) %}
+                        {% set _hi_pct = (_hi * 100)|round(1) %}
+                        {% set _pt_pct = (risk_data.total_risk_score * 100)|round(1) %}
+                        {% set _band_pct = (_hi_pct - _lo_pct)|round(2) %}
+                        <div class="confidence-gauge mt-2 mb-1"
+                             role="img"
+                             aria-label="Confidence interval gauge from {{ "%.2f"|format(_lo) }} to {{ "%.2f"|format(_hi) }}, point estimate {{ "%.2f"|format(risk_data.total_risk_score) }}">
+                            <div style="position: relative; height: 14px; background: linear-gradient(to right, #198754 0%, #198754 30%, #ffc107 30%, #ffc107 60%, #dc3545 60%, #dc3545 100%); border-radius: 7px; opacity: 0.25;"></div>
+                            <div style="position: relative; height: 14px; margin-top: -14px;">
+                                <div style="position: absolute; top: 0; left: {{ _lo_pct }}%; width: {{ _band_pct }}%; height: 14px; background-color: rgba(31, 71, 136, 0.55); border-radius: 4px; border: 1px solid #1f4788;"></div>
+                                <div style="position: absolute; top: -2px; left: calc({{ _pt_pct }}% - 1px); width: 2px; height: 18px; background-color: #0d7377;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted" style="font-size: 0.65rem; margin-top: 2px;">
+                                <span>0.00</span>
+                                <span>0.30 Low/Med</span>
+                                <span>0.60 Med/High</span>
+                                <span>1.00</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Percentile Rank section removed as requested -->
+                </div>
+            </div>
+        </div>
+
+    </div>

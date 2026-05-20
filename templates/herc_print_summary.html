@@ -124,7 +124,7 @@
                             <div class="col-md-6">
                                 <h5>Region Information</h5>
                                 <p>This HERC region contains {{ risk_data.counties|length }} counties and coordinates healthcare emergency preparedness activities across the region.</p>
-                                <p>Risk assessment data is aggregated from county-level jurisdictions to provide a regional view of public health and emergency preparedness risks.</p>
+                                <p>Risk assessment data is aggregated using a county-balanced two-stage mean (within-county mean, then across counties) to provide a regional view of public health and emergency preparedness risks. This prevents counties with multiple local health departments from over-weighting the regional rollup.</p>
                             </div>
                         </div>
                     </div>
@@ -306,6 +306,12 @@
                             </div>
                             <div class="col-md-8">
                                 <h5>Disease Activity Breakdown</h5>
+                                {% if risk_data.health_metrics and risk_data.health_metrics.metrics is defined and risk_data.health_metrics.metrics.signal_granularity_note is defined %}
+                                <div class="alert alert-secondary py-2 px-3 mb-2 small" role="note">
+                                    <strong>Signal scope:</strong> {{ risk_data.health_metrics.metrics.signal_granularity_note }}
+                                    ILI, COVID-19, RSV activity, and ED-visit percentages below are the same statewide value for every Wisconsin county.
+                                </div>
+                                {% endif %}
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
@@ -317,9 +323,13 @@
                                     <tbody>
                                         {% if risk_data.health_metrics and (risk_data.health_metrics.metrics is defined) %}
                                             {% for metric, score in risk_data.health_metrics.metrics.items() %}
-                                            {% if metric != 'last_updated' and metric != 'themes' and metric != 'data_sources' %}
+                                            {% if metric not in ('last_updated', 'themes', 'data_sources', 'signal_scope', 'signal_granularity_note') %}
+                                            {% set is_statewide_nssp = metric in ('ili_activity', 'covid_activity', 'rsv_activity', 'ed_visit_pct') %}
                                             <tr>
-                                                <td>{{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}</td>
+                                                <td>
+                                                    {{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}
+                                                    {% if is_statewide_nssp %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Statewide CDC NSSP signal, applied uniformly to all 72 WI counties">WI statewide</span>{% endif %}
+                                                </td>
                                                 <td>{{ "%.2f"|format(score) if score is number else '0.00' }}</td>
                                                 <td>
                                                     {% set num_score = score if score is number else 0 %}
@@ -333,8 +343,12 @@
                                         {% elif risk_data.health_metrics is mapping %}
                                             {% for metric, score in risk_data.health_metrics.items() if metric != 'risk_score' and metric != 'data_sources' and metric != 'last_updated' and metric != 'themes' %}
                                             {% if score is number %}
+                                            {% set is_statewide_nssp = metric in ('ili_activity', 'covid_activity', 'rsv_activity', 'ed_visit_pct') %}
                                             <tr>
-                                                <td>{{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}</td>
+                                                <td>
+                                                    {{ 'ILI Activity' if metric == 'ili_activity' else 'COVID-19 Activity' if metric == 'covid_activity' else 'RSV Activity' if metric == 'rsv_activity' else 'Vaccination Rate' if metric == 'vaccination_rate' else metric|upper if metric == 'ili' or metric == 'rsv' else metric|replace('_', ' ')|title }}
+                                                    {% if is_statewide_nssp %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Statewide CDC NSSP signal, applied uniformly to all 72 WI counties">WI statewide</span>{% endif %}
+                                                </td>
                                                 <td>{{ "%.2f"|format(score) }}</td>
                                                 <td>
                                                     <span class="badge {{ 'bg-danger' if score > 0.6 else 'bg-warning' if score > 0.3 else 'bg-success' }}">

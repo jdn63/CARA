@@ -243,6 +243,12 @@ def fetch_multi_point_air_quality_data(jurisdiction_id: str) -> Optional[Dict[st
     Returns:
         Dictionary with weighted average air quality data from multiple points
     """
+    # Cache-only enforcement: AirNow current-conditions must be pre-fetched
+    # by the scheduler. See utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch(f"epa_airnow_multipoint:{jurisdiction_id}")
+        return None
     try:
         multi_points = get_multi_point_coordinates(jurisdiction_id)
         if not multi_points:
@@ -366,6 +372,11 @@ def fetch_air_quality_data(county_name: str) -> Optional[Dict[str, Any]]:
     Returns:
         Dictionary with air quality data from AirNow API, or None if failed
     """
+    # Cache-only enforcement: see utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch(f"epa_airnow:{county_name}")
+        return None
     try:
         # Get coordinates for county or tribal jurisdiction
         county_key = county_name.strip().lower()

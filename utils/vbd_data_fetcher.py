@@ -126,6 +126,178 @@ def classify_wnv_rate(rate: float, total_5yr: int = 0) -> str:
         return 'minimal'
 
 
+# --- Empirical-Bayes shrinkage and reliability gates (review finding H9) ---
+#
+# Crude county-level VBD rates per 100,000 are unstable in low-population
+# counties: one extra confirmed Lyme case in a county of 4,500 (Florence,
+# Menominee, Iron) moves the per-100k rate by ~20 points, which is enough to
+# bounce the county across tier boundaries. Per H9 the fix is two-fold:
+#
+# 1. Shrink the county rate toward the statewide rate using a Buhlmann
+#    credibility weight w = c / (c + k), which is equivalent to a
+#    Poisson-Gamma empirical-Bayes posterior mean when the prior is Gamma
+#    with mean = state_rate and shape = k (k acts as a "prior strength"
+#    expressed in annual-case-equivalents). c is the county's average
+#    annual case count over the lookback window.
+#
+# 2. Tag each county with a reliability tier (low / medium / high) so that
+#    downstream code can refuse to apply climate trend boosts (or any other
+#    multiplicative amplification) on top of statistically unreliable
+#    baselines, and so the UI can show a confidence band rather than a
+#    point estimate that pretends to be precise.
+#
+# Statewide background rates are derived from data/disease/
+# wisconsin_vbd_real_data.json statewide_summary divided by the Wisconsin
+# resident population (2023 Census estimate, kept as a module constant
+# rather than fetched at runtime to keep this helper deterministic).
+
+WI_POPULATION_2023 = 5_896_000  # WI resident population, U.S. Census 2023 estimate
+
+# Prior strength in annual-case-equivalents. Lower k => weaker prior =>
+# observed county data dominates faster. k for Lyme is higher because Lyme
+# is endemic statewide and the prior is more informative; WNV is sparse
+# enough that a strong prior would over-shrink the rare counties that
+# actually do see local transmission.
+LYME_PRIOR_STRENGTH_K = 3.0
+WNV_PRIOR_STRENGTH_K = 1.5
+
+# Reliability bands keyed off observed annual case count. The thresholds
+# mirror common small-area-estimation cutoffs and align with the prior
+# strengths above (a county whose case count is below the prior strength
+# is being driven by the prior, not by its own data).
+RELIABILITY_LOW_MAX = 2.0     # 0-2 annual cases: too few to drive the score
+RELIABILITY_HIGH_MIN = 10.0   # >= 10 annual cases: observed rate is credible
+
+# Order used to combine per-disease reliability into an overall VBD
+# reliability (the weakest disease pulls the combined tier down).
+RELIABILITY_ORDER = {'low': 0, 'medium': 1, 'high': 2}
+RELIABILITY_LABEL = {0: 'low', 1: 'medium', 2: 'high'}
+
+
+def get_statewide_background_rates() -> Dict[str, float]:
+    """Statewide annual incidence rate per 100,000 used as the prior mean.
+
+    Reads the statewide_summary block from the real-data file and divides
+    average annual case counts by the Wisconsin population. Falls back to
+    epidemiologically reasonable defaults if the file is missing or has
+    malformed entries (Lyme ~88/100k, WNV ~0.30/100k).
+    """
+    try:
+        summary = load_real_vbd_data().get('statewide_summary', {}) or {}
+        lyme_state_avg = float(summary.get('lyme', {}).get('avg_annual_recent') or 5223.0)
+        wnv_state_avg = float(summary.get('wnv', {}).get('avg_annual') or 18.0)
+    except Exception as e:
+        logger.debug(f"Could not derive statewide VBD rates from summary: {e}")
+        lyme_state_avg, wnv_state_avg = 5223.0, 18.0
+    return {
+        'lyme': lyme_state_avg * 100_000.0 / WI_POPULATION_2023,
+        'wnv': wnv_state_avg * 100_000.0 / WI_POPULATION_2023,
+    }
+
+
+def apply_credibility_shrinkage(
+    observed_rate: float,
+    observed_cases: float,
+    state_rate: float,
+    prior_strength_k: float,
+) -> Dict[str, float]:
+    """Buhlmann credibility shrinkage of a county rate toward a state prior.
+
+    weight = cases / (cases + k); shrunk = w * observed + (1-w) * state.
+    Returns the shrunk rate and the credibility weight for transparency.
+    A county with zero observed cases is fully shrunk to the state rate
+    (weight = 0) and a county with case counts much larger than k is
+    barely shrunk at all (weight -> 1).
+
+    This is the standard Buhlmann linear credibility estimator and is a
+    close empirical-Bayes approximation to the posterior mean of a
+    Poisson-Gamma model when k is interpreted as a prior strength in
+    annual-case-equivalents. A strict posterior-mean form would require
+    explicit person-time exposure (population x years) and a fitted
+    Gamma(alpha, beta) prior; we use the credibility approximation
+    because the input data is reported as average annual rates rather
+    than as case counts over a known person-time denominator.
+    """
+    if observed_cases is None or observed_cases < 0:
+        observed_cases = 0.0
+    if prior_strength_k <= 0:
+        return {'rate': float(observed_rate or 0.0), 'weight': 1.0}
+    w = observed_cases / (observed_cases + prior_strength_k)
+    shrunk = w * float(observed_rate or 0.0) + (1.0 - w) * float(state_rate or 0.0)
+    return {'rate': shrunk, 'weight': w}
+
+
+def compute_reliability(annual_cases: float) -> str:
+    """Classify a county-disease pair into low / medium / high reliability.
+
+    Banding mirrors the prior-strength constants: counties below the prior
+    strength are 'low' (their rate is being driven by the prior, not the
+    data), counties at typical small-area-estimation reliable thresholds
+    (>=10 events) are 'high', and the middle band is 'medium'.
+    """
+    cases = float(annual_cases or 0.0)
+    if cases <= RELIABILITY_LOW_MAX:
+        return 'low'
+    if cases < RELIABILITY_HIGH_MIN:
+        return 'medium'
+    return 'high'
+
+
+def combine_reliability(*tiers: str) -> str:
+    """Combined reliability is the weakest input tier (precautionary)."""
+    valid = [t for t in tiers if t in RELIABILITY_ORDER]
+    if not valid:
+        return 'low'
+    return RELIABILITY_LABEL[min(RELIABILITY_ORDER[t] for t in valid)]
+
+
+def poisson_rate_ci(
+    annual_cases: float,
+    annual_rate: float,
+    confidence: float = 0.95,
+) -> Dict[str, float]:
+    """Approximate 95% CI for a Poisson incidence rate per 100,000.
+
+    Uses the normal approximation rate_se = rate / sqrt(cases) for
+    cases >= 1. For cases == 0 we apply the conventional Poisson(0)
+    one-sided 95% upper bound of 3 expected events (the "rule of three"):
+    if rate > 0 this translates to 3 * rate / cases on the rate scale,
+    but since cases == 0 we instead back-derive person-years from the
+    statewide WNV rate as a worst-case denominator and report the
+    upper bound at that scale. When both rate and cases are zero we
+    return a small but nonzero upper bound (the statewide WNV mean,
+    ~0.31/100k) so the UI does not display a misleading 0-0 CI for
+    counties that have simply not reported any cases yet. Lower bound
+    is clamped at 0. The CI is intentionally coarse -- it is shown to
+    users as a "this rate is uncertain" cue, not as a statistical
+    inference for publication.
+    """
+    cases = float(annual_cases or 0.0)
+    rate = float(annual_rate or 0.0)
+    if cases <= 0:
+        # Poisson rule of three: with 0 observed events, the 95% upper
+        # bound on the true count is ~3. Translate to a rate bound by
+        # using whichever denominator is informative.
+        if rate > 0:
+            # Should not happen (rate>0 implies cases>0) but handle defensively.
+            return {'low': 0.0, 'high': rate * 3.0}
+        # No cases AND no rate -- use the statewide WNV rate as a coarse
+        # ceiling so the UI does not show 0-0 for zero-case counties.
+        try:
+            state = get_statewide_background_rates()
+            ceiling = max(state.get('wnv', 0.3), 0.1)
+        except Exception:
+            ceiling = 0.3
+        return {'low': 0.0, 'high': ceiling}
+    if confidence != 0.95:
+        # Only 95% supported; fall through to default rather than fail.
+        pass
+    se = rate / (cases ** 0.5) if cases > 0 else 0.0
+    low = max(0.0, rate - 1.96 * se)
+    high = rate + 1.96 * se
+    return {'low': low, 'high': high}
+
+
 def rate_to_score(rate: float, disease: str = 'lyme') -> float:
     if disease == 'lyme':
         if rate >= 200:
@@ -154,6 +326,12 @@ def rate_to_score(rate: float, disease: str = 'lyme') -> float:
 
 
 def _fetch_csv(url: str, timeout: int = 30) -> Optional[List[Dict[str, str]]]:
+    # Cache-only enforcement: WI DHS EPHT vector-borne CSVs are warmed
+    # weekly by the scheduler. See utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch(f"wi_dhs_epht_csv:{url.rsplit('/', 1)[-1]}")
+        return None
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (compatible; CARA/1.0; Wisconsin Public Health Assessment)',

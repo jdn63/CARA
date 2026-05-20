@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif risk_name == 'cybersecurity' %}
                                 Census ACS, CDC SVI 2022, WI DOR county budget data (proxy-based model; no live threat API)
                             {% elif risk_name == 'extreme_heat' %}
-                                NOAA Climate at a Glance API, NWS Alerts API, WI DHS Heat Vulnerability Index, CDC SVI, Census ACS
+                                NOAA Climate at a Glance API, NWS Alerts API, WI DHS Heat Vulnerability Index (ArcGIS MapServer, county-aggregated), CDC SVI 2022, Census ACS
                             {% elif risk_name == 'active_shooter' %}
                                 GVA 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, CHR 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score
                             {% elif risk_name == 'air_quality' %}
@@ -109,15 +109,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif risk_name == 'air_quality' %}
                                 Long-term air quality risk based on Canadian wildfire smoke trends (2019-2024) and climate projections (2025-2050)
                             {% elif risk_name == 'flood' %}
-                                EVR framework: Exposure (FEMA NRI flood risk, river/lake proximity, terrain, precipitation, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %), Resilience (socioeconomic capacity, flood protection infrastructure). NOAA historical event counts and OpenFEMA claims data used for validation.
+                                EVR framework: Exposure (FEMA NRI flood risk, river/lake proximity, terrain, precipitation, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical event counts and OpenFEMA claims data used for validation.
                             {% elif risk_name == 'tornado' %}
-                                EVR framework: Exposure (FEMA NRI tornado risk, tornado alley proximity, open terrain, climate trend), Vulnerability (4 CDC SVI themes, mobile home %, population aged 65+ (%), population density), Resilience (community preparedness, socioeconomic capacity). NOAA historical tornado events and EF ratings used for validation.
+                                EVR framework: Exposure (FEMA NRI tornado risk, tornado alley proximity, open terrain, climate trend), Vulnerability (4 CDC SVI themes, mobile home %, population aged 65+ (%), population density), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical tornado events and EF ratings used for validation.
                             {% elif risk_name == 'winter_storm' %}
-                                EVR framework: Exposure (FEMA NRI winter risk, northern location, lake effect, ice storm climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), power grid vulnerability, rural isolation), Resilience (winter preparedness, northern community experience). NOAA historical winter events used for validation.
+                                EVR framework: Exposure (FEMA NRI winter risk, northern location, lake effect, ice storm climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), power grid vulnerability, rural isolation), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical winter events used for validation.
                             {% elif risk_name == 'thunderstorm' %}
-                                EVR framework: Exposure (NOAA severity index, lightning density, heavy rainfall frequency, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %, flood susceptibility, tree coverage), Resilience (community preparedness, socioeconomic capacity). NOAA historical thunderstorm events used for validation.
+                                EVR framework: Exposure (NOAA severity index, lightning density, heavy rainfall frequency, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %, flood susceptibility, tree coverage), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical thunderstorm events used for validation.
                             {% elif risk_name == 'dam_failure' %}
-                                EVR framework: Exposure (dam density from WI DNR Dam Safety Database, hazard classification severity, flood zone overlap from NFIP claims), Vulnerability (est. % of county population in dam inundation zones based on high/significant hazard dam counts and storage capacity, 4 CDC SVI themes, population aged 65+ (%)), Resilience (emergency action plans, inspection programs, socioeconomic capacity). Real dam inventory data from WI DNR (~4,100 active dams statewide).
+                                EVR framework: Exposure (dam density from WI DNR Dam Safety Database, hazard classification severity, flood zone overlap from NFIP claims), Vulnerability (est. % of county population in dam inundation zones based on high/significant hazard dam counts and storage capacity, 4 CDC SVI themes, population aged 65+ (%)), Resilience (per-dam Emergency Action Plan credit from NID plus inverse SVI socioeconomic and housing scores). Real dam inventory data from WI DNR (~4,100 active dams statewide).
                             {% elif risk_name == 'vector_borne_disease' %}
                                 EVR framework: Exposure (WI DHS EPHT county-level Lyme incidence rates per 100k, WI DHS Vectorborne Disease Program WNV case data, NLCD 2021 forest cover, WI DNR deer density, seasonal factors, WICCI/NOAA climate trend multipliers), Vulnerability (outdoor workforce %, elderly %, rural factor, SVI socioeconomic themes), Resilience (surveillance programs, public awareness, healthcare access). Seasonal adjustment for tick season (Apr-Oct) and mosquito season (Jun-Sep). Data period: 2019-2024.
                             {% else %}
@@ -257,13 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <ul class="mb-0">
                                     <li>Establish cooling centers in strategic locations</li>
                                     <li>Develop heat emergency response plans</li>
-                                    <li>Create vulnerable population registry</li>
                                     <li>Implement early warning system for heat events</li>
                                 </ul>
                                 {% elif risk_name == 'air_quality' %}
                                 <ul class="mb-0">
                                     <li>Establish air quality monitoring and alert systems</li>
-                                    <li>Create vulnerable population registry for respiratory risks</li>
                                     <li>Develop shelter-in-place protocols for poor air quality</li>
                                     <li>Implement public health messaging for air quality events</li>
                                 </ul>

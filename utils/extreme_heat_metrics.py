@@ -72,7 +72,13 @@ class ExtremeHeatMetrics:
         cached_data = get_from_persistent_cache(cache_key, self.cache_ttl['heat_days'])
         if cached_data:
             return cached_data
-        
+
+        # Cache-only enforcement: see utils/request_context.py.
+        from utils.request_context import is_cache_only_mode, record_blocked_fetch
+        if is_cache_only_mode():
+            record_blocked_fetch(f"noaa_heat_days:{county_name}")
+            return get_wisconsin_heat_days(county_name)
+
         try:
             county_fips = self.wi_county_fips.get(county_name)
             if not county_fips:
@@ -139,7 +145,13 @@ class ExtremeHeatMetrics:
         cached_data = get_from_persistent_cache(cache_key, self.cache_ttl['heat_advisories'])
         if cached_data:
             return cached_data
-        
+
+        # Cache-only enforcement: see utils/request_context.py.
+        from utils.request_context import is_cache_only_mode, record_blocked_fetch
+        if is_cache_only_mode():
+            record_blocked_fetch(f"nws_heat_advisories:{county_name}")
+            return None
+
         try:
             # Get current alerts for Wisconsin
             url = "https://api.weather.gov/alerts/active?area=WI"

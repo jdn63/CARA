@@ -1,186 +1,131 @@
 """
-Wisconsin Climate Data Module
+Wisconsin statewide heat-related constants for use as exposure baselines.
 
-This module provides scientifically-based climate data for Wisconsin counties
-based on NOAA climate normals and historical weather patterns.
-Data sources: NOAA State Climate Summaries, Wisconsin State Climatology Office
+CLEANUP HISTORY:
+Prior versions of this module shipped a hand-keyed dictionary
+(WISCONSIN_COUNTY_CLIMATE_DATA) with explicit annual_heat_days,
+elderly_population_pct, estimated_heat_ed_visits and heat_advisories_2024
+values for 15 Wisconsin counties (out of 72), with all other counties
+silently falling back to a single default row.  That arrangement had two
+problems:
+    1. The per-county values were not traceable to a specific NOAA NCEI
+       endpoint or CSV.  They appeared to be NOAA-informed author
+       estimates, not a reproducible download.
+    2. 57 of 72 counties received an identical default, producing the
+       illusion of per-county precision in downstream displays.
+
+This module now returns statewide values from cited public sources
+and delegates demographic data to utils.census_data_loader, which is
+the authoritative Census ACS loader.  Function signatures are
+preserved so existing callers (utils/climate_adjusted_risk.py,
+utils/extreme_heat_metrics.py) continue to work without change.
+
+FUTURE IMPROVEMENT:
+A scheduler job that pulls NOAA NCEI nClimGrid-County or daily-summaries
+data per WI county and computes the annual count of days TMAX >= 90F
+from a documented station-to-county mapping would replace the
+statewide constant in get_wisconsin_heat_days() with a real per-county
+value.  The NCEI Climate-at-a-Glance per-county time-series endpoint
+returned 404 from this environment at the time of this cleanup
+(2026-05-19); pursuing this should include verifying the current
+endpoint URL pattern with NOAA documentation.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Wisconsin county climate data based on NOAA climate normals (1991-2020)
-# Source: NOAA State Climate Summaries, Wisconsin State Climatology Office
-WISCONSIN_COUNTY_CLIMATE_DATA = {
-    'Milwaukee': {
-        'annual_heat_days': 14,  # Days >90°F based on historical records
-        'elderly_population_pct': 13.8,  # From US Census ACS 2021
-        'estimated_heat_ed_visits': 45,  # Based on Milwaukee health dept data
-        'heat_advisories_2024': 4,  # NWS historical average for southeastern WI
-    },
-    'Dane': {
-        'annual_heat_days': 12,
-        'elderly_population_pct': 12.1,
-        'estimated_heat_ed_visits': 38,
-        'heat_advisories_2024': 3,
-    },
-    'Brown': {
-        'annual_heat_days': 10,
-        'elderly_population_pct': 15.2,
-        'estimated_heat_ed_visits': 28,
-        'heat_advisories_2024': 3,
-    },
-    'Waukesha': {
-        'annual_heat_days': 13,
-        'elderly_population_pct': 16.8,
-        'estimated_heat_ed_visits': 42,
-        'heat_advisories_2024': 4,
-    },
-    'Winnebago': {
-        'annual_heat_days': 11,
-        'elderly_population_pct': 14.9,
-        'estimated_heat_ed_visits': 25,
-        'heat_advisories_2024': 3,
-    },
-    'Rock': {
-        'annual_heat_days': 13,
-        'elderly_population_pct': 16.1,
-        'estimated_heat_ed_visits': 22,
-        'heat_advisories_2024': 4,
-    },
-    'Racine': {
-        'annual_heat_days': 14,
-        'elderly_population_pct': 14.7,
-        'estimated_heat_ed_visits': 24,
-        'heat_advisories_2024': 4,
-    },
-    'Outagamie': {
-        'annual_heat_days': 11,
-        'elderly_population_pct': 13.5,
-        'estimated_heat_ed_visits': 21,
-        'heat_advisories_2024': 3,
-    },
-    'Kenosha': {
-        'annual_heat_days': 14,
-        'elderly_population_pct': 14.2,
-        'estimated_heat_ed_visits': 20,
-        'heat_advisories_2024': 4,
-    },
-    'Washington': {
-        'annual_heat_days': 12,
-        'elderly_population_pct': 15.9,
-        'estimated_heat_ed_visits': 18,
-        'heat_advisories_2024': 3,
-    },
-    'La Crosse': {
-        'annual_heat_days': 15,
-        'elderly_population_pct': 13.8,
-        'estimated_heat_ed_visits': 17,
-        'heat_advisories_2024': 4,
-    },
-    'Fond du Lac': {
-        'annual_heat_days': 11,
-        'elderly_population_pct': 16.8,
-        'estimated_heat_ed_visits': 15,
-        'heat_advisories_2024': 3,
-    },
-    'Marathon': {
-        'annual_heat_days': 9,
-        'elderly_population_pct': 16.2,
-        'estimated_heat_ed_visits': 18,
-        'heat_advisories_2024': 2,
-    },
-    'Sheboygan': {
-        'annual_heat_days': 11,
-        'elderly_population_pct': 17.1,
-        'estimated_heat_ed_visits': 16,
-        'heat_advisories_2024': 3,
-    },
-    'Eau Claire': {
-        'annual_heat_days': 12,
-        'elderly_population_pct': 13.2,
-        'estimated_heat_ed_visits': 14,
-        'heat_advisories_2024': 3,
-    },
-    # Default values for counties not explicitly listed
-    'default': {
-        'annual_heat_days': 12,
-        'elderly_population_pct': 15.1,  # Wisconsin state average
-        'estimated_heat_ed_visits': 20,
-        'heat_advisories_2024': 3,
-    }
-}
+
+# Wisconsin statewide annual count of days with daily maximum temperature
+# >= 90 degrees F.  Source: NOAA NCEI Wisconsin state climate summary
+# (1991-2020 climate normals) reports a statewide average of roughly
+# 10-14 days above 90F per year; midpoint used here.
+_WI_STATEWIDE_ANNUAL_HEAT_DAYS = 12
+
+# Wisconsin statewide average count of NWS heat advisories per County
+# Warning Area per year.  Source: NWS Milwaukee/Sullivan, Green Bay, and
+# La Crosse forecast offices issue roughly 2-4 heat advisories per year
+# across their WI service areas in a typical season; midpoint used here.
+_WI_STATEWIDE_ANNUAL_HEAT_ADVISORIES = 3
+
+# Wisconsin statewide rate of heat-related emergency department visits per
+# 100,000 population per year.  Source: WI DHS Environmental Public Health
+# Tracking heat-related illness indicator reports a statewide rate in the
+# range of 5-7 per 100,000 per year over the 2015-2022 period; midpoint
+# used here.  ED visit COUNTS are then derived from Census ACS county
+# population, not hand-keyed.
+_WI_STATEWIDE_HEAT_ED_RATE_PER_100K = 6.0
+
 
 def get_wisconsin_heat_days(county_name: str) -> int:
     """
-    Get annual heat days (>90°F) for a Wisconsin county
-    
-    Args:
-        county_name: Wisconsin county name (can include ' County' suffix)
-        
-    Returns:
-        Number of annual heat days based on NOAA climate normals
+    Return the Wisconsin statewide annual count of days TMAX >= 90F.
+
+    Until a per-county NOAA NCEI loader is integrated (see module
+    docstring), every Wisconsin county returns the same statewide value.
+    The county_name argument is accepted for API compatibility and is
+    only used in log output.
     """
-    # Clean county name to remove ' County' suffix if present
-    clean_county_name = county_name.replace(' County', '').strip()
-    
-    data = WISCONSIN_COUNTY_CLIMATE_DATA.get(clean_county_name, WISCONSIN_COUNTY_CLIMATE_DATA['default'])
-    heat_days = data['annual_heat_days']
-    logger.info(f"Wisconsin climate data - Heat days for {clean_county_name} (from {county_name}): {heat_days}")
-    return heat_days
+    clean = county_name.replace(' County', '').strip() if county_name else ''
+    logger.info(
+        "Wisconsin statewide annual heat days returned for %s: %d "
+        "(per-county NOAA loader not yet integrated)",
+        clean, _WI_STATEWIDE_ANNUAL_HEAT_DAYS,
+    )
+    return _WI_STATEWIDE_ANNUAL_HEAT_DAYS
+
 
 def get_wisconsin_elderly_population(county_name: str) -> float:
     """
-    Get population aged 65+ percentage for a Wisconsin county
-    
-    Args:
-        county_name: Wisconsin county name (can include ' County' suffix)
-        
-    Returns:
-        Percentage of population aged 65+ based on Census data
+    Return the population aged 65+ percentage for a Wisconsin county.
+
+    Delegates to utils.census_data_loader.wisconsin_census, which is the
+    authoritative Census ACS loader.  Falls back to the Wisconsin
+    statewide percentage (18.7%, ACS 2018-2022 5-year estimates) only
+    if the Census loader is unavailable for the requested county.
     """
-    # Clean county name to remove ' County' suffix if present
-    clean_county_name = county_name.replace(' County', '').strip()
-    
-    data = WISCONSIN_COUNTY_CLIMATE_DATA.get(clean_county_name, WISCONSIN_COUNTY_CLIMATE_DATA['default'])
-    elderly_pct = data['elderly_population_pct']
-    logger.info(f"Wisconsin census data - Population 65+ for {clean_county_name} (from {county_name}): {elderly_pct}%")
-    return elderly_pct
+    try:
+        from utils.census_data_loader import wisconsin_census
+        pct = wisconsin_census.get_elderly_population_percentage(county_name)
+        if pct is not None:
+            return pct
+    except Exception as e:
+        logger.warning(
+            "Census elderly fetch failed for %s: %s; using WI statewide 18.7",
+            county_name, e,
+        )
+    return 18.7
+
 
 def get_wisconsin_heat_ed_visits(county_name: str) -> int:
     """
-    Get estimated heat-related ED visits for a Wisconsin county
-    
-    Args:
-        county_name: Wisconsin county name (can include ' County' suffix)
-        
-    Returns:
-        Estimated annual heat-related emergency department visits
+    Return an estimated annual count of heat-related ED visits for a
+    Wisconsin county, derived from Census ACS population and the WI DHS
+    EPHT statewide heat-related ED-visit rate per 100,000.
+
+    This replaces the previous hand-keyed per-county estimate.  A real
+    per-county count from the WI DHS EPHT county-level export would be
+    a follow-up improvement.
     """
-    # Clean county name to remove ' County' suffix if present
-    clean_county_name = county_name.replace(' County', '').strip()
-    
-    data = WISCONSIN_COUNTY_CLIMATE_DATA.get(clean_county_name, WISCONSIN_COUNTY_CLIMATE_DATA['default'])
-    ed_visits = data['estimated_heat_ed_visits']
-    logger.info(f"Wisconsin health data - Heat-related ED visits for {clean_county_name} (from {county_name}): {ed_visits}")
-    return ed_visits
+    try:
+        from utils.census_data_loader import wisconsin_census
+        population = wisconsin_census.get_county_population(county_name) or 80000
+    except Exception as e:
+        logger.warning(
+            "Census population fetch failed for %s: %s; using WI median 80000",
+            county_name, e,
+        )
+        population = 80000
+    return int(round((population / 100000.0) * _WI_STATEWIDE_HEAT_ED_RATE_PER_100K))
+
 
 def get_wisconsin_heat_advisories(county_name: str) -> int:
     """
-    Get heat advisories count for a Wisconsin county
-    
-    Args:
-        county_name: Wisconsin county name (can include ' County' suffix)
-        
-    Returns:
-        Number of heat advisories issued in 2024
+    Return the Wisconsin statewide annual count of NWS heat advisories.
+
+    Until per-CWA NWS advisory counts are integrated, every Wisconsin
+    county returns the same statewide value.  The county_name argument
+    is accepted for API compatibility.
     """
-    # Clean county name to remove ' County' suffix if present
-    clean_county_name = county_name.replace(' County', '').strip()
-    
-    data = WISCONSIN_COUNTY_CLIMATE_DATA.get(clean_county_name, WISCONSIN_COUNTY_CLIMATE_DATA['default'])
-    advisories = data['heat_advisories_2024']
-    logger.info(f"Wisconsin NWS data - Heat advisories for {clean_county_name} (from {county_name}): {advisories}")
-    return advisories
+    return _WI_STATEWIDE_ANNUAL_HEAT_ADVISORIES

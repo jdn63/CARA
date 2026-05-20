@@ -37,7 +37,7 @@ EM assessments include an 8th primary domain (utilities, 10% weight) that is sup
 |--------|--------|-----------------|
 | Natural Hazards | 28% | NOAA Storm Events, OpenFEMA (declarations, NFIP claims, HMA), FEMA NRI, Census ACS |
 | Active Shooter | 18% | Gun Violence Archive 2023, NCES SSOCS 2019-2020, Census ACS demographics |
-| Health Metrics | 17% | WI DHS respiratory surveillance (web scraper), Census ACS |
+| Health Metrics | 17% | CDC NSSP Emergency Department Visits (Influenza/COVID-19/RSV), CHR 2025 (flu vaccination, PC access), CDC PLACES (COPD), WI DHS WIR (MMR), Census ACS |
 | Air Quality | 12% | EPA AirNow API, Census ACS, CDC SVI |
 | Extreme Heat | 11% | NOAA climate normals, NWS heat forecasts, Census ACS (65+, poverty), CDC SVI |
 | Dam Failure | 7% | WI DNR Dam Safety DB, USACE NID (fallback), OpenFEMA NFIP, CDC SVI |
@@ -83,7 +83,7 @@ All external data is pre-fetched by APScheduler jobs and stored in PostgreSQL ca
 | CDC/ATSDR SVI 2022 | ArcGIS REST API (keyless) | County-level SVI percentile rankings (all 72 WI counties) | Annual |
 | EPA AirNow | REST API (keyed) | AQI readings at monitoring stations | Daily |
 | NOAA/NWS | REST API (keyless) | Heat forecasts, weather data | Daily |
-| WI DHS Respiratory Surveillance | Web scraper (dhs.wisconsin.gov) | ILI, COVID-19, RSV activity levels | Weekly |
+| CDC NSSP Emergency Department Visits | Socrata REST API (data.cdc.gov/resource/vutn-jzwm.json, keyless) | Wisconsin-specific percent of ED visits for Influenza, COVID-19, and RSV; activity-level classification; week-over-week trend direction | Weekly (updated Friday) |
 | WI DHS EPHT (Lyme/WNV) | CSV download (dhs.wisconsin.gov/epht) | County-level Lyme and WNV incidence rates per 100k | Weekly |
 | County Health Rankings | Direct CSV download (countyhealthrankings.org, 2025 release) | Flu vaccination rate (BRFSS, all-ages seasonal) and primary care physicians per 100k; county-specific values for all 72 WI counties | Annual (March release) |
 | CDC PLACES | Socrata API (data.cdc.gov/resource/swc5-untb.json, keyless) | COPD crude prevalence by county; model-based BRFSS estimates | Annual |
@@ -126,13 +126,13 @@ The `(2.0 - Resilience)` term is an amplifier, not a divisor. At low resilience 
 - OpenFEMA NFIP claims (flood insurance claims as flood exposure proxy)
 - FEMA NRI baseline scores (census tract level, aggregated to county)
 
-For flood specifically, component weights are: NRI 45%, NOAA storm events 25%, NFIP claims 10%, proximity to major water bodies 20%. An urban stormwater exposure factor (0.25) is applied to high-impervious-surface counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) to account for combined sewer overflow and stormwater flooding that FEMA NRI does not measure.
+For flood specifically, component weights are: FEMA NRI baseline 30%, NOAA storm-events percentile 20%, NFIP claims percentile 10%, proximity to major water bodies 15%, flat-terrain factor 5%, precipitation-pattern factor 5%, climate trend 5%. NOAA storm-events and NFIP claim counts are normalized to events-per-year and then percentile-ranked across all 72 Wisconsin counties so urban counties do not dominate scoring purely by area. An additive urban-stormwater boost of +0.10 is applied (and capped at the 1.0 exposure ceiling) to high-impervious-surface counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) to account for combined sewer overflow and stormwater flooding that FEMA NRI does not measure. When the NFIP cross-county cache is unpopulated, the NFIP weight is dropped and remaining weights renormalize so that missing data does not silently lower flood exposure for every county. Tornado, winter storm, and thunderstorm exposures follow the same single-weight-layer pattern with their own component weights, each including a NOAA storm-events percentile term (25%, 15%, and 20% respectively).
 
 **Vulnerability** uses CDC SVI theme percentiles with hazard-specific sub-weights:
 - Flood (PH weights): housing/transportation (0.30), socioeconomic (0.20), household composition (0.15), elderly factor (0.15), minority status (0.10), mobile home factor (0.10). EM weights differ.
 - Tornado, winter storm, thunderstorm: similar SVI-based sub-weight structures with hazard-appropriate adjustments
 
-**Resilience** uses inverse SVI scores as proxies for community adaptive capacity. For flood, EOC county capacity is not included as a resilience bonus: emergency operations center readiness improves coordinated disaster response but does not reduce the frequency of stormwater events, riverine flooding, or combined sewer overflows.
+**Resilience** uses inverse SVI scores as proxies for community adaptive capacity, with no hard-coded county adjustments. Earlier versions of the natural-hazards pipeline applied flat bonuses to short lists of "well-resourced," "EOC-capable," or "prepared" counties (typically Milwaukee, Dane, Brown, Waukesha and a few others) for the four sub-hazards. Those lists were removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. A continuous capacity index (e.g. emergency-management staffing FTE per capita, hospital beds per capita, training-program participation) can be reintroduced as a smooth term in the future, but is not currently part of the pipeline.
 
 **Health Impact Factor** scales risk by population health indicators (elderly percentage, poverty rate).
 
@@ -154,10 +154,10 @@ Multi-component risk model using:
 
 ### 4.3 Health Metrics (Infectious Disease)
 
-Based on WI DHS respiratory illness surveillance data obtained via web scraper:
-- ILI (Influenza-like Illness) activity levels
-- COVID-19 metrics
-- RSV activity levels
+Based on CDC NSSP Emergency Department Visits data for Wisconsin (data.cdc.gov/resource/vutn-jzwm.json, keyless Socrata API, weekly Friday refresh). This is the same NSSP/ESSENCE data feed that underlies the WI DHS Tableau respiratory dashboards, so going to NSSP directly is more accurate than scraping the downstream WI DHS pages. Three pathogens are tracked:
+- Influenza (percent of ED visits, activity level, trend direction)
+- COVID-19 (percent of ED visits, activity level, trend direction)
+- RSV (percent of ED visits, activity level, trend direction)
 
 County-level modifiers from three additional cached data sources (v24+):
 - Flu vaccination rate (County Health Rankings 2025 CSV, BRFSS survey, all-ages seasonal). County-specific rates from 22% (Taylor/Polk) to 69% (Dane). Used as resilience modifier in disease EVR.
@@ -226,6 +226,18 @@ weighted_sum = sum(w * (risk ** p) for w, risk in zip(weights, risks))
 total_risk_score = max(0.0, min(1.0, weighted_sum ** (1.0 / p)))
 ```
 
+### 4.10 PHRAT Domain Dropout, Renormalization, and Confidence Interval
+
+The PHRAT composite (`utils/data_processor.py` L1272-1414) implements graceful degradation when a domain has insufficient data for a given county:
+
+- **Domain dropout**: A domain is excluded from the composite when its underlying data sources are unavailable or below a quality threshold. Each domain reports a coverage flag during assembly.
+- **Weight renormalization**: When one or more domains are dropped, the surviving domain weights are renormalized to sum to 1.0. The output object exposes both `original_weights` and `renormalized_weights` so the adjustment is auditable.
+- **Coverage fraction**: Reported as `coverage_fraction` (sum of original weights of included domains). A coverage fraction of 1.0 means all 7 PHRAT domains contributed; 0.85 means 15% of weighted coverage was dropped.
+- **Composite confidence interval**: A symmetric confidence band (`composite_lower`, `composite_upper`) is computed around the renormalized PHRAT score. The band widens as `coverage_fraction` decreases, reflecting reduced certainty when fewer domains contribute.
+- **Data quality banner**: When at least one domain is excluded, a human-readable banner string is produced (returned in `result['data_quality']['banner']`) listing the excluded domains and the resulting coverage fraction. This is the data source for the dashboard data-quality banner.
+
+The full structure is returned under `result['data_quality']` and includes: `discipline`, `included_domains`, `excluded_domains`, `original_weights`, `renormalized_weights`, `coverage_fraction`, `composite_confidence`, `confidence_interval` (lower/upper/method), and `banner`.
+
 ## 5. Temporal Framework (BSTA)
 
 CARA uses a Baseline-Seasonal-Trend-Acute (BSTA) temporal framework. In the default Annual Strategic Planning mode:
@@ -245,7 +257,7 @@ See `docs/temporal_framework_usage_strategy.md` for full details.
 1. **Census Data Timing**: ACS 5-year estimates have statistical margins of error. Rural areas have higher uncertainty. Data updated annually from local CSV files.
 2. **Static Datasets**: GVA (2023), NCES SSOCS (2019-2020), FEMA NRI, and climate normals are point-in-time snapshots that require manual updates.
 3. **USACE NID Cloud Access**: The NID ArcGIS FeatureServer may return 503 errors from cloud-hosted IPs. WI DNR Dam Safety Database is the primary source and works from cloud.
-4. **DHS Web Scraper**: Respiratory surveillance data depends on WI DHS page structure remaining stable. Format changes can break the scraper.
+4. **NSSP Coverage Granularity**: CDC NSSP Emergency Department Visits data is published at the state level for Wisconsin. Sub-state (county or HERC region) variation in respiratory activity is not directly observed; statewide NSSP signals are combined with county-specific MMR (WI DHS WIR), flu vaccination (CHR), COPD prevalence (CDC PLACES), and primary care access (CHR) modifiers in the EVR calculation.
 5. **VBD Data Lag**: WI DHS EPHT CSV data may have reporting delays of several weeks.
 
 ### 6.2 Methodological Limitations
@@ -291,7 +303,7 @@ See `docs/temporal_framework_usage_strategy.md` for full details.
 7. USACE National Inventory of Dams (NID ArcGIS FeatureServer)
 8. EPA AirNow API
 9. NOAA/NWS Heat Forecast API
-10. Wisconsin DHS Respiratory Illness Surveillance
+10. CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm) - Influenza, COVID-19, RSV percent of ED visits for Wisconsin; same NSSP/ESSENCE feed that underlies the WI DHS Tableau respiratory dashboards
 11. WI DHS Environmental Public Health Tracking (EPHT) - Lyme/WNV
 12. Gun Violence Archive 2023
 13. NCES School Safety and Climate Survey (SSOCS) 2019-2020

@@ -1,0 +1,262 @@
+    {% import "dashboard/_freshness_badge.html" as fb %}
+    <!-- Category: Community Resources and Utilities -->
+    <div class="category-section">
+        <div class="category-header category-community">Community Resources and Utilities (supplementary)</div>
+        {{ fb.badge_row(risk_data.data_quality, [
+            ('svi', 'CDC SVI'),
+            ('hifld_correctional', 'HIFLD correctional facilities')
+        ]) }}
+        <div class="row g-2">
+        <!-- Utilities Risk -->
+        <div class="col-12 compact-tile">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Community Resources and Utilities Risk
+                        <span class="badge bg-secondary ms-2">
+                            Supplementary: Modeled from Proxy Indicators
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Overall Risk Score -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <h6 class="text-muted">Overall Utilities Risk</h6>
+                                {% if risk_data.utilities is defined and risk_data.utilities.overall is defined %}
+                                    <h3>{{ "%.2f"|format(risk_data.utilities.overall) }}
+                                    {{ show_work_btn('utilities-info', 'Utilities Risk Calculation',
+                                    '<div class="formula-line">Score = Average of 4 utility sub-domains</div>'
+                                    ~ '<ul class="component-list">'
+                                    ~ '<li>Electrical Outage: ' ~ ("%.3f"|format(risk_data.utilities.electrical_outage) if risk_data.utilities.electrical_outage is defined else 'N/A') ~ '</li>'
+                                    ~ '<li>Utilities Disruption: ' ~ ("%.3f"|format(risk_data.utilities.utilities_disruption) if risk_data.utilities.utilities_disruption is defined else 'N/A') ~ '</li>'
+                                    ~ '<li>Supply Chain: ' ~ ("%.3f"|format(risk_data.utilities.supply_chain) if risk_data.utilities.supply_chain is defined else 'N/A') ~ '</li>'
+                                    ~ '<li>Fuel Shortage: ' ~ ("%.3f"|format(risk_data.utilities.fuel_shortage) if risk_data.utilities.fuel_shortage is defined else 'N/A') ~ '</li>'
+                                    ~ '</ul>'
+                                    ~ '<div class="formula-line">Each uses: (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
+                                    ~ '<div class="formula-line">Overall = ' ~ "%.3f"|format(risk_data.utilities.overall) ~ '</div>'
+                                    ~ '<div class="data-source">Sources: Census Bureau, CDC SVI, WI PSC utility territory maps (proxy-based estimates)</div>'
+                                    ) }}
+                                    </h3>
+                                    <span class="badge bg-{{ 'danger' if risk_data.utilities.overall > 0.6 else 'warning' if risk_data.utilities.overall > 0.3 else 'success' }}">
+                                        {{ 'High Risk' if risk_data.utilities.overall > 0.6 else 'Medium Risk' if risk_data.utilities.overall > 0.3 else 'Low Risk' }}
+                                    </span>
+                                {% else %}
+                                    <h3>N/A</h3>
+                                    <span class="badge bg-secondary">No Data</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="text-center mb-3">
+                                        <h6 class="text-muted">Electrical Outage</h6>
+                                        {% if risk_data.utilities is defined and risk_data.utilities.electrical_outage is defined %}
+                                            <h4>{{ "%.2f"|format(risk_data.utilities.electrical_outage) }}</h4>
+                                            <span class="badge bg-{{ 'danger' if risk_data.utilities.electrical_outage > 0.6 else 'warning' if risk_data.utilities.electrical_outage > 0.3 else 'success' }}">
+                                                {{ 'High' if risk_data.utilities.electrical_outage > 0.6 else 'Medium' if risk_data.utilities.electrical_outage > 0.3 else 'Low' }}
+                                            </span>
+                                        {% else %}
+                                            <h4>N/A</h4>
+                                            <span class="badge bg-secondary">No Data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="text-center mb-3">
+                                        <h6 class="text-muted">Utilities Disruption</h6>
+                                        {% if risk_data.utilities is defined and risk_data.utilities.utilities_disruption is defined %}
+                                            <h4>{{ "%.2f"|format(risk_data.utilities.utilities_disruption) }}</h4>
+                                            <span class="badge bg-{{ 'danger' if risk_data.utilities.utilities_disruption > 0.6 else 'warning' if risk_data.utilities.utilities_disruption > 0.3 else 'success' }}">
+                                                {{ 'High' if risk_data.utilities.utilities_disruption > 0.6 else 'Medium' if risk_data.utilities.utilities_disruption > 0.3 else 'Low' }}
+                                            </span>
+                                        {% else %}
+                                            <h4>N/A</h4>
+                                            <span class="badge bg-secondary">No Data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="text-center mb-3">
+                                        <h6 class="text-muted">Supply Chain</h6>
+                                        {% if risk_data.utilities is defined and risk_data.utilities.supply_chain is defined %}
+                                            <h4>{{ "%.2f"|format(risk_data.utilities.supply_chain) }}</h4>
+                                            <span class="badge bg-{{ 'danger' if risk_data.utilities.supply_chain > 0.6 else 'warning' if risk_data.utilities.supply_chain > 0.3 else 'success' }}">
+                                                {{ 'High' if risk_data.utilities.supply_chain > 0.6 else 'Medium' if risk_data.utilities.supply_chain > 0.3 else 'Low' }}
+                                            </span>
+                                        {% else %}
+                                            <h4>N/A</h4>
+                                            <span class="badge bg-secondary">No Data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="text-center mb-3">
+                                        <h6 class="text-muted">Fuel Shortage</h6>
+                                        {% if risk_data.utilities is defined and risk_data.utilities.fuel_shortage is defined %}
+                                            <h4>{{ "%.2f"|format(risk_data.utilities.fuel_shortage) }}</h4>
+                                            <span class="badge bg-{{ 'danger' if risk_data.utilities.fuel_shortage > 0.6 else 'warning' if risk_data.utilities.fuel_shortage > 0.3 else 'success' }}">
+                                                {{ 'High' if risk_data.utilities.fuel_shortage > 0.6 else 'Medium' if risk_data.utilities.fuel_shortage > 0.3 else 'Low' }}
+                                            </span>
+                                        {% else %}
+                                            <h4>N/A</h4>
+                                            <span class="badge bg-secondary">No Data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Multi-Dimensional Analysis (if components are available) -->
+                    {% if risk_data.utilities is defined and risk_data.utilities.components is defined %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-muted mb-3">Multi-Dimensional Risk Analysis</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Utility Type</th>
+                                                <th>Exposure<br><small class="text-muted">Likelihood & Magnitude</small></th>
+                                                <th>Vulnerability<br><small class="text-muted">Susceptibility</small></th>
+                                                <th>Resilience<br><small class="text-muted">Recovery Capacity</small></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if risk_data.utilities.components.electrical_outage is defined %}
+                                                <tr>
+                                                    <td>Electrical Outage</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.electrical_outage.exposure > 0.6 else 'warning' if risk_data.utilities.components.electrical_outage.exposure > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.electrical_outage.exposure * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.electrical_outage.exposure) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.electrical_outage.vulnerability > 0.6 else 'warning' if risk_data.utilities.components.electrical_outage.vulnerability > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.electrical_outage.vulnerability * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.electrical_outage.vulnerability) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.electrical_outage.resilience > 0.6 else 'warning' if risk_data.utilities.components.electrical_outage.resilience > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.electrical_outage.resilience * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.electrical_outage.resilience) }}</small>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                            
+                                            {% if risk_data.utilities.components.utilities_disruption is defined %}
+                                                <tr>
+                                                    <td>Utilities Disruption</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.utilities_disruption.exposure > 0.6 else 'warning' if risk_data.utilities.components.utilities_disruption.exposure > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.utilities_disruption.exposure * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.utilities_disruption.exposure) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.utilities_disruption.vulnerability > 0.6 else 'warning' if risk_data.utilities.components.utilities_disruption.vulnerability > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.utilities_disruption.vulnerability * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.utilities_disruption.vulnerability) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.utilities_disruption.resilience > 0.6 else 'warning' if risk_data.utilities.components.utilities_disruption.resilience > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.utilities_disruption.resilience * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.utilities_disruption.resilience) }}</small>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                            
+                                            {% if risk_data.utilities.components.supply_chain is defined %}
+                                                <tr>
+                                                    <td>Supply Chain</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.supply_chain.exposure > 0.6 else 'warning' if risk_data.utilities.components.supply_chain.exposure > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.supply_chain.exposure * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.supply_chain.exposure) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.supply_chain.vulnerability > 0.6 else 'warning' if risk_data.utilities.components.supply_chain.vulnerability > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.supply_chain.vulnerability * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.supply_chain.vulnerability) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.supply_chain.resilience > 0.6 else 'warning' if risk_data.utilities.components.supply_chain.resilience > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.supply_chain.resilience * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.supply_chain.resilience) }}</small>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                            
+                                            {% if risk_data.utilities.components.fuel_shortage is defined %}
+                                                <tr>
+                                                    <td>Fuel Shortage</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.fuel_shortage.exposure > 0.6 else 'warning' if risk_data.utilities.components.fuel_shortage.exposure > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.fuel_shortage.exposure * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.fuel_shortage.exposure) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.fuel_shortage.vulnerability > 0.6 else 'warning' if risk_data.utilities.components.fuel_shortage.vulnerability > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.fuel_shortage.vulnerability * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.fuel_shortage.vulnerability) }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-{{ 'danger' if risk_data.utilities.components.fuel_shortage.resilience > 0.6 else 'warning' if risk_data.utilities.components.fuel_shortage.resilience > 0.3 else 'success' }}"
+                                                                 style="width: {{ risk_data.utilities.components.fuel_shortage.resilience * 100 }}%"></div>
+                                                        </div>
+                                                        <small>{{ "%.2f"|format(risk_data.utilities.components.fuel_shortage.resilience) }}</small>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Explanatory text -->
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            This analysis evaluates the risk to critical infrastructure and utilities that support community functions during emergencies and normal operations.
+                        </small>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Sources: Census Bureau, CDC SVI, WI PSC utility territory maps (proxy-based estimates)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>

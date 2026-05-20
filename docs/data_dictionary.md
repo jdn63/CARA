@@ -37,9 +37,9 @@ This document provides a comprehensive reference for all data variables, risk me
 #### Flood Risk
 | Variable | Type | Range | Unit | Description |
 |----------|------|-------|------|-------------|
-| `flood_exposure` | Float | 0.0 - 1.0 | Normalized | NRI baseline (45%), NOAA storm events (25%), NFIP claims (10%), water body proximity (20%); urban stormwater factor (+0.25) applied to Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington counties |
+| `flood_exposure` | Float | 0.0 - 1.0 | Normalized | NRI baseline (30%), NOAA storm-events percentile (20%), NFIP claims percentile (10%), water body proximity (15%), flat terrain (5%), precipitation patterns (5%), climate trend (5%); additive +0.10 urban stormwater boost (capped at 1.0) for Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington counties. NOAA and NFIP counts are normalized to events-per-year and percentile-ranked across all 72 Wisconsin counties before contributing. |
 | `flood_vulnerability` | Float | 0.0 - 1.0 | Normalized | SVI housing/transportation (30%), socioeconomic (20%), household composition (15%), elderly population (15%), minority status (10%), mobile home density (10%) |
-| `flood_resilience` | Float | 0.0 - 1.0 | Normalized | Inverse SVI socioeconomic and housing scores; EOC county capacity is not included (operational readiness does not reduce stormwater or riverine flood frequency) |
+| `flood_resilience` | Float | 0.0 - 1.0 | Normalized | Inverse SVI socioeconomic and housing scores only; hard-coded county capacity adjustments have been removed to eliminate cliffs between adjacent counties |
 | `fema_flood_zone` | String | - | Categorical | A, AE, X, etc. (FEMA flood zone designations) |
 | `dam_count` | Integer | 0 - 50 | Count | Number of dams in jurisdiction |
 
@@ -58,10 +58,10 @@ This document provides a comprehensive reference for all data variables, risk me
 |----------|------|-------|------|-------------|
 | `heat_exposure` | Float | 0.0 - 0.95 | Normalized | Climate-adjusted heat exposure |
 | `heat_vulnerability` | Float | 0.0 - 1.0 | Normalized | Population vulnerability to extreme heat |
-| `heat_resilience` | Float | 0.0 - 1.0 | Normalized | Cooling resources and adaptation capacity |
+| `heat_resilience` | Float | 0.1 - 0.9 | Normalized | Inverse CDC SVI socioeconomic and housing-transportation themes from a 0.5 baseline |
 | `wet_bulb_risk` | Float | 0.0 - 1.0 | Normalized | Dangerous humidity-heat combinations |
 | `climate_trend_factor` | Float | 1.0 - 1.5 | Multiplier | Climate change amplification factor |
-| `heat_island_factor` | Float | 1.0 - 1.4 | Multiplier | Urban heat island amplification |
+| `heat_island_factor` | Float | 1.0 | Multiplier | Reserved for a continuous urban-heat-island signal (currently fixed at 1.0 until a cited per-county imperviousness or population-density source is integrated) |
 | `cooling_degree_days` | Integer | 0 - 2000 | Degree Days | Annual cooling energy demand |
 | `heat_days_90f_projected` | Integer | 0 - 60 | Days/year | Projected 90F+ days by 2050 |
 
@@ -166,7 +166,7 @@ This document provides a comprehensive reference for all data variables, risk me
 | OpenFEMA (3 endpoints) | Weekly (scheduler cache) | Declarations, NFIP claims, HMA | Statewide |
 | WI DNR Dam Safety | Weekly (scheduler cache) | Dam inventory, hazard classifications | Statewide |
 | CDC/ATSDR SVI 2022 | Annual (scheduler cache) | Social vulnerability percentiles | All 72 WI counties |
-| WI DHS Respiratory | Weekly (web scraper cache) | ILI, COVID, RSV activity | Statewide |
+| CDC NSSP Emergency Department Visits | Weekly Friday (Socrata API cache) | Influenza, COVID-19, RSV percent of ED visits | Statewide (Wisconsin) |
 | WI DHS EPHT (VBD) | Weekly (CSV download cache) | Lyme/WNV incidence rates | All 72 WI counties |
 | FEMA NRI | Static file | Census tract hazard scores | Statewide |
 
@@ -192,8 +192,16 @@ Where:
 - w1..w7: Domain weights from config/risk_weights.yaml (sum to 1.0)
 - p=2 (quadratic mean emphasizes higher-risk domains)
 
-Per-Domain (EVR Framework for natural hazards, dam failure):
-Residual Risk = (Exposure * Vulnerability * Health_Impact_Factor) / Resilience
+Per-Domain (EVR Framework for natural hazards, dam failure, vector-borne disease, infectious disease):
+Residual Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
+
+Where:
+- (2.0 - Resilience) is a multiplicative amplifier, not a divisor.
+  At Resilience = 0.1 it multiplies risk by 1.9; at Resilience = 0.9 it multiplies by 1.1.
+  Resilience attenuates risk but never eliminates it.
+- Health_Impact_Factor (typically 0.80-1.50) scales risk by domain-specific health
+  consequence weighting (e.g., 1.5 for infectious disease).
+- Implementation: utils/risk_calculation.py calculate_residual_risk()
 ```
 
 ### Confidence Calculations
@@ -251,7 +259,7 @@ Where:
     }
   },
   "metadata": {
-    "methodology": "CARA v2.1",
+    "methodology": "CARA v2.5",
     "temporal_framework": "STRATEGIC",
     "data_sources": ["US_CENSUS", "NOAA", "WI_DHS"],
     "last_updated": "2024-01-15T06:00:00Z"

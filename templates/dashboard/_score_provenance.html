@@ -1,0 +1,132 @@
+    {% if risk_data.score_provenance is defined %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center" 
+                     data-bs-toggle="collapse" data-bs-target="#scoreProvenance" 
+                     role="button" tabindex="0" aria-expanded="false" aria-controls="scoreProvenance"
+                     style="cursor: pointer;"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+                    <h5 class="mb-0"><i class="fas fa-search-plus me-2"></i>Score Provenance Trace</h5>
+                    <span class="badge bg-secondary">Click to expand full calculation chain</span>
+                </div>
+                <div class="collapse" id="scoreProvenance">
+                    <div class="card-body">
+                        <div class="alert alert-info py-2">
+                            <strong>End-to-end calculation trace</strong> from source data through every transformation to the final score. Intended for analysts and external reviewers verifying score reproducibility.
+                        </div>
+
+                        <h6>Final Score Verification</h6>
+                        <div class="bg-light p-3 rounded mb-3 font-monospace small">
+                            <div><strong>Formula:</strong> {{ risk_data.score_provenance.formula }}</div>
+                            <div><strong>Manual check:</strong> {{ risk_data.score_provenance.verification.manual_check }}</div>
+                            <div><strong>Weights sum:</strong> {{ risk_data.score_provenance.verification.weights_sum }}</div>
+                            <div><strong>Weighted sum (Σ wᵢ×Riskᵢ²):</strong> {{ risk_data.score_provenance.weighted_sum }}</div>
+                            <div><strong>Final score (√weighted_sum):</strong> {{ risk_data.score_provenance.total_risk_score }}</div>
+                        </div>
+
+                        <h6>Primary Domain Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Weight</th>
+                                        <th>Pre-SVI Score</th>
+                                        <th>Final Score</th>
+                                        <th>w×Score²</th>
+                                        <th>SVI Adjustment</th>
+                                        <th>Aggregation Method</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for domain in risk_data.score_provenance.get('domains', []) %}
+                                    <tr>
+                                        <td><strong>{{ domain.name }}</strong></td>
+                                        <td>{{ "%.0f"|format(domain.weight * 100) }}%</td>
+                                        <td>{{ "%.4f"|format(domain.pre_svi_score) if domain.pre_svi_score is defined else '--' }}</td>
+                                        <td><strong>{{ "%.4f"|format(domain.final_score) }}</strong></td>
+                                        <td>{{ "%.4f"|format(domain.weighted_contribution) }}</td>
+                                        <td class="small">{{ domain.svi_adjustment }}</td>
+                                        <td class="small">{{ domain.aggregation if domain.aggregation is defined else '--' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% for domain in risk_data.score_provenance.get('domains', []) %}
+                        {% if domain.sub_components is defined and domain.sub_components %}
+                        <div class="mb-2">
+                            <strong class="small">{{ domain.name }} sub-components:</strong>
+                            <span class="font-monospace small">
+                                {% for k, v in domain.sub_components.items() %}
+                                {{ k }}={{ v }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                        <h6 class="mt-3">Data Sources per Domain</h6>
+                        <div class="row">
+                            {% for domain in risk_data.score_provenance.get('domains', []) %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="border rounded p-2 h-100">
+                                    <strong class="small">{{ domain.name }}</strong>
+                                    <ul class="mb-0 small" style="padding-left: 1.2em;">
+                                        {% for src in domain.data_sources %}
+                                        <li>{{ src }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <h6 class="mt-3">SVI Theme Values Used</h6>
+                        <div class="font-monospace small bg-light p-2 rounded">
+                            {% for theme, value in risk_data.score_provenance.get('svi_themes_used', {}).items() %}
+                            {{ theme }}: {{ value }}{% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        {% if risk_data.score_provenance.get('supplementary_domains') %}
+                        <h6 class="mt-3">Supplementary Domains (not in PHRAT score)</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Pre-SVI Score</th>
+                                        <th>Final Score</th>
+                                        <th>SVI Adjustment</th>
+                                        <th>Data Sources</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for domain in risk_data.score_provenance.get('supplementary_domains', []) %}
+                                    <tr>
+                                        <td><strong>{{ domain.name }}</strong></td>
+                                        <td>{{ "%.4f"|format(domain.pre_svi_score) if domain.pre_svi_score is defined else '--' }}</td>
+                                        <td>{{ "%.4f"|format(domain.final_score) }}</td>
+                                        <td class="small">
+                                            {{ domain.svi_adjustment if domain.svi_adjustment is defined else '--' }}
+                                            {% if domain.svi_bias_warning is defined %}
+                                            <br><span class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{ domain.svi_bias_warning }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="small">{{ domain.data_sources | join(', ') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}

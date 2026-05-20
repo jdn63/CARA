@@ -76,6 +76,14 @@ def _fetch_chr_wi_data() -> Dict[str, Dict]:
         logger.info("Using cached County Health Rankings data")
         return cached
 
+    # Cache-only enforcement: live HTTP is forbidden in the user dashboard
+    # request path. The scheduler must warm this cache. See
+    # utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("county_health_rankings")
+        return {}
+
     try:
         logger.info(f"Downloading County Health Rankings data from {CHR_CSV_URL}")
         resp = requests.get(CHR_CSV_URL, timeout=30)
@@ -266,6 +274,12 @@ def _fetch_places_copd_wi() -> Dict[str, float]:
         logger.info("Using cached CDC PLACES COPD data")
         return cached
 
+    # Cache-only enforcement: see utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_places_copd")
+        return {}
+
     try:
         logger.info("Fetching CDC PLACES COPD data for Wisconsin counties")
         params = {
@@ -343,6 +357,12 @@ def _fetch_places_mhlth_wi() -> Dict[str, float]:
     if cached:
         logger.info("Using cached CDC PLACES MHLTH data")
         return cached
+
+    # Cache-only enforcement: see utils/request_context.py.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_places_mhlth")
+        return {}
 
     try:
         logger.info("Fetching CDC PLACES MHLTH (mental distress) data for Wisconsin counties")

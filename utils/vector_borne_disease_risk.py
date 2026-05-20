@@ -176,23 +176,108 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
     seasonal_factor = _get_seasonal_factor()
     climate_mult = _get_climate_multiplier(baseline)
 
-    if using_real_data:
-        from utils.vbd_data_fetcher import rate_to_score, classify_lyme_rate, classify_wnv_rate
+    # Defaults for shrinkage / reliability metadata (overwritten when real
+    # data is available; kept here so the metrics dict has a stable shape
+    # whether or not the EPHT CSVs have populated this county yet).
+    lyme_rate_observed = None
+    wnv_rate_observed = None
+    lyme_rate_shrunk = None
+    wnv_rate_shrunk = None
+    lyme_shrinkage_weight = None
+    wnv_shrinkage_weight = None
+    lyme_rate_ci = None
+    wnv_rate_ci = None
+    lyme_reliability = 'low'
+    wnv_reliability = 'low'
+    wnv_cases_annual = None
 
-        lyme_rate = real_data.get('lyme_avg_annual_rate') or 0
-        wnv_rate = real_data.get('wnv_avg_annual_rate') or 0
+    if using_real_data:
+        from utils.vbd_data_fetcher import (
+            rate_to_score,
+            classify_lyme_rate,
+            classify_wnv_rate,
+            get_statewide_background_rates,
+            apply_credibility_shrinkage,
+            compute_reliability,
+            poisson_rate_ci,
+            LYME_PRIOR_STRENGTH_K,
+            WNV_PRIOR_STRENGTH_K,
+        )
+
+        lyme_rate_observed = real_data.get('lyme_avg_annual_rate') or 0
+        wnv_rate_observed = real_data.get('wnv_avg_annual_rate') or 0
         wnv_total_5yr = real_data.get('wnv_total_cases_5yr') or 0
         lyme_cases = real_data.get('lyme_avg_annual_cases') or 0
         wnv_cases_5yr = real_data.get('wnv_total_cases_5yr') or 0
+        wnv_cases_annual = (
+            real_data.get('wnv_avg_annual_cases')
+            if real_data.get('wnv_avg_annual_cases') is not None
+            else (wnv_cases_5yr / 5.0 if wnv_cases_5yr else 0.0)
+        )
 
-        lyme_score = rate_to_score(lyme_rate, 'lyme')
-        wnv_score = rate_to_score(wnv_rate, 'wnv')
+        # Review finding H9: shrink crude rates toward the statewide
+        # background before they reach the scoring curve. Small counties
+        # (Florence, Menominee, Iron) have annual case counts in the
+        # single digits, so the unsmoothed rate per 100k swings by tens
+        # of points on a single observed case. The Buhlmann credibility
+        # weight w = c / (c + k) is equivalent to the posterior mean of
+        # a Poisson-Gamma model and is the standard small-area correction
+        # for rare-event incidence rates.
+        state_rates = get_statewide_background_rates()
+        lyme_shrink = apply_credibility_shrinkage(
+            observed_rate=lyme_rate_observed,
+            observed_cases=lyme_cases,
+            state_rate=state_rates['lyme'],
+            prior_strength_k=LYME_PRIOR_STRENGTH_K,
+        )
+        wnv_shrink = apply_credibility_shrinkage(
+            observed_rate=wnv_rate_observed,
+            observed_cases=wnv_cases_annual or 0.0,
+            state_rate=state_rates['wnv'],
+            prior_strength_k=WNV_PRIOR_STRENGTH_K,
+        )
+        lyme_rate_shrunk = lyme_shrink['rate']
+        wnv_rate_shrunk = wnv_shrink['rate']
+        lyme_shrinkage_weight = lyme_shrink['weight']
+        wnv_shrinkage_weight = wnv_shrink['weight']
 
-        lyme_tier = classify_lyme_rate(lyme_rate)
-        wnv_tier = classify_wnv_rate(wnv_rate, wnv_total_5yr)
+        # Score off the shrunk rate so the existing scoring curve does not
+        # need to be modified. Classification tiers still use the observed
+        # rate so the user-visible "Lyme tier" matches what EPHT publishes
+        # in its county tables, but the SCORE that drives the composite is
+        # smoothed.
+        lyme_score = rate_to_score(lyme_rate_shrunk, 'lyme')
+        wnv_score = rate_to_score(wnv_rate_shrunk, 'wnv')
 
-        logger.info(f"VBD real data for {county_name}: Lyme rate={lyme_rate}/100k (score={lyme_score:.3f}), "
-                    f"WNV rate={wnv_rate}/100k (score={wnv_score:.3f})")
+        lyme_tier = classify_lyme_rate(lyme_rate_observed)
+        wnv_tier = classify_wnv_rate(wnv_rate_observed, wnv_total_5yr)
+
+        # Per-disease and combined reliability tiers (low / medium / high).
+        # The combined tier follows the weakest disease (precautionary).
+        lyme_reliability = compute_reliability(lyme_cases)
+        wnv_reliability = compute_reliability(wnv_cases_annual or 0.0)
+
+        # 95% approximate CIs on the OBSERVED (unshrunk) rate, so the UI
+        # can show a confidence band around the per-100k figure that EPHT
+        # publishes. Shrunk rates intentionally do not get a CI -- they
+        # are a posterior point estimate and a credibility interval would
+        # require carrying the full posterior, which is out of scope.
+        lyme_rate_ci = poisson_rate_ci(lyme_cases, lyme_rate_observed)
+        wnv_rate_ci = poisson_rate_ci(wnv_cases_annual or 0.0, wnv_rate_observed)
+
+        # Preserve the legacy names downstream code consumes.
+        lyme_rate = lyme_rate_shrunk
+        wnv_rate = wnv_rate_shrunk
+
+        logger.info(
+            f"VBD real data for {county_name}: "
+            f"Lyme observed={lyme_rate_observed:.1f}/100k cases={lyme_cases:.1f} "
+            f"shrunk={lyme_rate_shrunk:.1f} w={lyme_shrinkage_weight:.2f} "
+            f"reliability={lyme_reliability}; "
+            f"WNV observed={wnv_rate_observed:.2f}/100k cases={(wnv_cases_annual or 0):.2f} "
+            f"shrunk={wnv_rate_shrunk:.2f} w={wnv_shrinkage_weight:.2f} "
+            f"reliability={wnv_reliability}"
+        )
     else:
         lyme_score = _get_tier_score(county_data['lyme_tier'], baseline)
         wnv_score = _get_tier_score(county_data['wnv_tier'], baseline)
@@ -210,11 +295,34 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
     case_rate_composite = (lyme_score * 0.65) + (wnv_score * 0.35)
     land_cover_factor = (forest_cover_factor * 0.60) + (deer_density_score * 0.40)
 
+    # Combined reliability across both diseases (weakest tier wins). When
+    # the underlying case counts are too small to support a stable rate,
+    # the review (H9) requires that we NOT amplify that rate with the
+    # climate trend multiplier -- doing so layers an additional source of
+    # spurious variation on top of an already noisy baseline. The gate is
+    # graduated: low reliability drops the climate boost entirely, medium
+    # reliability halves it, high reliability keeps the full boost.
+    if using_real_data:
+        from utils.vbd_data_fetcher import combine_reliability
+        combined_reliability = combine_reliability(lyme_reliability, wnv_reliability)
+    else:
+        # No EPHT data => tier-based fallback; treat as low-reliability so
+        # we do not stack a climate boost on top of a default tier estimate.
+        combined_reliability = 'low'
+
+    raw_climate_trend = min(1.0, case_rate_composite * climate_mult) - case_rate_composite
+    if combined_reliability == 'low':
+        climate_trend_gated = 0.0
+    elif combined_reliability == 'medium':
+        climate_trend_gated = raw_climate_trend * 0.5
+    else:
+        climate_trend_gated = raw_climate_trend
+
     exposure_factors = {
         'historical_case_rates': case_rate_composite,
         'land_cover_risk': land_cover_factor,
         'seasonal_activity': seasonal_factor,
-        'climate_trend': min(1.0, case_rate_composite * climate_mult) - case_rate_composite
+        'climate_trend': climate_trend_gated,
     }
 
     exposure_score = min(1.0, (
@@ -268,11 +376,16 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
 
         resilience_raw = max(0.1, min(0.9, resilience_raw))
 
-    health_factor = 1.0
+    # Use the vector_borne_disease health-impact factor (1.2 default), NOT the
+    # flood HIF that was used previously by mistake. VBD health consequences
+    # (Lyme, WNV) are unrelated to flood health burden, so using the flood key
+    # was producing incorrectly-amplified VBD scores in flood-prone counties
+    # and incorrectly-dampened VBD scores in non-flood counties.
+    health_factor = 1.2
     try:
-        health_factor = get_health_impact_factor(county_name, 'flood')
+        health_factor = get_health_impact_factor(county_name, 'vector_borne_disease')
     except Exception:
-        health_factor = 1.0
+        health_factor = 1.2
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -298,10 +411,36 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
     }
 
     if using_real_data:
-        metrics['lyme_incidence_rate'] = lyme_rate
+        # 'lyme_incidence_rate' historically held the value that drives
+        # the score; under H9 that is now the shrunk posterior rate.
+        # The OBSERVED (unshrunk) rate is exposed alongside it so the UI
+        # can show both and explain the difference.
+        metrics['lyme_incidence_rate'] = lyme_rate  # shrunk; drives the score
+        metrics['lyme_incidence_rate_observed'] = lyme_rate_observed
+        metrics['lyme_incidence_rate_shrunk'] = lyme_rate_shrunk
+        metrics['lyme_shrinkage_weight'] = round(lyme_shrinkage_weight, 3) if lyme_shrinkage_weight is not None else None
+        metrics['lyme_rate_ci_low'] = round(lyme_rate_ci['low'], 1) if lyme_rate_ci else None
+        metrics['lyme_rate_ci_high'] = round(lyme_rate_ci['high'], 1) if lyme_rate_ci else None
+        metrics['lyme_reliability'] = lyme_reliability
         metrics['lyme_avg_annual_cases'] = lyme_cases
-        metrics['wnv_incidence_rate'] = wnv_rate
+
+        metrics['wnv_incidence_rate'] = wnv_rate  # shrunk; drives the score
+        metrics['wnv_incidence_rate_observed'] = wnv_rate_observed
+        metrics['wnv_incidence_rate_shrunk'] = wnv_rate_shrunk
+        metrics['wnv_shrinkage_weight'] = round(wnv_shrinkage_weight, 3) if wnv_shrinkage_weight is not None else None
+        metrics['wnv_rate_ci_low'] = round(wnv_rate_ci['low'], 2) if wnv_rate_ci else None
+        metrics['wnv_rate_ci_high'] = round(wnv_rate_ci['high'], 2) if wnv_rate_ci else None
+        metrics['wnv_reliability'] = wnv_reliability
+        metrics['wnv_avg_annual_cases'] = round(wnv_cases_annual, 2) if wnv_cases_annual is not None else None
         metrics['wnv_total_cases_5yr'] = wnv_cases_5yr
+
+        metrics['vbd_reliability_combined'] = combined_reliability
+        metrics['vbd_climate_gate'] = (
+            'full' if combined_reliability == 'high'
+            else 'half' if combined_reliability == 'medium'
+            else 'suppressed'
+        )
+
         data_years = real_data.get('lyme_data_years', [])
         if data_years:
             metrics['data_period'] = f"{min(data_years)}-{max(data_years)}"
@@ -348,15 +487,31 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
 
 
 def _get_season_label() -> str:
+    """Return a human-readable label for the current vector-borne
+    disease season.
+
+    Review finding M11 (2026-05-20): the previous month-by-month if/elif
+    chain put the tick branches before the mosquito branches with
+    overlapping months (e.g. July and August appeared in both tick and
+    mosquito conditions), making the mosquito-only branches unreachable.
+    The condition order is now month-disjoint, and overlap months
+    return a combined "tick + mosquito" label so neither vector is
+    silently dropped from the UI.
+    """
     month = datetime.now().month
-    if month in [5, 6, 7]:
+    # Combined peak window: ticks (May-Jul) overlap mosquitoes (Jul-Aug)
+    # in July, and tick shoulder (Aug-Oct) overlaps mosquito shoulder
+    # (Jun, Sep) in August/September.
+    if month == 7:
+        return 'Peak tick and mosquito season'
+    if month == 8:
+        return 'Peak mosquito and active tick season'
+    if month in (5, 6):
         return 'Peak tick season'
-    elif month in [4, 8, 9, 10]:
+    if month == 9:
+        return 'Active tick and mosquito season'
+    if month in (4, 10):
         return 'Active tick season'
-    elif month in [7, 8]:
-        return 'Peak mosquito season'
-    elif month in [6, 9]:
-        return 'Active mosquito season'
-    elif month in [11, 12, 1, 2, 3]:
+    if month in (11, 12, 1, 2, 3):
         return 'Low season (winter)'
     return 'Moderate activity'

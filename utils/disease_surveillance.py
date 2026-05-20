@@ -65,19 +65,27 @@ def get_disease_metrics(county_name: str) -> Dict[str, Any]:
         ed_visit_data = surveillance_data.get('ed_visit_data', {})
         risk_indicators = surveillance_data.get('risk_indicators', {})
 
-        # Map statewide data to county-level estimates.
-        # NSSP provides statewide Wisconsin data; regional adjustment applies a
-        # small density-based modifier for counties in higher-density regions.
-        regional_adjustment = _get_regional_adjustment(county_name, surveillance_data)
+        # NSSP provides a Wisconsin-statewide respiratory signal only; it
+        # is applied uniformly to all 72 counties. Prior code multiplied
+        # this signal by a hand-coded population-density-tier modifier
+        # (0.8-1.2) that invented county-level variation not present in
+        # the source data. That code path has been removed entirely
+        # (review finding H4). The signal_scope and signal_granularity_note
+        # fields below qualify the metric so user-facing renderers do not
+        # present the statewide ILI/COVID/RSV activity scores or the
+        # ed_visit_pct percentages as county-specific surveillance.
 
         # Extract vaccination data
         vaccination_data = surveillance_data.get('vaccination_data', {})
 
-        # Build metrics structure from NSSP data
+        nssp_scope_note = (
+            'CDC NSSP Wisconsin statewide signal applied uniformly to all '
+            '72 counties (no county-level NSSP data is publicly published).'
+        )
         metrics = {
-            'ili_activity': _map_activity_to_score(statewide_activity.get('influenza', 'low')) * regional_adjustment,
-            'covid_activity': _map_activity_to_score(statewide_activity.get('covid19', 'minimal')) * regional_adjustment,
-            'rsv_activity': _map_activity_to_score(statewide_activity.get('rsv', 'minimal')) * regional_adjustment,
+            'ili_activity': _map_activity_to_score(statewide_activity.get('influenza', 'low')),
+            'covid_activity': _map_activity_to_score(statewide_activity.get('covid19', 'minimal')),
+            'rsv_activity': _map_activity_to_score(statewide_activity.get('rsv', 'minimal')),
             # ed_visit_pct: % of total ED visits per pathogen (CDC NSSP/ESSENCE)
             # Replaces lab positivity; reflects syndromic ED burden rather than lab test rate
             'ed_visit_pct': {
@@ -90,14 +98,22 @@ def get_disease_metrics(county_name: str) -> Dict[str, Any]:
                 'mmr_school_age': vaccination_data.get('mmr_vaccination', {}).get('children_5_18_years', 87.8),
                 'school_compliance': vaccination_data.get('school_vaccination', {}).get('meeting_minimum_requirements', 86.4),
             },
+            # Granularity metadata: ili/covid/rsv activity and ed_visit_pct are
+            # statewide signals. Templates should qualify any per-county text.
+            'signal_scope': 'statewide_wisconsin',
+            'signal_granularity_note': nssp_scope_note,
             'last_updated': surveillance_data.get('last_updated', datetime.now().isoformat()),
         }
 
-        # Risk score: NSSP combined_risk × vaccination risk multiplier × regional adjustment
+        # Risk score: NSSP combined_risk x vaccination risk multiplier.
+        # No regional adjustment is applied; per review finding H4, the
+        # underlying NSSP signal is statewide and the prior hand-coded
+        # density-tier multiplier was removed (it invented county-level
+        # variation that did not exist in the source data).
         dhs_combined_risk = risk_indicators.get('combined_risk', 0.45)
         vaccination_risk_assessment = _calculate_strategic_vaccination_risk(vaccination_data, county_name)
         base_risk_with_vaccination = dhs_combined_risk * vaccination_risk_assessment['risk_multiplier']
-        risk_score = min(1.0, max(0.0, base_risk_with_vaccination * regional_adjustment))
+        risk_score = min(1.0, max(0.0, base_risk_with_vaccination))
 
         # Activity level strings for display
         activity_levels = {
@@ -157,6 +173,14 @@ def get_disease_metrics(county_name: str) -> Dict[str, Any]:
                     'mmr_school_age': 87.8,
                     'school_compliance': 86.4,
                 },
+                # Granularity metadata (kept in fallback for shape consistency
+                # with the success path; see review finding H4).
+                'signal_scope': 'statewide_wisconsin',
+                'signal_granularity_note': (
+                    'CDC NSSP Wisconsin statewide signal applied uniformly to '
+                    'all 72 counties (no county-level NSSP data is publicly '
+                    'published).'
+                ),
                 'last_updated': datetime.now().isoformat(),
             },
             'activity_levels': {
@@ -183,80 +207,6 @@ def _map_activity_to_score(activity_level: str) -> float:
     }
     return activity_mapping.get(activity_level.lower(), 0.4)
 
-def _get_regional_adjustment(county_name: str, surveillance_data: Dict[str, Any]) -> float:
-    """
-    Get regional adjustment factor for county-specific disease risk
-    
-    Args:
-        county_name: Name of the county
-        surveillance_data: Statewide surveillance data from DHS
-        
-    Returns:
-        Adjustment factor (0.8-1.2) based on regional patterns
-    """
-    # Get regional data if available
-    regional_data = surveillance_data.get('regional_activity', {})
-    
-    # Map counties to DHS regions (simplified mapping)
-    county_to_region = {
-        # Southeastern region (higher population density)
-        'milwaukee': 'southeastern',
-        'waukesha': 'southeastern', 
-        'racine': 'southeastern',
-        'kenosha': 'southeastern',
-        'washington': 'southeastern',
-        'ozaukee': 'southeastern',
-        
-        # Southern region
-        'dane': 'southern',
-        'rock': 'southern',
-        'jefferson': 'southern',
-        'walworth': 'southern',
-        
-        # Fox Valley region
-        'winnebago': 'fox_valley',
-        'outagamie': 'fox_valley',
-        'brown': 'fox_valley',
-        'calumet': 'fox_valley',
-        
-        # Western region
-        'la_crosse': 'western',
-        'eau_claire': 'western',
-        'chippewa': 'western',
-        
-        # Northern region (lower population density)
-        'oneida': 'northern',
-        'vilas': 'northern',
-        'iron': 'northern'
-    }
-    
-    # Normalize county name for lookup
-    county_key = county_name.lower().replace(' ', '_').replace('county', '').strip()
-    region = county_to_region.get(county_key, 'other')
-    
-    # Regional adjustment factors based on population density and historical patterns
-    regional_adjustments = {
-        'southeastern': 1.1,  # Higher risk due to population density
-        'southern': 1.05,     # Moderate adjustment for urban areas
-        'fox_valley': 1.0,    # Baseline
-        'western': 0.95,      # Slightly lower rural risk
-        'northern': 0.9,      # Lower risk in less dense areas
-        'other': 1.0          # Default for unmapped counties
-    }
-    
-    base_adjustment = regional_adjustments.get(region, 1.0)
-    
-    # Check if regional data provides specific activity levels
-    if regional_data and region in regional_data:
-        region_activity = regional_data[region].get('activity_level', 'low')
-        if region_activity == 'high':
-            base_adjustment *= 1.1
-        elif region_activity == 'minimal':
-            base_adjustment *= 0.9
-    
-    # Ensure adjustment stays within reasonable bounds
-    return max(0.8, min(1.2, base_adjustment))
-
 def _calculate_strategic_vaccination_risk(
     vaccination_data: Dict[str, Any],
     county_name: str,
@@ -273,11 +223,16 @@ def _calculate_strategic_vaccination_risk(
     (CDC/WHO guidance updated 2022-2024).
 
     Active outbreak detection:
-      - ``active_measles_outbreak`` defaults to False and should only be set
-        True when the WI DHS communicable disease surveillance system (not the
-        respiratory NREVSS/ESSENCE PDF) confirms an active case cluster.
-        CARA does not currently ingest DHS communicable disease data in real
-        time, so this flag is False unless a future data connector sets it.
+      - ``active_measles_outbreak`` is a live STATEWIDE WISCONSIN signal
+        sourced from CDC NNDSS Weekly Data (see utils/nndss_communicable.py).
+        It fires True when CDC reports any indigenous WI measles case in
+        the last 4 reported weeks, any indigenous YTD case where YTD is
+        running at or ahead of the prior year, or more than 2 imported
+        cases in the last 4 reported weeks. Because NNDSS is published at
+        state-level only (county-level WEDSS data is not publicly
+        accessible), the same flag is applied uniformly to all 72
+        counties; downstream consumers must label any rendered policy
+        text as a statewide signal, not a county-specific outbreak.
 
     Args:
         vaccination_data: Vaccination data from Wisconsin DHS
@@ -354,24 +309,68 @@ def _calculate_strategic_vaccination_risk(
     }
 
     # === OUTBREAK RISK INDICATORS ===
-    # active_measles_outbreak: False by default.
-    # CARA ingests only the NREVSS/ESSENCE respiratory PDF (flu, COVID, RSV).
-    # Measles outbreak status requires DHS communicable disease surveillance,
-    # which CARA does not currently fetch in real time.  This flag must be
-    # set to True manually or via a future DHS communicable-disease connector
-    # when an active cluster is confirmed.
-    active_measles_outbreak = False
+    # Granular measles flags from CDC NNDSS Weekly Data. See
+    # utils/nndss_communicable.py for the full data flow. Three flags
+    # are now exposed because the prior umbrella flag conflated three
+    # operationally distinct signals (CDC/CSTE distinguishes acute
+    # local transmission from import pressure from year-to-date
+    # elevated incidence; each drives a different response posture):
+    #
+    #   active_local_transmission  - indigenous case in last 4 weeks
+    #                                (the only signal that warrants
+    #                                acute "active outbreak" language)
+    #   import_pressure_elevated   - more than 2 imported cases in
+    #                                last 4 weeks (NOT itself an
+    #                                outbreak; elevates spread risk)
+    #   ytd_elevated               - indigenous YTD case AND YTD >=
+    #                                prior YTD (year-level vulnerability)
+    #
+    # GRANULARITY: All three are statewide signals applied uniformly
+    # to all 72 counties (WEDSS county-level case data is not publicly
+    # accessible).
+    try:
+        from utils.nndss_communicable import get_measles_outbreak_flags
+        _measles_flags = get_measles_outbreak_flags()
+        active_local_transmission = _measles_flags['active_local_transmission']
+        import_pressure_elevated = _measles_flags['import_pressure_elevated']
+        ytd_elevated = _measles_flags['ytd_elevated']
+        active_measles_outbreak = _measles_flags['active_measles_outbreak']
+        outbreak_signal_source = 'cdc_nndss'
+    except Exception as exc:
+        logger.warning(f"NNDSS measles flags unavailable, defaulting to False: {exc}")
+        active_local_transmission = False
+        import_pressure_elevated = False
+        ytd_elevated = False
+        active_measles_outbreak = False
+        outbreak_signal_source = 'unavailable'
     outbreak_conditions = {
+        # Umbrella flag (OR of the three granular flags) - kept for
+        # backward compatibility with templates and downstream consumers.
         'active_measles_outbreak': active_measles_outbreak,
+        # Granular flags - new code should prefer these so that import
+        # pressure and YTD-elevated incidence are not mislabeled as
+        # active community transmission.
+        'active_local_transmission': active_local_transmission,
+        'import_pressure_elevated': import_pressure_elevated,
+        'ytd_elevated': ytd_elevated,
+        # Granularity metadata: NNDSS publishes WI at state level only;
+        # the same signal is broadcast to all 72 counties. Downstream
+        # renderers must use these fields to qualify any user-facing text.
+        'outbreak_signal_scope': 'statewide_wisconsin',
+        'outbreak_signal_source': outbreak_signal_source,
         'below_measles_threshold': mmr_rate < 95.0,
         'school_vulnerability': school_compliance < 90.0,
         'multiple_gaps': sum(1 for gap in gaps.values() if gap > 5.0) >= 2,
     }
 
     # === SCHOOL VULNERABILITY INDEX ===
-    # Schools are outbreak amplifiers - special assessment needed
+    # Pure vaccination-compliance signal (MMR + school compliance gaps).
+    # Intentionally does NOT incorporate the live outbreak flag: the
+    # outbreak signal is applied to the multiplier directly below, and
+    # folding it into the school index as well caused the same statewide
+    # signal to be counted three times in the multiplier (review H1).
     school_vulnerability_score = _calculate_school_vulnerability_index(
-        mmr_rate, school_compliance, outbreak_conditions['active_measles_outbreak']
+        mmr_rate, school_compliance
     )
 
     # === STRATEGIC RISK MULTIPLIER CALCULATION ===
@@ -385,11 +384,25 @@ def _calculate_strategic_vaccination_risk(
     if gaps['school_compliance_gap'] > 5.0:
         base_multiplier += gaps['school_compliance_gap'] * 0.02
 
-    # Active outbreak emergency multiplier (only fires when outbreak is confirmed)
-    if outbreak_conditions['active_measles_outbreak'] and outbreak_conditions['below_measles_threshold']:
-        base_multiplier += 0.3
+    # Outbreak pathway: mutually exclusive, severity-ordered contributions
+    # from the three granular NNDSS flags, capped at +0.30 total. Replaces
+    # the prior triple-count (direct +0.30 boost AND +0.40 inside school
+    # index AND +0.20 from school index breaching 0.7) flagged in review H1.
+    # Only fires when local population immunity is also inadequate
+    # (MMR < 95%); a strong-immunity county does not get the boost.
+    outbreak_boost = 0.0
+    if outbreak_conditions['below_measles_threshold']:
+        if active_local_transmission:
+            outbreak_boost = 0.30   # acute local community spread
+        elif import_pressure_elevated:
+            outbreak_boost = 0.15   # sustained import pressure (not local spread)
+        elif ytd_elevated:
+            outbreak_boost = 0.10   # year-level elevated incidence only
+    outbreak_boost = min(0.30, outbreak_boost)
+    base_multiplier += outbreak_boost
 
-    # School vulnerability emergency adjustment
+    # School vulnerability emergency adjustment (pure undervaccination
+    # signal; no longer compounds with the outbreak boost above).
     if school_vulnerability_score > 0.7:
         base_multiplier += 0.2
 
@@ -411,13 +424,66 @@ def _calculate_strategic_vaccination_risk(
             'action_needed': 'Immediate school-based vaccination campaigns'
         })
 
-    if outbreak_conditions['active_measles_outbreak']:
-        policy_flags.append({
-            'level': 'EMERGENCY',
-            'issue': 'Active measles outbreak with inadequate population immunity',
-            'gap': f"Population immunity at {mmr_rate:.1f}%, need 95% for control",
-            'action_needed': 'Emergency vaccination orders, school exclusion policies'
-        })
+    # Policy flags now reflect the granular CSTE-aligned classification.
+    # Only true active local transmission warrants EMERGENCY language;
+    # import pressure and YTD elevated incidence are operationally
+    # distinct and surface at lower priority levels. Wording and
+    # severity are also gated by below_measles_threshold so that a
+    # county at or above 95% MMR is not described as having inadequate
+    # immunity (keeps policy text consistent with the multiplier
+    # pathway, which only fires when immunity is also inadequate).
+    below_threshold = outbreak_conditions['below_measles_threshold']
+    if active_local_transmission:
+        if below_threshold:
+            policy_flags.append({
+                'level': 'EMERGENCY',
+                'issue': 'Active local measles transmission in Wisconsin with inadequate local population immunity',
+                'gap': f"Population immunity at {mmr_rate:.1f}%, need 95% for control",
+                'action_needed': 'Emergency vaccination orders, school exclusion policies',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, indigenous case in last 4 weeks)',
+            })
+        else:
+            policy_flags.append({
+                'level': 'HIGH_PRIORITY',
+                'issue': 'Active local measles transmission in Wisconsin (local immunity meets the 95% threshold)',
+                'gap': f"Population immunity at {mmr_rate:.1f}%; threshold met but active spread observed",
+                'action_needed': 'Targeted contact tracing, ring vaccination, monitor for community spread',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, indigenous case in last 4 weeks)',
+            })
+    elif import_pressure_elevated:
+        if below_threshold:
+            policy_flags.append({
+                'level': 'HIGH_PRIORITY',
+                'issue': 'Elevated measles import pressure in Wisconsin with inadequate local population immunity (no current local transmission)',
+                'gap': f"Population immunity at {mmr_rate:.1f}%, need 95% to prevent spread from imports",
+                'action_needed': 'Heightened surveillance, traveler screening, school MMR catch-up campaigns',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, >2 imported cases in last 4 weeks)',
+            })
+        else:
+            policy_flags.append({
+                'level': 'MEDIUM_PRIORITY',
+                'issue': 'Elevated measles import pressure in Wisconsin (no current local transmission)',
+                'gap': f"Population immunity at {mmr_rate:.1f}% (threshold met); maintain vigilance",
+                'action_needed': 'Heightened surveillance and traveler screening',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, >2 imported cases in last 4 weeks)',
+            })
+    elif ytd_elevated:
+        if below_threshold:
+            policy_flags.append({
+                'level': 'MEDIUM_PRIORITY',
+                'issue': 'Year-to-date measles incidence elevated vs prior year with inadequate local population immunity (no active local transmission)',
+                'gap': f"Population immunity at {mmr_rate:.1f}%, need 95% to maintain control",
+                'action_needed': 'Maintain enhanced surveillance, target catch-up vaccination',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, YTD indigenous cases >= prior YTD)',
+            })
+        else:
+            policy_flags.append({
+                'level': 'SEASONAL_PRIORITY',
+                'issue': 'Year-to-date measles incidence elevated vs prior year (no active local transmission)',
+                'gap': f"Population immunity at {mmr_rate:.1f}% (threshold met)",
+                'action_needed': 'Continue routine surveillance',
+                'signal_scope': 'statewide_wisconsin (CDC NNDSS, YTD indigenous cases >= prior YTD)',
+            })
 
     if school_vulnerability_score > 0.6:
         policy_flags.append({
@@ -445,29 +511,33 @@ def _calculate_strategic_vaccination_risk(
         'framework_type': 'strategic_vaccination_risk_v2.2',
     }
 
-def _calculate_school_vulnerability_index(mmr_rate: float, school_compliance: float, active_outbreak: bool) -> float:
-    """Calculate school-specific vulnerability to disease outbreaks"""
-    
+def _calculate_school_vulnerability_index(mmr_rate: float, school_compliance: float) -> float:
+    """Calculate school-specific vulnerability to disease outbreaks.
+
+    Pure structural undervaccination signal: a function of MMR coverage
+    and school-entry compliance only. Intentionally does NOT take the
+    live outbreak flag as input. The outbreak signal is applied to the
+    risk multiplier directly by the caller; folding it in here as well
+    caused the same statewide flag to be counted three times in the
+    final multiplier (see review finding H1).
+    """
+
     # Base vulnerability from vaccination gaps
     base_vulnerability = 0.0
-    
+
     # MMR gap creates direct vulnerability (measles spreads rapidly in schools)
     if mmr_rate < 95.0:
         mmr_vulnerability = (95.0 - mmr_rate) / 95.0  # Normalized gap
         base_vulnerability += mmr_vulnerability * 0.6  # 60% weight for MMR gap
-    
+
     # School compliance gap indicates systemic issues
     if school_compliance < 90.0:
         compliance_vulnerability = (90.0 - school_compliance) / 90.0
         base_vulnerability += compliance_vulnerability * 0.3  # 30% weight for compliance
-    
-    # Active outbreak dramatically increases school vulnerability
-    if active_outbreak:
-        base_vulnerability += 0.4  # 40% emergency increase
-    
+
     # Age-based transmission amplification (schools have higher transmission)
     school_amplification_factor = 1.2
-    
+
     final_vulnerability = min(1.0, base_vulnerability * school_amplification_factor)
     return final_vulnerability
 
@@ -496,6 +566,11 @@ def _get_fallback_vaccination_risk_assessment() -> Dict[str, Any]:
         },
         'outbreak_conditions': {
             'active_measles_outbreak': False,
+            'active_local_transmission': False,
+            'import_pressure_elevated': False,
+            'ytd_elevated': False,
+            'outbreak_signal_scope': 'statewide_wisconsin',
+            'outbreak_signal_source': 'unavailable',
             'below_measles_threshold': True,
             'school_vulnerability': True,
             'multiple_gaps': True,

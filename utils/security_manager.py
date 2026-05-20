@@ -311,6 +311,100 @@ def require_api_key(required_level='readonly'):
     return decorator
 
 
+def require_same_origin_or_api_key(api_key_level: str = 'write'):
+    """Decorator that gates state-changing requests (POST/PUT/PATCH/DELETE)
+    on either a same-origin browser session or a valid API key. GET and
+    HEAD requests are allowed through unchanged so existing UI flows
+    (and read-only deep links) are not broken.
+
+    Closes review finding M4 (2026-05-20) for `routes/gis_export.py`
+    state-changing endpoints which previously had no auth or CSRF
+    protection. Strategy:
+
+      - GET / HEAD: allowed through (still subject to global Flask-Limiter
+        rate limits configured by SecurityManager).
+      - POST / PUT / PATCH / DELETE:
+          1. If the request carries a valid `X-API-Key` (or Bearer
+             token) at `api_key_level`, allow as a programmatic API
+             call and populate `g.api_access_level`.
+          2. Else, require that the request `Origin` header is present
+             AND matches `request.host_url` exactly. This is the
+             standard browser-CSRF defense: a victim browser triggered
+             from a malicious site cannot suppress or rewrite the
+             Origin header (it is set automatically by the user agent
+             and cannot be overridden from JavaScript). Referer alone
+             is NOT accepted because Referer can be stripped or
+             modified by privacy proxies, and prefix-matching Referer
+             is too loose. A missing Origin on a mutating request
+             from an unauthenticated client is rejected.
+          3. If neither check passes, return 403.
+
+    Threat model note: this guard defends against the standard CSRF
+    attack (malicious site causes a victim browser to issue a
+    cross-site POST to /api/gis/*). It does NOT pretend to be access
+    control against scripted clients like curl/bots, which can spoof
+    any header they choose. Anonymous scripted abuse is bounded by
+    the Flask-Limiter rate limits applied to /api/* in
+    SecurityManager._setup_rate_limiting. If/when CARA grows
+    authenticated mutating endpoints, upgrade these to a session-
+    cookie + signed CSRF token scheme.
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if request.method in ('GET', 'HEAD', 'OPTIONS'):
+                return f(*args, **kwargs)
+
+            api_key = (
+                request.headers.get('X-API-Key') or
+                request.headers.get('Authorization', '').replace('Bearer ', '')
+            )
+            if api_key:
+                validation_result = security_manager.validate_api_key(
+                    api_key, api_key_level,
+                )
+                if validation_result['valid']:
+                    g.api_access_level = validation_result['access_level']
+                    g.api_permissions = validation_result['permissions']
+                    return f(*args, **kwargs)
+                log_security_event('export_endpoint_invalid_api_key', {
+                    'endpoint': request.endpoint,
+                    'error': validation_result.get('error'),
+                })
+                return jsonify({
+                    'success': False,
+                    'error': validation_result.get('error', 'Invalid API key'),
+                }), 401
+
+            # No API key: enforce strict same-origin via the Origin
+            # header. Referer is intentionally NOT used as a fallback
+            # (see threat model in docstring). A mutating request with
+            # a missing or mismatched Origin is rejected.
+            host_url = (request.host_url or '').rstrip('/')
+            origin = (request.headers.get('Origin') or '').rstrip('/')
+            if host_url and origin and origin == host_url:
+                return f(*args, **kwargs)
+
+            log_security_event('export_endpoint_csrf_blocked', {
+                'endpoint': request.endpoint,
+                'origin': origin or None,
+                'referer': request.headers.get('Referer'),
+                'remote_addr': request.remote_addr,
+            })
+            return jsonify({
+                'success': False,
+                'error': (
+                    'State-changing requests require either a same-origin '
+                    'browser session or a valid X-API-Key header.'
+                ),
+            }), 403
+
+        return decorated_function
+
+    return decorator
+
+
 def setup_security(app):
     """Initialize security features for the CARA application."""
     

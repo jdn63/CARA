@@ -21,76 +21,56 @@ from functools import wraps
 
 from flask import current_app, has_app_context
 
+from utils.source_registry import (
+    CANONICAL_SOURCES as _CANONICAL_SOURCES,
+    canonicalize as _canonicalize,
+)
+
 logger = logging.getLogger(__name__)
 
+# Derived from utils.source_registry. SOURCE_TYPES used to be a
+# hand-maintained dict that drifted from the scheduler / freshness
+# tables; it is now a thin projection of the canonical registry so the
+# three layers can never disagree about cadence or expiry.
 SOURCE_TYPES = {
-    'cdc_svi': {
-        'name': 'CDC Social Vulnerability Index',
-        'refresh_cadence': 'annual',
-        'expiry_days': 365,
-        'description': 'Social vulnerability data for disaster preparedness'
-    },
-    'fema_nri': {
-        'name': 'FEMA National Risk Index',
-        'refresh_cadence': 'annual',
-        'expiry_days': 365,
-        'description': 'Natural hazard risk indices'
-    },
-    'dhs_health': {
-        'name': 'DHS Health Metrics',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 7,
-        'description': 'Health surveillance data from Wisconsin DHS'
-    },
-    'nws_forecast': {
-        'name': 'NWS Weather Forecasts',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 7,
-        'description': 'Weather forecasts and alerts'
-    },
-    'epa_air_quality': {
-        'name': 'EPA Air Quality',
-        'refresh_cadence': 'daily',
-        'expiry_days': 1,
-        'description': 'Air quality index data from EPA AirNow'
-    },
-    'openfema_disaster_declarations': {
-        'name': 'FEMA Disaster Declarations',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 30,
-        'description': 'Federal disaster declarations per county from OpenFEMA'
-    },
-    'openfema_nfip_claims': {
-        'name': 'NFIP Flood Claims',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 30,
-        'description': 'NFIP flood insurance claims per county from OpenFEMA'
-    },
-    'openfema_hma_projects': {
-        'name': 'Hazard Mitigation Projects',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 30,
-        'description': 'Hazard mitigation assistance projects per county from OpenFEMA'
-    },
-    'noaa_storm_events': {
-        'name': 'NOAA Storm Events',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 7,
-        'description': 'Historical severe weather events per county from NCEI Storm Events Database'
-    },
-    'nid_dam_inventory': {
-        'name': 'NID Dam Inventory',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 30,
-        'description': 'Dam counts, hazard classifications, and EAP status per county from USACE National Inventory of Dams'
-    },
-    'dhs_vbd_surveillance': {
-        'name': 'DHS EPHT VBD Surveillance',
-        'refresh_cadence': 'weekly',
-        'expiry_days': 7,
-        'description': 'Vector-borne disease surveillance data (Lyme, WNV) from WI DHS EPHT and Vectorborne Disease Program'
+    cid: {
+        'name': spec.display_name,
+        'refresh_cadence': (
+            'daily' if spec.refresh_interval_hours <= 24
+            else 'weekly' if spec.refresh_interval_hours <= 168
+            else 'monthly' if spec.refresh_interval_hours <= 720
+            else 'quarterly' if spec.refresh_interval_hours <= 2160
+            else 'annual'
+        ),
+        'expiry_days': max(1, spec.freshness_max_age_days),
+        'description': spec.description,
     }
+    for cid, spec in _CANONICAL_SOURCES.items()
 }
+
+
+def _normalize_source_type(source_type: str) -> str:
+    """Canonicalize a legacy or canonical source_type label.
+
+    Cache reads and writes accept either the canonical ID (preferred)
+    or any legacy alias still hardcoded in older callers. Returning the
+    canonical form here means the DB only ever sees canonical strings,
+    so the data_source_cache.source_type column converges on the
+    canonical vocabulary as rows are refreshed.
+    """
+    canonical = _canonicalize(source_type)
+    if canonical is None:
+        # Unknown sources are passed through so unrelated misuse (e.g.
+        # a typo) still raises a clean DB error rather than being
+        # silently swallowed. Log loudly so the startup assertion can
+        # later flag the same issue.
+        logger.warning(
+            "data_cache_manager: source_type '%s' is not in the canonical "
+            "registry; storing as-is. Add it to utils.source_registry.",
+            source_type,
+        )
+        return source_type
+    return canonical
 
 REFRESH_INTERVALS = {
     'annual': timedelta(days=365),
@@ -133,10 +113,12 @@ def get_cached_data(
     session = get_db_session()
     if not session:
         return None
-    
+
+    source_type = _normalize_source_type(source_type)
+
     try:
         from models import DataSourceCache
-        
+
         query = session.query(DataSourceCache).filter(
             DataSourceCache.source_type == source_type,
             DataSourceCache.is_valid == True
@@ -199,10 +181,12 @@ def save_cached_data(
     session = get_db_session()
     if not session:
         return False
-    
+
+    source_type = _normalize_source_type(source_type)
+
     try:
         from models import DataSourceCache, DataQualityEvent
-        
+
         source_config = SOURCE_TYPES.get(source_type, {})
         expiry_days = source_config.get('expiry_days', 7)
         
@@ -480,7 +464,7 @@ def get_air_quality_from_cache(county_name: str) -> Optional[Dict[str, Any]]:
     Get air quality data from cache with freshness metadata.
     Falls back to live fetch if cache miss.
     """
-    cached = get_cached_data('epa_air_quality', county_name=county_name)
+    cached = get_cached_data('airnow', county_name=county_name)
     if cached and cached.get('is_fresh'):
         data = cached['data']
         data['_from_cache'] = True
@@ -510,7 +494,7 @@ def get_weather_from_cache(county_name: str) -> Optional[Dict[str, Any]]:
     Get weather forecast data from cache with freshness metadata.
     Falls back to live fetch if cache miss.
     """
-    cached = get_cached_data('nws_forecast', county_name=county_name)
+    cached = get_cached_data('nws_heat', county_name=county_name)
     if cached and cached.get('is_fresh'):
         data = cached['data']
         data['_from_cache'] = True

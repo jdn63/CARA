@@ -150,19 +150,31 @@ def fetch_nssp_wi_respiratory() -> Dict[str, Any]:
         )
         return cached
 
+    # Cache-only enforcement: if this fetcher is called from the user
+    # dashboard request path (process_risk_data), live HTTP is forbidden.
+    # The scheduler job refresh_all_nssp_respiratory must warm the cache.
+    from utils.request_context import is_cache_only_mode, record_blocked_fetch
+    if is_cache_only_mode():
+        record_blocked_fetch("cdc_nssp_respiratory")
+        return _fallback()
+
     try:
-        resp = requests.get(
-            NSSP_ENDPOINT,
-            params={
-                "$where": "geography='Wisconsin'",
-                "$order": "week_end DESC",
-                "$limit": 36,
-            },
-            headers={"User-Agent": _SCRAPER_UA},
-            timeout=20,
-        )
-        resp.raise_for_status()
-        rows = resp.json()
+        from utils.http_client import fetch_json, CircuitOpenError
+        try:
+            rows = fetch_json(
+                source_id='cdc_nssp',
+                url=NSSP_ENDPOINT,
+                params={
+                    "$where": "geography='Wisconsin'",
+                    "$order": "week_end DESC",
+                    "$limit": 36,
+                },
+                headers={"User-Agent": _SCRAPER_UA},
+                timeout=20,
+            )
+        except CircuitOpenError as exc:
+            logger.warning(f"NSSP fetch refused by circuit breaker: {exc}")
+            return _fallback()
 
         if not rows:
             logger.warning("NSSP API: empty response for Wisconsin")
@@ -195,7 +207,14 @@ def fetch_nssp_wi_respiratory() -> Dict[str, Any]:
         covid_pct = current.get("covid19", 0.0)
         rsv_pct = current.get("rsv", 0.0)
 
-        prior_week = sorted_weeks[3] if len(sorted_weeks) > 3 else None
+        # Trend is true week-over-week: compare the most recent reporting
+        # week to the immediately preceding week, not to ~4 weeks ago.
+        # Review finding M8 (2026-05-20) corrected the prior index of [3]
+        # which silently turned the user-facing "vs prior week" label
+        # into a four-week-ago delta. NSSP rows are sorted by week_end
+        # descending, so sorted_weeks[1] is the true prior reporting
+        # week if at least two weeks of data are present.
+        prior_week = sorted_weeks[1] if len(sorted_weeks) > 1 else None
         prior = by_week[prior_week] if prior_week else {}
 
         flu_trend = _trend(flu_pct, prior.get("influenza", flu_pct))

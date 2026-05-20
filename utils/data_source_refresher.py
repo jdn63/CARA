@@ -13,6 +13,7 @@ IMPORTANT: All refresh functions must run within Flask app context for database 
 """
 
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -338,68 +339,115 @@ def refresh_all_nws_forecasts() -> Dict[str, Any]:
 
 
 def refresh_all_fema_nri() -> Dict[str, Any]:
-    """
-    Refresh FEMA National Risk Index data for all Wisconsin counties.
-    Called annually by scheduler.
-    Wraps in app context for database access from background threads.
+    """Verify the FEMA National Risk Index static dataset.
+
+    FEMA NRI is published as a static CSV (annual release); there is no live
+    REST API to refresh against. Earlier versions of this function called
+    FEMARAPTConnector.get_correctional_facilities() and saved the result
+    under the fema_nri cache key, which silently overwrote NRI metadata
+    with unrelated correctional facility data.
+
+    This implementation does the right thing: it locates the bundled NRI
+    CSV (preferring the Wisconsin-filtered census-tract file used by the
+    rest of the app), records its modification age, and saves a small
+    metadata entry under the fema_nri cache key so the dashboard's data
+    freshness panel reflects when the static file was last updated.
+
+    The actual NRI data is still loaded on demand by
+    utils.data_processor.load_nri_data() / utils.risk_calculation; this
+    job exists to surface freshness information, not to mutate the file.
     """
     app = _get_app()
     if not app:
         return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
-    
+
     with app.app_context():
         from utils.data_cache_manager import save_cached_data
         from utils.svi_data import WI_COUNTY_FIPS
-        
+
         results = {
             'source_type': 'fema_nri',
             'started_at': datetime.utcnow().isoformat(),
             'success': 0,
             'failed': 0,
             'fallback': 0,
-            'errors': []
+            'errors': [],
         }
-        
-        logger.info("Starting FEMA NRI data refresh for all counties")
-        
+
+        candidate_paths = [
+            'attached_assets/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv',
+            'data/nri/NRI_Table_Counties.csv',
+            'attached_assets/NRI_Table_Counties.csv',
+        ]
+
+        nri_path = next((p for p in candidate_paths if os.path.exists(p)), None)
+
+        if not nri_path:
+            logger.warning(
+                "FEMA NRI static file not found in any expected location; "
+                "skipping freshness update."
+            )
+            results['errors'].append({
+                'error': 'NRI CSV not found',
+                'searched_paths': candidate_paths,
+            })
+            results['finished_at'] = datetime.utcnow().isoformat()
+            return results
+
         try:
-            from utils.fema_rapt_connector import FEMARAPTConnector
-            connector = FEMARAPTConnector()
-            facilities_data = connector.get_correctional_facilities()
-            
-            for county_name in WI_COUNTY_FIPS.keys():
-                try:
-                    county_key = county_name.title()
-                    data = facilities_data.get(county_key, {})
-                    
-                    if not data:
-                        data = {'facilities': [], 'weights': {}}
-                    
-                    success = save_cached_data(
-                        source_type='fema_nri',
-                        data=data,
-                        county_name=county_name,
-                        api_source='FEMA RAPT API',
-                        used_fallback=True,
-                        fallback_reason='Limited FEMA data available'
-                    )
-                    
-                    if success:
-                        results['fallback'] += 1
-                    else:
-                        results['failed'] += 1
-                        
-                except Exception as e:
+            stat = os.stat(nri_path)
+            file_size_bytes = stat.st_size
+            file_mtime = datetime.utcfromtimestamp(stat.st_mtime)
+            file_age_days = max(0, (datetime.utcnow() - file_mtime).days)
+        except OSError as exc:
+            logger.error(f"Unable to stat NRI file {nri_path}: {exc}")
+            results['errors'].append({'error': f'stat failed: {exc}'})
+            results['finished_at'] = datetime.utcnow().isoformat()
+            return results
+
+        metadata = {
+            'source': 'FEMA National Risk Index (static CSV release)',
+            'file_path': nri_path,
+            'file_size_bytes': file_size_bytes,
+            'file_modified_at': file_mtime.isoformat(),
+            'file_age_days': file_age_days,
+            'description': (
+                'FEMA NRI ships as an annual static CSV. This entry records '
+                'the bundled file metadata so freshness reporting can flag '
+                'an outdated NRI release. The actual NRI values are read '
+                'directly from the CSV at calculation time.'
+            ),
+            'verified_at': datetime.utcnow().isoformat(),
+        }
+
+        logger.info(
+            "FEMA NRI static file verified: %s (%.1f MB, %d days old)",
+            nri_path, file_size_bytes / (1024 * 1024), file_age_days,
+        )
+
+        for county_name in WI_COUNTY_FIPS.keys():
+            try:
+                ok = save_cached_data(
+                    source_type='fema_nri',
+                    data=metadata,
+                    county_name=county_name,
+                    api_source=nri_path,
+                    used_fallback=False,
+                )
+                if ok:
+                    results['success'] += 1
+                else:
                     results['failed'] += 1
-                    results['errors'].append({'county': county_name, 'error': str(e)})
-                    
-        except Exception as e:
-            logger.error(f"Error connecting to FEMA: {e}")
-            results['errors'].append({'error': str(e)})
-        
+            except Exception as e:
+                results['failed'] += 1
+                results['errors'].append({'county': county_name, 'error': str(e)})
+
         results['finished_at'] = datetime.utcnow().isoformat()
-        logger.info(f"FEMA NRI refresh complete: {results['success']} success, {results['fallback']} fallback, {results['failed']} failed")
-        
+        logger.info(
+            "FEMA NRI freshness verification complete: %d success, %d failed "
+            "(file age: %d days)",
+            results['success'], results['failed'], file_age_days,
+        )
         return results
 
 
@@ -681,6 +729,228 @@ def refresh_all_nid_dam_inventory() -> Dict[str, Any]:
         return results
 
 
+def refresh_all_wi_dhs_hvi() -> Dict[str, Any]:
+    """
+    Refresh the Wisconsin DHS Heat Vulnerability Index cache.
+
+    Paginates the DHS HVI ArcGIS MapServer layer once (4,472 Census
+    block groups), aggregates to a 72-county table via unweighted mean
+    of block-group z-scores, writes the persistent cache and a
+    human-readable JSON snapshot.  HVI updates on a multi-year cadence
+    so this job is registered quarterly by data_refresh_scheduler.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.wi_dhs_hvi import fetch_bulk_hvi_data, populate_cache_from_bulk
+
+        results = {
+            'source_type': 'wi_dhs_hvi',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'errors': [],
+        }
+
+        try:
+            start = time.time()
+            table = fetch_bulk_hvi_data()
+            duration = time.time() - start
+
+            if not table:
+                results['failed'] = 1
+                results['errors'].append({'error': 'Bulk HVI fetch returned empty'})
+                logger.error("WI DHS HVI refresh failed: empty bulk result")
+            else:
+                written = populate_cache_from_bulk(table)
+                results['success'] = written
+                results['failed'] = max(0, len(table) - written)
+                logger.info(
+                    f"WI DHS HVI refresh: {written} counties cached in {duration:.1f}s"
+                )
+        except Exception as e:
+            results['failed'] = 1
+            results['errors'].append({'error': str(e)})
+            logger.error(f"WI DHS HVI refresh exception: {e}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_nssp_respiratory() -> Dict[str, Any]:
+    """
+    Refresh the CDC NSSP Wisconsin respiratory surveillance cache.
+
+    NSSP publishes statewide percent-of-ED-visits for Influenza,
+    COVID-19, and RSV weekly (Fridays). The data is statewide-only,
+    so a single fetch warms the cache for all 72 counties; we record
+    the result as a single source entry with county_name=None.
+
+    Called weekly by the scheduler so the dashboard does not have to
+    wait on a cold-cache live fetch on the first user request after
+    each Friday refresh.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.wisconsin_dhs_scraper import refresh_dhs_surveillance_data
+
+        results: Dict[str, Any] = {
+            'source_type': 'nssp_respiratory',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'fallback': 0,
+            'errors': [],
+        }
+
+        try:
+            start = time.time()
+            ok = refresh_dhs_surveillance_data()
+            duration = time.time() - start
+
+            if ok:
+                results['success'] = 1
+                logger.info(
+                    f"NSSP respiratory refresh: cache warmed in {duration:.1f}s"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning(
+                    "NSSP respiratory refresh: completed but data_source != 'nssp_ed_visits' "
+                    "(fallback path used). Cache was still updated."
+                )
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"NSSP respiratory refresh exception: {exc}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_cdc_nndss_communicable() -> Dict[str, Any]:
+    """
+    Refresh the CDC NNDSS Wisconsin communicable disease cache.
+
+    NNDSS publishes weekly state-level case counts for reportable
+    diseases (measles, pertussis, meningococcal, etc.) on Tuesdays
+    for the prior MMWR week. The data is statewide-only, so a single
+    fetch warms the cache for all 72 counties; we record the result
+    as a single source entry with county_name=None.
+
+    Drives the active_measles_outbreak flag in utils/disease_surveillance.py.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.nndss_communicable import fetch_nndss_wi_communicable
+        from utils.persistent_cache import clear_cache_by_prefix
+
+        results: Dict[str, Any] = {
+            'source_type': 'cdc_nndss_communicable',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'fallback': 0,
+            'errors': [],
+        }
+
+        try:
+            start = time.time()
+            # Force a fresh fetch by clearing the persistent cache first.
+            clear_cache_by_prefix('nndss_wi_communicable')
+            data = fetch_nndss_wi_communicable()
+            duration = time.time() - start
+
+            if data.get('data_source') == 'cdc_nndss':
+                results['success'] = 1
+                flags = data.get('outbreak_flags', {})
+                logger.info(
+                    f"NNDSS communicable refresh: cache warmed in {duration:.1f}s, "
+                    f"report={data.get('report_date')}, flags={flags}"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning(
+                    "NNDSS communicable refresh: completed but data_source != "
+                    "'cdc_nndss' (fallback path used)."
+                )
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"NNDSS communicable refresh exception: {exc}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_cdc_nhsn_hospital() -> Dict[str, Any]:
+    """
+    Refresh the CDC NHSN Wisconsin hospital capacity cache.
+
+    NHSN HRD publishes weekly state-level hospital ICU beds, ICU
+    occupancy, and confirmed COVID/flu/RSV hospitalizations and ICU
+    patients on Wednesdays for the prior week. The data is
+    statewide-only, so a single fetch warms the cache for all 72
+    counties; we record the result as a single source entry with
+    county_name=None.
+
+    Replaces the previously aspirational wha_hospital_capacity entry.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.nhsn_hospital import fetch_nhsn_wi_hospital
+        from utils.persistent_cache import clear_cache_by_prefix
+
+        results: Dict[str, Any] = {
+            'source_type': 'cdc_nhsn_hospital',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'fallback': 0,
+            'errors': [],
+        }
+
+        try:
+            start = time.time()
+            clear_cache_by_prefix('nhsn_wi_hospital')
+            data = fetch_nhsn_wi_hospital()
+            duration = time.time() - start
+
+            if data.get('data_source') == 'cdc_nhsn_hrd':
+                results['success'] = 1
+                cw = data.get('current_week', {})
+                logger.info(
+                    f"NHSN hospital refresh: cache warmed in {duration:.1f}s, "
+                    f"week={data.get('report_date')}, "
+                    f"ICU={cw.get('icu_occupancy_pct')}, "
+                    f"resp_admissions={cw.get('total_respiratory_new_admissions')}"
+                )
+            else:
+                results['fallback'] = 1
+                logger.warning(
+                    "NHSN hospital refresh: completed but data_source != "
+                    "'cdc_nhsn_hrd' (fallback path used)."
+                )
+        except Exception as exc:
+            results['failed'] = 1
+            results['errors'].append({'error': str(exc)})
+            logger.error(f"NHSN hospital refresh exception: {exc}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
 def run_all_refreshes() -> Dict[str, Any]:
     """
     Run all data source refreshes. Used for initial cache population.
@@ -703,7 +973,11 @@ def run_all_refreshes() -> Dict[str, Any]:
     results['sources']['openfema_hma'] = refresh_all_openfema_hma()
     results['sources']['noaa_storm_events'] = refresh_all_noaa_storm_events()
     results['sources']['nid_dam_inventory'] = refresh_all_nid_dam_inventory()
-    
+    results['sources']['wi_dhs_hvi'] = refresh_all_wi_dhs_hvi()
+    results['sources']['nssp_respiratory'] = refresh_all_nssp_respiratory()
+    results['sources']['cdc_nndss_communicable'] = refresh_all_cdc_nndss_communicable()
+    results['sources']['cdc_nhsn_hospital'] = refresh_all_cdc_nhsn_hospital()
+
     results['finished_at'] = datetime.utcnow().isoformat()
     
     logger.info("Full data cache refresh complete")

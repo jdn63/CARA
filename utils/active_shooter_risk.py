@@ -13,7 +13,20 @@ The scoring framework consists of five domains:
 5. Access to Lethal Means (15%)
 
 Each domain produces a normalized score between 0.0 and 1.0.
-The total risk score is the weighted sum of all domain scores.
+
+The total risk score is computed using the standardized EVR
+(Exposure-Vulnerability-Resilience) residual-risk framework that the
+rest of the CARA risk model uses (natural hazards, dam failure, VBD):
+
+    Risk = (Exposure × Vulnerability) × (2 - Resilience) × HealthImpactFactor
+    Exposure       = w_hist × Historical + w_means × LethalMeans
+    Vulnerability  = w_school × School + w_social × Social
+    Resilience     = 1 - (Mental × mental_sensitivity)   (clamped to [0, 1])
+
+The 5 config domain weights drive E/V via renormalization within each
+component, and drive R via mental_sensitivity = w_mental / 0.20 (the
+documented default), so every configured weight has an operative effect
+on the score. HealthImpactFactor for this domain is 1.4.
 """
 
 import os
@@ -908,95 +921,228 @@ class ActiveShooterRiskModel:
                 'adjustments': adjustments
             })
             
-            # Step 6: Calculate overall risk score using domain weighting formula
+            # Step 6: Calculate overall risk score using the EVR (Exposure-
+            # Vulnerability-Resilience) framework that matches the rest of
+            # the CARA risk model. Config domain weights are used to derive
+            # how each domain feeds into the E and V components (rather
+            # than being multiplied into a weighted-sum and discarded, as
+            # in pre-2026-05 code).
+            #
+            # Review finding H6 fix: this previously logged a weighted-sum
+            # formula and a "sum of weighted domain scores" final-score
+            # explanation while actually computing an EVR residual with
+            # hardcoded 0.6/0.4 sub-weights. The two formulas produce
+            # different numbers, so config edits had no effect on score.
+            # Both the math and the logged formula now describe EVR.
             calculation_steps.append({
                 'step_number': 6,
-                'step_name': 'Calculate Weighted Risk Score',
-                'description': 'Apply domain weights and calculate final risk score',
-                'formula': 'Risk = (Historical × 0.25) + (School × 0.20) + (Social × 0.20) + (Mental × 0.20) + (Lethal Means × 0.15)',
-                'manual_process': 'Manually calculate weighted average of all domain scores',
+                'step_name': 'Calculate EVR Risk Score',
+                'description': (
+                    'Map the 5 domain scores into Exposure / Vulnerability '
+                    '/ Resilience using config-driven sub-weights, then '
+                    'apply the standardized EVR residual-risk formula.'
+                ),
+                'formula': (
+                    'Risk = (Exposure × Vulnerability) × (2 - Resilience) '
+                    '× HealthImpactFactor; '
+                    'Exposure = w_hist × Historical + w_means × LethalMeans; '
+                    'Vulnerability = w_school × School + w_social × Social; '
+                    'Resilience = clamp(1 - (Mental × mental_sensitivity), 0, 1), '
+                    'mental_sensitivity = w_mental / 0.20; '
+                    'HealthImpactFactor = 1.4'
+                ),
+                'manual_process': 'Compute E and V via weighted averages, then EVR residual risk.',
                 'time_estimate': '1-2 hours'
             })
             time_estimates['risk_calculation'] = '1-2 hours'
-            
-            # Get domain weights from configuration manager
+
+            # Get domain weights from configuration manager.
             config_manager = get_config_manager()
             config_weights = config_manager.get_domain_weights('active_shooter')
-            
-            weights = {
-                'historical': config_weights.get('historical_incident_density', 0.25),
-                'school': config_weights.get('school_youth_vulnerability', 0.20),
-                'social': config_weights.get('social_community_fragility', 0.20),
-                'mental': config_weights.get('mental_behavioral_health', 0.20),
-                'means': config_weights.get('access_lethal_means', 0.15)
+
+            # Default weights (must match config/risk_weights.yaml
+            # active_shooter_weights defaults; used as fallback if a
+            # bad config is supplied).
+            _DEFAULT_WEIGHTS = {
+                'historical': 0.25,
+                'school': 0.20,
+                'social': 0.20,
+                'mental': 0.20,
+                'means': 0.15,
             }
-            
+            weights = {
+                'historical': config_weights.get('historical_incident_density', _DEFAULT_WEIGHTS['historical']),
+                'school': config_weights.get('school_youth_vulnerability', _DEFAULT_WEIGHTS['school']),
+                'social': config_weights.get('social_community_fragility', _DEFAULT_WEIGHTS['social']),
+                'mental': config_weights.get('mental_behavioral_health', _DEFAULT_WEIGHTS['mental']),
+                'means': config_weights.get('access_lethal_means', _DEFAULT_WEIGHTS['means'])
+            }
+
+            # Validate weights: reject non-numeric / NaN / negative
+            # values, all-zero configs, and any config where an EVR
+            # component pair sums to zero (which would zero out that
+            # entire pathway and yield a degenerate score). Fall back
+            # to the documented defaults and log loudly so the operator
+            # notices any of these conditions.
+            import math
+            def _bad_value(v):
+                if not isinstance(v, (int, float)):
+                    return True
+                if isinstance(v, bool):
+                    return True
+                if math.isnan(v) or math.isinf(v):
+                    return True
+                return v < 0
+            invalid_reason = None
+            if any(_bad_value(v) for v in weights.values()):
+                invalid_reason = 'non-numeric, NaN, infinite, or negative weight'
+            elif all(v == 0 for v in weights.values()):
+                invalid_reason = 'all weights are zero'
+            elif (weights['historical'] + weights['means']) <= 0:
+                invalid_reason = 'Exposure pair (historical + means) sums to zero'
+            elif (weights['school'] + weights['social']) <= 0:
+                invalid_reason = 'Vulnerability pair (school + social) sums to zero'
+            if invalid_reason is not None:
+                logger.warning(
+                    "Invalid active_shooter_weights in config (%s): %s. "
+                    "Falling back to documented defaults.",
+                    invalid_reason, weights
+                )
+                weights = dict(_DEFAULT_WEIGHTS)
+
             logger.info(f"Active shooter domain weights: {weights}")
-            
-            # Record the weighting calculation
+
+            # Derive Exposure / Vulnerability sub-weights by renormalizing
+            # the config domain weights within each EVR component. This
+            # gives the config its intended effect on the score: raising
+            # `historical_incident_density` in config shifts Exposure
+            # toward historical incidents, raising `school_youth_vulnerability`
+            # shifts Vulnerability toward school factors, and so on.
+            # Resilience is a single-component inverse of the mental-health
+            # score, so it has no sub-weight to derive.
+            exposure_total = weights['historical'] + weights['means']
+            vulnerability_total = weights['school'] + weights['social']
+            if exposure_total <= 0:
+                exposure_total = 1.0
+            if vulnerability_total <= 0:
+                vulnerability_total = 1.0
+            w_hist = weights['historical'] / exposure_total
+            w_means = weights['means'] / exposure_total
+            w_school = weights['school'] / vulnerability_total
+            w_social = weights['social'] / vulnerability_total
+
+            # Map domain scores to standardized risk components.
+            # Exposure: Historical incidents and access to means (likelihood factors).
+            exposure_score = (historical_score * w_hist) + (means_score * w_means)
+
+            # Vulnerability: School/youth factors and social fragility (susceptibility factors).
+            vulnerability_score = (school_score * w_school) + (social_score * w_social)
+
+            # Resilience: Mental health support capacity (inverse of mental-health risk).
+            # The `mental` config weight is wired in as a sensitivity coefficient
+            # on the resilience deflation, anchored to the default mental weight
+            # (0.20). At the documented default config, behavior reduces exactly
+            # to the prior `1 - mental_score` (no regression). Raising the
+            # mental weight above 0.20 means the operator is signaling that
+            # mental-health capacity matters MORE for active-shooter risk, so
+            # a poor mental_score deflates resilience harder; lowering it has
+            # the opposite effect. This is the operative wiring that closes
+            # the H6 architect-review gap where mental_behavioral_health was
+            # a dead config knob.
+            MENTAL_WEIGHT_BASELINE = _DEFAULT_WEIGHTS['mental']  # 0.20
+            mental_sensitivity = weights['mental'] / MENTAL_WEIGHT_BASELINE if MENTAL_WEIGHT_BASELINE > 0 else 1.0
+            resilience_score = max(0.0, min(1.0, 1.0 - (mental_score * mental_sensitivity)))
+
+            # Record the actual EVR composition (the "weighting_calculation"
+            # log line now describes what the score really did, not a
+            # parallel weighted-sum that nothing consumes).
             calculation_steps.append({
-                'step_type': 'weighting_calculation',
-                'historical_contribution': f"{historical_score} × {weights['historical']} = {round(historical_score * weights['historical'], 4)}",
-                'school_contribution': f"{school_score} × {weights['school']} = {round(school_score * weights['school'], 4)}",
-                'social_contribution': f"{social_score} × {weights['social']} = {round(social_score * weights['social'], 4)}",
-                'mental_contribution': f"{mental_score} × {weights['mental']} = {round(mental_score * weights['mental'], 4)}",
-                'means_contribution': f"{means_score} × {weights['means']} = {round(means_score * weights['means'], 4)}"
+                'step_type': 'evr_composition',
+                'exposure': (
+                    f"{round(historical_score, 3)} × {round(w_hist, 3)} + "
+                    f"{round(means_score, 3)} × {round(w_means, 3)} = "
+                    f"{round(exposure_score, 4)}"
+                ),
+                'vulnerability': (
+                    f"{round(school_score, 3)} × {round(w_school, 3)} + "
+                    f"{round(social_score, 3)} × {round(w_social, 3)} = "
+                    f"{round(vulnerability_score, 4)}"
+                ),
+                'resilience': (
+                    f"1 - ({round(mental_score, 3)} × "
+                    f"{round(mental_sensitivity, 3)}) = "
+                    f"{round(resilience_score, 4)}"
+                ),
+                'sub_weights_source': (
+                    'config/risk_weights.yaml active_shooter_weights '
+                    '(historical/means renormalized within Exposure; '
+                    'school/social renormalized within Vulnerability; '
+                    'mental scales the Resilience deflation relative to '
+                    'the documented 0.20 baseline)'
+                ),
             })
-            
-            # Map domain scores to standardized risk components for corrected formula
-            # Exposure: Historical incidents and access to means (likelihood factors)
-            exposure_score = (historical_score * 0.6) + (means_score * 0.4)
-            
-            # Vulnerability: School/youth factors and social fragility (susceptibility factors)  
-            vulnerability_score = (school_score * 0.6) + (social_score * 0.4)
-            
-            # Resilience: Mental health support capacity (inverse of mental health risk)
-            resilience_score = 1.0 - mental_score
-            
-            # Apply the corrected standardized risk formula
+
+            # Apply the standardized EVR residual-risk formula.
             from utils.risk_calculation import calculate_residual_risk
             overall_score = calculate_residual_risk(
                 exposure=exposure_score,
-                vulnerability=vulnerability_score, 
+                vulnerability=vulnerability_score,
                 resilience=resilience_score,
-                health_impact_factor=1.4  # Significant direct health impacts from active shooter events
+                health_impact_factor=1.4  # Significant direct health impacts from active-shooter events.
             )
-            
-            # Round to 2 decimals
+
+            # Round to 2 decimals.
             overall_score = round(overall_score, 2)
-            
-            # Define risk level
+
+            # Define risk level.
             if overall_score >= 0.65:
                 risk_level = "High"
             elif overall_score >= 0.4:
                 risk_level = "Moderate"
             else:
                 risk_level = "Low"
-                
-            # Log variable contributions for explainability
+
+            # Log variable contributions for explainability. NOTE: these
+            # are WEIGHTED INDICATORS for audit-trail readability, NOT an
+            # additive decomposition of the final EVR residual score
+            # (which is multiplicative and nonlinear). They tell the
+            # operator which domain carries the most config-weighted
+            # signal, not how many score-points each domain "added".
+            mental_log_share = weights['mental']
             variable_contributions = [
                 ('historical_incident_density', historical_score * weights['historical'], historical_score),
                 ('school_youth_vulnerability', school_score * weights['school'], school_score),
                 ('social_community_fragility', social_score * weights['social'], social_score),
-                ('mental_behavioral_health', mental_score * weights['mental'], mental_score),
+                ('mental_behavioral_health', (1.0 - mental_score) * mental_log_share, mental_score),
                 ('access_lethal_means', means_score * weights['means'], means_score)
             ]
-            
-            # Log contributions using the config manager
+
+            # Log contributions using the config manager.
             config_manager.log_contribution(
                 domain='active_shooter',
                 variable_contributions=variable_contributions,
                 final_score=overall_score,
                 jurisdiction_id=county_name
             )
-            
-            # Record the final calculation result
+
+            # Record the final calculation result. The formula text now
+            # matches the actual computation (EVR residual), not the
+            # prior weighted-sum description.
             calculation_steps.append({
                 'step_type': 'final_score',
                 'score': overall_score,
                 'risk_level': risk_level,
-                'calculation_formula': 'Sum of all weighted domain scores',
-                'formula_applied': f"{round(historical_score * weights['historical'], 4)} + {round(school_score * weights['school'], 4)} + {round(social_score * weights['social'], 4)} + {round(mental_score * weights['mental'], 4)} + {round(means_score * weights['means'], 4)} = {overall_score}"
+                'calculation_formula': 'EVR residual: (Exposure × Vulnerability) × (2 - Resilience) × 1.4',
+                'formula_applied': (
+                    f"({round(exposure_score, 4)} × {round(vulnerability_score, 4)}) "
+                    f"× (2 - {round(resilience_score, 4)}) × 1.4 = {overall_score}"
+                ),
+                'contribution_log_semantics': (
+                    'variable_contributions are weighted indicators for '
+                    'audit readability; they are not an additive '
+                    'decomposition of the final EVR residual (which is '
+                    'multiplicative and nonlinear in E, V, and R).'
+                ),
             })
             
             # Step 7: Compile comprehensive risk report
@@ -1017,10 +1163,23 @@ class ActiveShooterRiskModel:
             # Tool time (realistic)
             tool_time = "3-5 seconds"
             
-            # Return comprehensive risk data with calculation steps
+            # Return comprehensive risk data with calculation steps.
+            # methodology_type and data_classification make explicit that
+            # this is a modeled risk built from proxy indicators (no direct
+            # event-rate measurement), so the dashboard can label it that
+            # way instead of presenting it as observed surveillance.
             return {
                 'active_shooter_risk': overall_score,
                 'risk_level': risk_level,
+                'methodology_type': 'modeled_risk_proxy_indicators',
+                'data_classification': 'modeled',
+                'methodology_note': (
+                    'Active shooter risk is a modeled composite of proxy '
+                    'indicators (historical incident density, school and '
+                    'youth vulnerability, social and community fragility, '
+                    'mental and behavioral health access, and access to '
+                    'lethal means). It is not a forecast of specific events.'
+                ),
                 'components': {
                     'historical_incident_density': round(historical_score, 2),
                     'school_youth_vulnerability': round(school_score, 2),
@@ -1037,6 +1196,10 @@ class ActiveShooterRiskModel:
                 },
                 'weights': weights,
                 'framework_version': '2.0',
+                'data_quality': {
+                    'available': True,
+                    'classification': 'modeled_proxy',
+                },
                 'show_my_work': {
                     'calculation_steps': calculation_steps,
                     'time_estimates': {
@@ -1046,22 +1209,26 @@ class ActiveShooterRiskModel:
                     }
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Error in active shooter risk calculation: {str(e)}")
-            # Return minimal response with error
+            # Mark the domain unavailable rather than silently substituting
+            # 0.35 across every component; the PHRAT composite will then
+            # renormalize over the domains that did succeed instead of
+            # injecting a fabricated value.
             return {
-                'active_shooter_risk': 0.35,
-                'risk_level': 'Estimation Error',
-                'components': {
-                    'historical_incident_density': 0.35,
-                    'school_youth_vulnerability': 0.35,
-                    'social_community_fragility': 0.35,
-                    'mental_behavioral_health': 0.35,
-                    'access_to_lethal_means': 0.35
-                },
+                'active_shooter_risk': None,
+                'risk_level': 'Unavailable',
+                'methodology_type': 'modeled_risk_proxy_indicators',
+                'data_classification': 'modeled',
+                'components': {},
                 'error': str(e),
-                'framework_version': '2.0'
+                'framework_version': '2.0',
+                'data_quality': {
+                    'available': False,
+                    'reason': f'Active shooter risk calculation failed: {str(e)}',
+                    'classification': 'unavailable',
+                },
             }
 
 

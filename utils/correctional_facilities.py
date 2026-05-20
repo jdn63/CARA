@@ -35,6 +35,12 @@ class CorrectionalFacilitiesConnector:
             }
         }
         """
+        # Cache-only enforcement: see utils/request_context.py.
+        from utils.request_context import is_cache_only_mode, record_blocked_fetch
+        if is_cache_only_mode():
+            record_blocked_fetch("hifld_correctional_facilities")
+            return self._get_fallback_data()
+
         try:
             # Define facility type weights
             facility_weights = {

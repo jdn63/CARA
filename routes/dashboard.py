@@ -115,7 +115,14 @@ def dashboard(jurisdiction_id):
             
         from utils.persistent_cache import get_from_persistent_cache, set_in_persistent_cache
         
-        full_cache_key = f"dashboard_full_{jurisdiction_id}"
+        # Cache key versioned to v2 (2026-05-20) so warm caches that
+        # pre-date the S004 surfacing (data-quality banner refinements,
+        # blocked_fetches list, nndss_data attachment with H3 pertussis
+        # caveat, community freshness badges) are invalidated cleanly
+        # at deploy. Bump the version suffix whenever the rendered
+        # context shape changes in a way that older cached payloads
+        # cannot satisfy.
+        full_cache_key = f"dashboard_full_v5_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
         
         if cached_context:
@@ -157,7 +164,8 @@ def dashboard(jurisdiction_id):
             }
         
         from utils.temporal_risk import TemporalRiskComponent
-        
+        from utils.request_context import cache_only_context
+
         natural_hazard_types = {
             'flood': risk_data.get('flood_risk', 0.3),
             'tornado': risk_data.get('tornado_risk', 0.25), 
@@ -170,73 +178,89 @@ def dashboard(jurisdiction_id):
         active_shooter_score = risk_data.get('active_shooter_risk', 0.2)
         
         temporal_risk_data = {}
-        
-        for hazard_type, base_score in natural_hazard_types.items():
+
+        # Cache-only request-path guarantee: every TemporalRiskComponent
+        # call must run inside cache_only_context() so that the
+        # infectious-disease acute path (_check_disease_outbreaks ->
+        # NSSP/disease_surveillance fetchers) cannot trigger live HTTP on
+        # a cold cache. process_risk_data() above already exited its own
+        # cache_only_context; we re-enter for this block.
+        with cache_only_context():
+            for hazard_type, base_score in natural_hazard_types.items():
+                try:
+                    county_name = risk_data.get('county', risk_data.get('county_name', 'Unknown County'))
+                    temporal_component = TemporalRiskComponent(hazard_type, jurisdiction_id, county_name)
+                    temporal_component.calculate_components()
+                    temporal_risk_data[hazard_type] = {
+                        'composite_score': round(temporal_component.get_composite_score(), 3),
+                        'temporal_components': {
+                            'baseline': round(temporal_component.baseline, 3),
+                            'seasonal': round(temporal_component.seasonal, 3),
+                            'trend': round(temporal_component.trend, 3),
+                            'acute': round(temporal_component.acute, 3),
+                            'trend_metadata': getattr(temporal_component, '_trend_metadata', None)
+                        }
+                    }
+                except Exception as e:
+                    logger.error(f"Error generating temporal component for {hazard_type}: {str(e)}")
+                    temporal_risk_data[hazard_type] = {
+                        'composite_score': round(base_score, 3),
+                        'temporal_components': {
+                            'baseline': round(base_score * 0.85, 3),
+                            'seasonal': round(base_score * 0.10, 3),
+                            'trend': round(base_score * 0.05, 3),
+                            'acute': 0.0
+                        }
+                    }
+
             try:
                 county_name = risk_data.get('county', risk_data.get('county_name', 'Unknown County'))
-                temporal_component = TemporalRiskComponent(hazard_type, jurisdiction_id, county_name)
-                temporal_component.calculate_components()
-                temporal_risk_data[hazard_type] = {
-                    'composite_score': round(temporal_component.get_composite_score(), 3),
+                health_temporal = TemporalRiskComponent('infectious_disease', jurisdiction_id, county_name)
+                health_temporal.calculate_components()
+                temporal_risk_data['infectious_disease'] = {
+                    'composite_score': round(health_temporal.get_composite_score(), 3),
                     'temporal_components': {
-                        'baseline': round(temporal_component.baseline, 3),
-                        'seasonal': round(temporal_component.seasonal, 3),
-                        'trend': round(temporal_component.trend, 3),
-                        'acute': round(temporal_component.acute, 3),
-                        'trend_metadata': getattr(temporal_component, '_trend_metadata', None)
+                        'baseline': round(health_temporal.baseline, 3),
+                        'seasonal': round(health_temporal.seasonal, 3),
+                        'trend': round(health_temporal.trend, 3),
+                        'acute': round(health_temporal.acute, 3),
+                        'trend_metadata': getattr(health_temporal, '_trend_metadata', None)
+                    }
+                }
+                active_shooter_temporal = TemporalRiskComponent('active_shooter', jurisdiction_id, county_name)
+                active_shooter_temporal.calculate_components()
+                temporal_risk_data['active_shooter'] = {
+                    'composite_score': round(active_shooter_temporal.get_composite_score(), 3),
+                    'temporal_components': {
+                        'baseline': round(active_shooter_temporal.baseline, 3),
+                        'seasonal': round(active_shooter_temporal.seasonal, 3),
+                        'trend': round(active_shooter_temporal.trend, 3),
+                        'acute': round(active_shooter_temporal.acute, 3),
+                        'trend_metadata': getattr(active_shooter_temporal, '_trend_metadata', None)
                     }
                 }
             except Exception as e:
-                logger.error(f"Error generating temporal component for {hazard_type}: {str(e)}")
-                temporal_risk_data[hazard_type] = {
-                    'composite_score': round(base_score, 3),
-                    'temporal_components': {
-                        'baseline': round(base_score * 0.85, 3),
-                        'seasonal': round(base_score * 0.10, 3),
-                        'trend': round(base_score * 0.05, 3),
-                        'acute': 0.0
-                    }
+                logger.error(f"Error generating health/active shooter temporal components: {str(e)}")
+                temporal_risk_data['infectious_disease'] = {
+                    'composite_score': round(health_score, 3),
+                    'temporal_components': {'baseline': round(health_score * 0.85, 3), 'seasonal': round(health_score * 0.10, 3), 'trend': 0.0, 'acute': round(health_score * 0.05, 3), 'trend_metadata': None}
                 }
-        
-        try:
-            county_name = risk_data.get('county', risk_data.get('county_name', 'Unknown County'))
-            health_temporal = TemporalRiskComponent('infectious_disease', jurisdiction_id, county_name)
-            health_temporal.calculate_components()
-            temporal_risk_data['infectious_disease'] = {
-                'composite_score': round(health_temporal.get_composite_score(), 3),
-                'temporal_components': {
-                    'baseline': round(health_temporal.baseline, 3),
-                    'seasonal': round(health_temporal.seasonal, 3),
-                    'trend': round(health_temporal.trend, 3),
-                    'acute': round(health_temporal.acute, 3),
-                    'trend_metadata': getattr(health_temporal, '_trend_metadata', None)
+                temporal_risk_data['active_shooter'] = {
+                    'composite_score': round(active_shooter_score, 3),
+                    'temporal_components': {'baseline': round(active_shooter_score * 0.85, 3), 'seasonal': round(active_shooter_score * 0.10, 3), 'trend': round(active_shooter_score * 0.05, 3), 'acute': 0.0}
                 }
-            }
-            active_shooter_temporal = TemporalRiskComponent('active_shooter', jurisdiction_id, county_name)
-            active_shooter_temporal.calculate_components()
-            temporal_risk_data['active_shooter'] = {
-                'composite_score': round(active_shooter_temporal.get_composite_score(), 3),
-                'temporal_components': {
-                    'baseline': round(active_shooter_temporal.baseline, 3),
-                    'seasonal': round(active_shooter_temporal.seasonal, 3),
-                    'trend': round(active_shooter_temporal.trend, 3),
-                    'acute': round(active_shooter_temporal.acute, 3),
-                    'trend_metadata': getattr(active_shooter_temporal, '_trend_metadata', None)
-                }
-            }
-        except Exception as e:
-            logger.error(f"Error generating health/active shooter temporal components: {str(e)}")
-            temporal_risk_data['infectious_disease'] = {
-                'composite_score': round(health_score, 3),
-                'temporal_components': {'baseline': round(health_score * 0.85, 3), 'seasonal': round(health_score * 0.10, 3), 'trend': 0.0, 'acute': round(health_score * 0.05, 3), 'trend_metadata': None}
-            }
-            temporal_risk_data['active_shooter'] = {
-                'composite_score': round(active_shooter_score, 3),
-                'temporal_components': {'baseline': round(active_shooter_score * 0.85, 3), 'seasonal': round(active_shooter_score * 0.10, 3), 'trend': round(active_shooter_score * 0.05, 3), 'acute': 0.0}
-            }
         
         logger.info(f"Generated temporal risk data for {len(temporal_risk_data)} risk types")
-        
+
+        # Enrich each entry with sparkline + plain-language posture payload
+        # consumed by templates/dashboard/_bsta_temporal.html. Pure-Python,
+        # no external fetches -- safe inside the cache-only request path.
+        try:
+            from utils.bsta_visualization import build_bsta_visualization
+            build_bsta_visualization(temporal_risk_data)
+        except Exception as viz_err:
+            logger.warning(f"BSTA visualization enrichment failed: {viz_err}")
+
         set_in_persistent_cache(full_cache_key, {
             'risk_data': risk_data,
             'alerts': alerts,
@@ -254,9 +278,14 @@ def dashboard(jurisdiction_id):
                              now=datetime.now())
         
     except Exception as e:
-        logger.error(f"Error loading dashboard for jurisdiction {jurisdiction_id}: {str(e)}")
-        return render_template('error.html', 
-                           message="An error occurred while loading the dashboard. Please try again or select a different jurisdiction.")
+        import traceback, sys
+        tb = traceback.format_exc()
+        logger.error(
+            f"Error loading dashboard for jurisdiction {jurisdiction_id}: {str(e)}\n{tb}"
+        )
+        print(f"[DASHBOARD ERROR] {jurisdiction_id}: {e}\n{tb}", file=sys.stderr, flush=True)
+        return render_template('error.html',
+                           error=f"An error occurred while loading the dashboard for {jurisdiction_id}: {e}")
 
 
 @dashboard_bp.route('/em-comparison-export')

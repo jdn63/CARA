@@ -1,0 +1,171 @@
+        <!-- Flood -->
+        <div class="col-md-3 compact-tile">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Flood Risk Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Risk Score -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between">
+                            <h6>Overall Risk Score:
+{% if risk_data.flood_components is defined %}
+{{ show_work_btn('flood-info', 'Flood Risk Calculation',
+'<div class="formula-line">Risk = (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
+~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.flood_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.flood_components.vulnerability) ~ ') × (2.0 - ' ~ "%.3f"|format(risk_data.flood_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.flood_components.health_impact) ~ '</div>'
+~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.flood_risk) ~ '</div>'
+~ '<ul class="component-list">'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.flood_components.exposure) ~ ' (FEMA NRI × ' ~ "%.2f"|format(risk_data.flood_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.flood_components.vulnerability) ~ ' (4 SVI themes + Census demographics)</li>'
+~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.flood_components.resilience) ~ ' (inverse SVI socioeconomic + housing-transportation)</li>'
+~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.flood_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
+~ '</ul>'
+~ '<div class="data-source">Sources: FEMA NRI, OpenFEMA NFIP Claims, NOAA Storm Events, CDC SVI, U.S. Census</div>'
+) }}
+{% endif %}
+</h6>
+                            <h6 class="fw-bold text-{{ 'danger' if risk_data.flood_risk > 0.6 else 'warning' if risk_data.flood_risk > 0.3 else 'success' }}">
+                                {{ "%.2f"|format(risk_data.flood_risk) }}
+                                
+                                <!-- Percentile display removed -->
+                            </h6>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-{{ 'danger' if risk_data.flood_risk > 0.6 else 'warning' if risk_data.flood_risk > 0.3 else 'success' }}" 
+                                 role="progressbar" 
+                                 style="width: {{ risk_data.flood_risk * 100 }}%" 
+                                 aria-valuenow="{{ risk_data.flood_risk * 100 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Components -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Risk Components</h6>
+                        <div class="row g-2">
+                            {% if risk_data.flood_components is defined %}
+                                <!-- Exposure Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.flood_components.exposure) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ risk_data.flood_components.exposure * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Vulnerability Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.flood_components.vulnerability) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ risk_data.flood_components.vulnerability * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Resilience Component -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-success mb-1">Resilience</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.flood_components.resilience) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-success" style="width: {{ risk_data.flood_components.resilience * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Fallback display -->
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                        <span class="h5">0.55</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: 55%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                        <span class="h5">0.48</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: 48%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-success mb-1">Resilience</span>
+                                        <span class="h5">0.62</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-success" style="width: 62%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Key Metrics Table -->
+
+                        <h6 class="text-muted mb-2">Key Metrics</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if risk_data.flood_metrics is defined %}
+                                    {% set fm = risk_data.flood_metrics %}
+                                    <tr>
+                                        <td>Flood Events (NOAA)</td>
+                                        <td>{% if fm.historical_flood_events is not none %}{{ fm.historical_flood_events }}{% else %}Pending{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Property Damage</td>
+                                        <td>{% if fm.flood_property_damage is not none %}{{ fm.flood_property_damage }}{% else %}Pending{% endif %}</td>
+                                    </tr>
+                                    {% if fm.nfip_claims_total is not none %}
+                                    <tr>
+                                        <td>NFIP Claims (FEMA)</td>
+                                        <td>{{ fm.nfip_claims_total }} ({{ fm.nfip_total_payout|default('$0', true) }})</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if fm.federal_flood_declarations is not none %}
+                                    <tr>
+                                        <td>Federal Declarations</td>
+                                        <td>{{ fm.federal_flood_declarations }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if fm.mitigation_projects is not none %}
+                                    <tr>
+                                        <td>Mitigation Projects</td>
+                                        <td>{{ fm.mitigation_projects }} ({{ fm.mitigation_federal_funding|default('$0', true) }})</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <td>Population Aged 65+ (%)</td>
+                                        <td>{{ fm.elderly_vulnerability_pct|default('N/A', true) }}%</td>
+                                    </tr>
+                                    {% if fm.data_period is not none %}
+                                    <tr>
+                                        <td colspan="2"><small class="text-muted">Data period: {{ fm.data_period }}</small></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="2" class="text-muted">Data loading...</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                </div>
+            </div>
+        </div>

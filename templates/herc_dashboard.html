@@ -39,7 +39,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Counties in Region ({{ risk_data.jurisdiction_count }} jurisdictions)</h6>
+                            <h6>Counties in Region ({{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties; {{ risk_data.jurisdiction_count }} jurisdictions)</h6>
                             <ul>
                                 {% for county in risk_data.counties %}
                                 <li>{{ county }}</li>
@@ -48,7 +48,7 @@
                         </div>
                         <div class="col-md-6">
                             <h6>About This Dashboard</h6>
-                            <p>All scores shown are regional averages aggregated across the {{ risk_data.jurisdiction_count }} jurisdictions in this HERC region. Domain scores use the same EVR methodology and data sources as individual jurisdiction dashboards.</p>
+                            <p>All scores shown are county-balanced regional averages: jurisdiction risks are averaged within each county first, then averaged across the {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties in this HERC region (two-stage mean across {{ risk_data.jurisdiction_count }} jurisdictions). This prevents counties with multiple local health departments from over-weighting the regional rollup. Domain scores use the same EVR methodology and data sources as individual jurisdiction dashboards.</p>
                             <p>For granular county-level detail, select an individual jurisdiction from the home page.</p>
                         </div>
                     </div>
@@ -69,13 +69,13 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <p>
-                                Our <strong>Baseline-Seasonal-Trend-Acute (BSTA)</strong> framework breaks down risks into temporal components for strategic preparedness planning. Values below represent averages across all {{ risk_data.jurisdiction_count }} jurisdictions in this HERC region.
+                                Our <strong>Baseline-Seasonal-Trend-Acute (BSTA)</strong> framework breaks down risks into temporal components for strategic preparedness planning. Values below are county-balanced averages across the {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions) in this HERC region.
                                 <a href="/methodology" class="small" target="_blank" rel="noopener noreferrer">Learn about the BSTA framework</a>
                             </p>
                         </div>
                         <div class="col-lg-4">
                             <div class="alert alert-secondary mb-0 small">
-                                <strong>Annual Planning Focus:</strong> Trend data derived from NOAA Storm Events, OpenFEMA, climate projections, and Census data. Infectious disease uses WI DHS surveillance for acute scoring instead of trend.
+                                <strong>Annual Planning Focus.</strong> Trend data derived from NOAA Storm Events, OpenFEMA, climate projections, and Census data. Infectious disease uses CDC NSSP surveillance for acute scoring instead of trend; Acute is retired from non-infectious domains.
                             </div>
                         </div>
                     </div>
@@ -133,7 +133,7 @@
                                     </td>
                                     <td>
                                         {% if is_id %}
-                                        <div class="progress" style="height: 20px;" title="WI DHS respiratory surveillance data (15% weight)">
+                                        <div class="progress" style="height: 20px;" title="CDC NSSP respiratory surveillance data (15% weight)">
                                             <div class="progress-bar bg-danger" role="progressbar"
                                                 style="width: {{ data.temporal_components.acute * 100 }}%;"
                                                 aria-valuenow="{{ data.temporal_components.acute * 100 }}"
@@ -142,14 +142,7 @@
                                             </div>
                                         </div>
                                         {% else %}
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-danger" role="progressbar"
-                                                style="width: {{ data.temporal_components.acute * 100 }}%;"
-                                                aria-valuenow="{{ data.temporal_components.acute * 100 }}"
-                                                aria-valuemin="0" aria-valuemax="100">
-                                                {{ "%.2f"|format(data.temporal_components.acute) }}
-                                            </div>
-                                        </div>
+                                        <span class="badge bg-light text-muted" title="Acute component retired from non-infectious domains 2026-05 (CARA is strategic-only)">retired</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -194,7 +187,7 @@
                 <div class="card-body text-center">
                     <h5 class="card-title">Overall Regional Risk Assessment</h5>
                     <div class="mb-3">
-                        <span class="text-muted small">Aggregated PHRAT Score ({{ risk_data.jurisdiction_count }} jurisdictions)
+                        <span class="text-muted small">Aggregated PHRAT Score ({{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties; {{ risk_data.jurisdiction_count }} jurisdictions)
                         {{ show_work_btn('overall-info', 'Regional Risk Score Calculation',
                         '<div class="formula-line">Score = PHRAT Quadratic Mean of 7 Primary Domains</div>'
                         ~ '<div class="formula-line">= sqrt(Σ(w_i × domain_i²)) — regional averages</div>'
@@ -208,7 +201,7 @@
                         ~ '<li>Vector-Borne Disease (7%): ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</li>'
                         ~ '</ul>'
                         ~ '<div class="formula-line">Regional Score = ' ~ "%.3f"|format(risk_data.total_risk_score) ~ '</div>'
-                        ~ '<div class="data-source">7-domain weighted quadratic mean (PHRAT p=2); values are averages across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions</div>'
+                        ~ '<div class="data-source">7-domain weighted quadratic mean (PHRAT p=2); values are county-balanced averages (two-stage mean: within-county then across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties / ' ~ risk_data.jurisdiction_count ~ ' jurisdictions)</div>'
                         ) }}
                         </span>
                         <div class="display-4 mb-1">{{ "%.2f"|format(risk_data.total_risk_score) }}</div>
@@ -243,7 +236,7 @@
                         ~ '<li>Vaccination Coverage (20%): WI DHS WIR MMR rates; County Health Rankings flu rates</li>'
                         ~ '</ul>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.health_risk|default(0)) ~ '</div>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: CDC NSSP ED Visits (data.cdc.gov/resource/vutn-jzwm, weekly); County Health Rankings 2025</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: CDC NSSP ED Visits (data.cdc.gov/resource/vutn-jzwm, weekly); County Health Rankings 2025</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.health_risk|default(0) > 0.6 else 'warning' if risk_data.health_risk|default(0) > 0.3 else 'success' }}">
@@ -259,7 +252,7 @@
                     </div>
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, updated weekly); WI DHS WIR immunization data; County Health Rankings 2025. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.
+                            Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, updated weekly); WI DHS WIR immunization data; County Health Rankings 2025. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).
                         </small>
                     </div>
                 </div>
@@ -283,7 +276,7 @@
                         ~ '<li>Vulnerability: outdoor workforce, elderly, rural, SVI</li>'
                         ~ '<li>Resilience: surveillance programs, public awareness</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.vector_borne_disease_risk|default(0) > 0.6 else 'warning' if risk_data.vector_borne_disease_risk|default(0) > 0.3 else 'success' }}">
@@ -299,7 +292,7 @@
                     </div>
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.
+                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).
                         </small>
                     </div>
                 </div>
@@ -328,7 +321,7 @@
                             {{ show_work_btn(hazard_type ~ '-info', hazard_type|replace('_', ' ')|title ~ ' Risk (Regional Average)',
                             '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
                             ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(score) ~ '</div>'
-                            ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: FEMA NRI, NOAA Storm Events, OpenFEMA Declarations, CDC SVI, U.S. Census</div>'
+                            ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: FEMA NRI, NOAA Storm Events, OpenFEMA Declarations, CDC SVI, U.S. Census</div>'
                             ) }}
                             </h6>
                             <h6 class="fw-bold text-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
@@ -349,7 +342,7 @@
                         </span>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -381,7 +374,7 @@
                         ~ '<li>Vulnerability: respiratory disease prevalence (COPD), elderly, SVI</li>'
                         ~ '<li>Resilience: healthcare access, primary care density</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: EPA AirNow API, CDC PLACES, County Health Rankings</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: EPA AirNow API, CDC PLACES, County Health Rankings</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.air_quality_risk|default(0) > 0.6 else 'warning' if risk_data.air_quality_risk|default(0) > 0.3 else 'success' }}">
@@ -396,7 +389,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Sources: EPA AirNow, CDC PLACES, County Health Rankings. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Sources: EPA AirNow, CDC PLACES, County Health Rankings. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -412,14 +405,14 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>{{ "%.2f"|format(risk_data.extreme_heat_risk|default(0)) }}
                         {{ show_work_btn('heat-info', 'Extreme Heat Risk (Regional Average)',
-                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        '<div class="formula-line">Risk = (0.7 x Exp + 0.3 x WetBulb) x Vuln x (2.0 - Resil) x min(1.6, 1.3 x ClimateTrend)</div>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.extreme_heat_risk|default(0)) ~ '</div>'
                         ~ '<ul class="component-list">'
-                        ~ '<li>Exposure: NWS heat forecasts, historical heat events, climate trend</li>'
-                        ~ '<li>Vulnerability: elderly, low-income, urban heat island, SVI</li>'
-                        ~ '<li>Resilience: cooling centers, healthcare capacity, green space</li>'
+                        ~ '<li>Exposure: NOAA annual heat-day count, normalized and climate-adjusted</li>'
+                        ~ '<li>Vulnerability: 4 CDC SVI themes + Census aged 65+ %</li>'
+                        ~ '<li>Resilience: inverse SVI socioeconomic + housing-transportation</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: NOAA/NWS, FEMA NRI, CDC SVI, U.S. Census</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: NOAA climate normals, CDC SVI 2022, U.S. Census ACS</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.extreme_heat_risk|default(0) > 0.6 else 'warning' if risk_data.extreme_heat_risk|default(0) > 0.3 else 'success' }}">
@@ -434,7 +427,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Sources: NOAA/NWS, FEMA NRI, CDC SVI. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Sources: NOAA/NWS, FEMA NRI, CDC SVI. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -457,7 +450,7 @@
                         ~ '<li>Vulnerability: floodplain residents, critical infrastructure, SVI</li>'
                         ~ '<li>Resilience: Emergency Action Plans, inspection history</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: WI DNR Dam Safety Database, USACE NID ArcGIS FeatureServer</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: WI DNR Dam Safety Database, USACE NID ArcGIS FeatureServer</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.dam_failure_risk|default(0) > 0.6 else 'warning' if risk_data.dam_failure_risk|default(0) > 0.3 else 'success' }}">
@@ -472,7 +465,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Sources: WI DNR Dam Safety Database (primary), USACE NID (fallback). Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Sources: WI DNR Dam Safety Database (primary), USACE NID (fallback). County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -503,7 +496,7 @@
                         ~ '<li>Vulnerability: public venue density, large gathering capacity, SVI</li>'
                         ~ '<li>Resilience: law enforcement response time, trauma center access, preparedness training</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Sources: GVA 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, CHR 2025, CDC PLACES, RAND 2022</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: GVA 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, CHR 2025, CDC PLACES, RAND 2022</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.active_shooter_risk|default(0) > 0.6 else 'warning' if risk_data.active_shooter_risk|default(0) > 0.3 else 'success' }}">
@@ -518,7 +511,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Sources: Gun Violence Archive 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, County Health Rankings 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Sources: Gun Violence Archive 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, County Health Rankings 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -549,7 +542,7 @@
                         ~ '<li>Vulnerability: legacy system prevalence, IT staffing, SVI</li>'
                         ~ '<li>Resilience: IT security policies, backup infrastructure, incident response</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Supplementary context for EM planning.</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Supplementary context for EM planning.</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.cybersecurity_risk|default(0) > 0.6 else 'warning' if risk_data.cybersecurity_risk|default(0) > 0.3 else 'success' }}">
@@ -564,7 +557,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -587,7 +580,7 @@
                         ~ '<li>Vulnerability: aging infrastructure, population dependency, SVI</li>'
                         ~ '<li>Resilience: backup power capacity, mutual aid agreements</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">Average across ' ~ risk_data.jurisdiction_count ~ ' jurisdictions. Supplementary context for EM planning.</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Supplementary context for EM planning.</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.utilities_risk|default(0) > 0.6 else 'warning' if risk_data.utilities_risk|default(0) > 0.3 else 'success' }}">
@@ -602,7 +595,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. Regional average across {{ risk_data.jurisdiction_count }} jurisdictions.</small>
+                        <small class="text-muted">Supplementary context domain. Not included in PHRAT composite score. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                 </div>
             </div>
@@ -647,7 +640,7 @@
                 <div class="card-body bg-dark text-white">
                     <h6>Data Sources</h6>
                     <p class="small mb-0">Risk data in this dashboard is aggregated from the following counties: {{ risk_data.counties|join(', ') }}</p>
-                    <p class="small mb-0">All domain scores are averages of real EVR calculations across {{ risk_data.jurisdiction_count }} jurisdictions. Sources: FEMA NRI, NOAA Storm Events, OpenFEMA, WI DHS, WI DNR, USACE NID, CDC PLACES, County Health Rankings, EPA AirNow, NOAA/NWS, CDC SVI 2022.</p>
+                    <p class="small mb-0">All domain scores are county-balanced averages of real EVR calculations: within-county mean then across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions). Sources: FEMA NRI, NOAA Storm Events, OpenFEMA, WI DHS, WI DNR, USACE NID, CDC PLACES, County Health Rankings, EPA AirNow, NOAA/NWS, CDC SVI 2022.</p>
                     <p class="small mb-0">Additional regional healthcare data can be accessed through the <a href="https://www.dhs.wisconsin.gov/preparedness/healthcare/index.htm" target="_blank" rel="noopener noreferrer" class="text-info">HERC coordinator</a>.</p>
                     <div class="small mt-1">
                         Last updated: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}

@@ -9,7 +9,8 @@ DATA SOURCES:
 1. NOAA/NWS climate projections and historical temperature data
 2. EPA heat threshold guidelines and physiological research
 3. CDC Social Vulnerability Index (SVI) demographic data
-4. Wisconsin DHS Heat Vulnerability Index
+4. Wisconsin DHS Heat Vulnerability Index (DHS ArcGIS MapServer,
+   block-group features aggregated to county; see utils/wi_dhs_hvi.py)
 5. Census Bureau American Community Survey (ACS) data
 6. USGS geographic and topographic data
 7. Peer-reviewed climate science publications
@@ -81,620 +82,379 @@ class ClimateAdjustedHeatRisk:
 
     def calculate_enhanced_heat_risk(self, county_name: str, jurisdiction_id: str = None) -> Dict[str, Any]:
         """
-        Calculate comprehensive extreme heat risk incorporating climate science.
-        
-        Args:
-            county_name: County name for risk assessment
-            jurisdiction_id: Optional jurisdiction ID for specific data
-            
-        Returns:
-            Dictionary with detailed heat risk assessment
+        Calculate extreme heat risk for TWO distinct horizons, returned in
+        the same dict so the PHRAT composite and the strategic-trajectory
+        panel cannot drift apart.
+
+        Review finding Q7 (2026-05-20): the prior implementation baked
+        2050 climate-trajectory multipliers (frequency 1.4, wet-bulb
+        humidity 1.2, mid-century warming trend 1.35) directly into the
+        12-month PHRAT score. Because base_HIF (1.3) * trend (1.35) =
+        1.755 was capped at 1.6, every county silently received the
+        maximum 2050 health-impact ceiling regardless of present-day
+        conditions. The dashboard simultaneously labeled the composite
+        "Annual Strategic (12-month)" — a horizon mismatch.
+
+        Resolution: compute the EVR transform twice.
+          - PRESENT-DAY: climate multipliers = 1.0 across the board.
+            This is the value PHRAT consumes via overall_risk.
+          - TRAJECTORY-2050: the original mid-century multipliers
+            (NOAA WICCI, IPCC AR6). Surfaced separately on the
+            dashboard as a planning trajectory; NOT composited.
         """
         try:
-            # Get baseline geographic heat exposure
-            exposure_data = self._calculate_climate_adjusted_exposure(county_name)
-            
-            # Get enhanced vulnerability assessment
             vulnerability_data = self._calculate_enhanced_vulnerability(county_name, jurisdiction_id)
-            
-            # Get resilience assessment with climate considerations
             resilience_data = self._calculate_climate_resilience(county_name)
-            
-            # Calculate wet bulb temperature risk
-            wet_bulb_risk = self._calculate_wet_bulb_risk(county_name)
-            
-            # Apply climate change trend adjustments
-            climate_trend_factor = self._calculate_climate_trend_factor(county_name)
-            
-            # Combine all factors for overall risk
-            overall_risk = self._calculate_comprehensive_risk(
-                exposure_data, vulnerability_data, resilience_data, 
-                wet_bulb_risk, climate_trend_factor
+
+            present_exposure = self._calculate_climate_adjusted_exposure(county_name, horizon='present_day')
+            present_wet_bulb = self._calculate_wet_bulb_risk(county_name, horizon='present_day')
+            present_trend = self._calculate_climate_trend_factor(county_name, horizon='present_day')
+            present_risk = self._calculate_comprehensive_risk(
+                present_exposure, vulnerability_data, resilience_data,
+                present_wet_bulb, present_trend
             )
-            
+
+            traj_exposure = self._calculate_climate_adjusted_exposure(county_name, horizon='trajectory_2050')
+            traj_wet_bulb = self._calculate_wet_bulb_risk(county_name, horizon='trajectory_2050')
+            traj_trend = self._calculate_climate_trend_factor(county_name, horizon='trajectory_2050')
+            traj_risk = self._calculate_comprehensive_risk(
+                traj_exposure, vulnerability_data, resilience_data,
+                traj_wet_bulb, traj_trend
+            )
+
             return {
                 'county_name': county_name,
                 'jurisdiction_id': jurisdiction_id,
                 'assessment_date': datetime.now().isoformat(),
-                'overall_risk': overall_risk,
-                'exposure': exposure_data,
+                'horizon': 'present_day_12_month',
+                'overall_risk': present_risk,
+                'exposure': present_exposure,
                 'vulnerability': vulnerability_data,
                 'resilience': resilience_data,
-                'wet_bulb_risk': wet_bulb_risk,
-                'climate_trend_factor': climate_trend_factor,
-                'risk_level': self._determine_risk_level(overall_risk),
+                'wet_bulb_risk': present_wet_bulb,
+                'climate_trend_factor': present_trend,
+                'risk_level': self._determine_risk_level(present_risk),
                 'key_concerns': self._identify_key_concerns(
-                    exposure_data, vulnerability_data, wet_bulb_risk
+                    present_exposure, vulnerability_data, present_wet_bulb
                 ),
-                'methodology': 'Climate-Adjusted Heat Risk Assessment v2.0',
+                'trajectory_2050': {
+                    'horizon': '2025_to_2050',
+                    'overall_risk': traj_risk,
+                    'risk_level': self._determine_risk_level(traj_risk),
+                    'delta_vs_present_day': round(traj_risk - present_risk, 4),
+                    'exposure': traj_exposure,
+                    'wet_bulb_risk': traj_wet_bulb,
+                    'climate_trend_factor': traj_trend,
+                    'multipliers_applied': {
+                        'noaa_frequency_multiplier': self.climate_adjustments['frequency_multiplier'],
+                        'wet_bulb_humidity_factor': 1.2,
+                        'noaa_wicci_warming_trend': 1.35,
+                    },
+                    'note': (
+                        'Separate planning trajectory. NOT composited into the '
+                        'PHRAT 12-month risk score. Based on NOAA State Climate '
+                        'Summaries (WI) and IPCC AR6 RCP4.5 mid-century projections.'
+                    ),
+                },
+                'methodology': 'Climate-Adjusted Heat Risk Assessment v3.0 (horizon-separated)',
                 'data_sources': self.data_sources,
                 'calculation_basis': {
-                    'exposure_calculation': 'Geographic base exposure * NOAA climate frequency multiplier * Urban heat island factor',
-                    'vulnerability_calculation': 'CDC SVI demographic factors * Heat-specific vulnerability multipliers',
-                    'resilience_calculation': 'Infrastructure capacity * Climate adaptation penalty',
-                    'wet_bulb_calculation': 'Regional humidity patterns * Climate humidity increase factor',
-                    'climate_trend_calculation': 'IPCC regional warming projections * Urban amplification',
-                    'overall_formula': '(Exposure × Vulnerability ÷ Resilience) × (1 + Wet_Bulb × 0.5) × Climate_Trend'
+                    'exposure_calculation_present': 'NOAA annual heat-day count (normalized to [0, 0.95]); no 2050 frequency multiplier applied',
+                    'exposure_calculation_trajectory_2050': 'NOAA annual heat-day count * 1.4 (NOAA mid-century frequency multiplier)',
+                    'vulnerability_calculation': 'Weighted CDC SVI 2022 themes (socioeconomic 30%, housing-transportation 20%, household-composition 15%, minority-status 10%) + Census ACS population aged 65+ factor (25%)',
+                    'resilience_calculation': 'Inverse CDC SVI socioeconomic (20%) and housing-transportation (10%) from a 0.5 baseline, clamped to [0.1, 0.9]',
+                    'wet_bulb_calculation_present': 'Statewide NOAA Great Lakes wet-bulb baseline (no humidity-projection multiplier)',
+                    'wet_bulb_calculation_trajectory_2050': 'Statewide baseline * 1.2 humidity projection factor',
+                    'climate_trend_present': '1.0 (no mid-century warming applied)',
+                    'climate_trend_trajectory_2050': '1.35 (NOAA WICCI mid-century midpoint)',
+                    'overall_formula_present': '(0.7*Exposure + 0.3*Wet_Bulb) * V * (2.0 - R) * 1.3 (base heat HIF)',
+                    'overall_formula_trajectory_2050': '(0.7*Exposure_2050 + 0.3*Wet_Bulb_2050) * V * (2.0 - R) * min(1.6, 1.3*1.35)',
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Error calculating enhanced heat risk for {county_name}: {str(e)}")
             return self._get_fallback_assessment(county_name)
 
-    def _calculate_climate_adjusted_exposure(self, county_name: str) -> Dict[str, float]:
+    def _calculate_climate_adjusted_exposure(self, county_name: str, horizon: str = 'present_day') -> Dict[str, float]:
         """
-        Calculate heat exposure adjusted for climate change trends and urban heat island effects.
-        
-        This method determines a county's exposure to extreme heat events by combining:
-        1. Base geographic exposure levels specific to Wisconsin regions
-        2. NOAA climate change frequency multipliers (showing increasing heat days)
-        3. Urban heat island amplification factors for different settlement types
-        
-        The calculation accounts for Wisconsin's climate variations from northern forests
-        to southern urban areas, with climate projections showing 2-3x increases in
-        dangerous heat days by 2050.
-        
-        Args:
-            county_name (str): Name of Wisconsin county (e.g., 'Milwaukee', 'Dane')
-            
-        Returns:
-            Dict[str, float]: Dictionary containing:
-                - base_exposure: Geographic baseline exposure (0.0-1.0)
-                - climate_adjusted: Base exposure × NOAA frequency multiplier
-                - heat_island_factor: Urban heat amplification (1.0-1.4)
-                - final_exposure: Final calculated exposure level (0.0-0.95)
-                - confidence: Data confidence level (0.85 = high confidence)
-                
-        Note:
-            Exposure values are normalized to 0.0-0.95 scale where:
-            - 0.0-0.3: Low exposure (northern forests)
-            - 0.3-0.6: Moderate exposure (central Wisconsin)  
-            - 0.6-0.8: High exposure (southern counties)
-            - 0.8-0.95: Very high exposure (urban areas)
+        Calculate heat exposure from NOAA annual heat-day counts.
+
+        Replaces the previous hand-keyed per-county base_exposure dictionary
+        (72 author-assigned values) with a derivation from the Wisconsin
+        annual heat-day data in utils/wisconsin_climate_data.py
+        (NOAA climate-normals based). The NOAA frequency multiplier is then
+        applied as before.
+
+        The +15% urban-county heat-island bonus (formerly a hand-picked list
+        of 7 counties) was removed because it had the same anti-pattern
+        documented in utils/natural_hazards_risk.py: an uncited county list
+        that produced abrupt cliffs between adjacent counties. Urban heat
+        island effects are partly captured by NOAA station siting; if a
+        continuous per-county imperviousness or population-density signal
+        becomes available it should be folded in here as a smooth term.
         """
-        
-        # Base exposure by geographic region (Wisconsin-specific)
-        base_exposure = {
-            # Southern Wisconsin - highest heat exposure
-            'Milwaukee': 0.78,    # Urban heat island + climate change
-            'Dane': 0.75,         # Central urban area
-            'Waukesha': 0.72,     # Suburban heat island
-            'Racine': 0.76,       # Lakeshore warming
-            'Kenosha': 0.78,      # Southernmost, most warming
-            'Rock': 0.77,         # Southern inland
-            'Walworth': 0.74,     # Southern lakes region
-            'Jefferson': 0.73,    # South central
-            'Dodge': 0.72,        # Southeast
-            'Washington': 0.71,   # Southeast
-            
-            # Central Wisconsin - moderate-high exposure
-            'Wood': 0.65,         # Central Wisconsin
-            'Portage': 0.66,      # Central Wisconsin
-            'Waupaca': 0.64,      # Central Wisconsin
-            'Winnebago': 0.67,    # Fox Valley
-            'Outagamie': 0.66,    # Fox Valley
-            'Fond du Lac': 0.68,  # Eastern central
-            'Sheboygan': 0.69,    # Eastern lakeshore
-            'Manitowoc': 0.67,    # Eastern lakeshore
-            'Calumet': 0.65,      # Eastern central
-            'Green Lake': 0.64,   # Central lakes
-            
-            # Northern Wisconsin - moderate exposure (but increasing)
-            'Brown': 0.62,        # Green Bay area
-            'Marinette': 0.58,    # Northeast
-            'Oconto': 0.57,       # Northeast
-            'Langlade': 0.55,     # North central
-            'Lincoln': 0.54,      # North central
-            'Oneida': 0.53,       # North central
-            'Vilas': 0.52,        # Northern lakes
-            'Forest': 0.51,       # Northern forest
-            'Florence': 0.50,     # Northeast forest
-            'Iron': 0.48,         # Northern forest
-            'Bayfield': 0.47,     # Northern peninsula
-            'Douglas': 0.46,      # Far northwest
-            'Ashland': 0.45,      # Northern lake region
-            'Burnett': 0.49,      # Northwest
-            'Washburn': 0.48,     # Northwest
-            'Sawyer': 0.47,       # Northwest
-            'Rusk': 0.50,         # Northwest
-            'Price': 0.49,        # North central
-            'Taylor': 0.51,       # North central
-            
-            # Western Wisconsin - moderate exposure
-            'Crawford': 0.63,     # Southwest
-            'Grant': 0.64,        # Southwest
-            'Iowa': 0.62,         # Southwest
-            'Lafayette': 0.63,    # Southwest
-            'Green': 0.65,        # South central
-            'Richland': 0.61,     # Southwest
-            'Sauk': 0.66,         # South central
-            'Columbia': 0.67,     # South central
-            'Marquette': 0.64,    # Central
-            'Adams': 0.62,        # Central
-            'Juneau': 0.61,       # Central
-            'Monroe': 0.60,       # West central
-            'Vernon': 0.58,       # Southwest
-            'La Crosse': 0.65,    # Western urban
-            'Trempealeau': 0.59,  # Western
-            'Jackson': 0.58,      # West central
-            'Clark': 0.57,        # West central
-            'Eau Claire': 0.62,   # Western urban
-            'Chippewa': 0.60,     # Western
-            'Dunn': 0.59,         # Western
-            'Pepin': 0.58,        # Western
-            'Pierce': 0.61,       # Western
-            'St. Croix': 0.63,    # Western suburban
-            'Polk': 0.58,         # Western
-            'Barron': 0.56,       # Western
-            'Buffalo': 0.57       # Western
-        }
-        
-        county_exposure = base_exposure.get(county_name, 0.60)  # Default for unlisted counties
-        
-        # Apply climate change multipliers (reduced cap to preserve geographic differentiation)
-        climate_adjusted_exposure = min(0.80, county_exposure * self.climate_adjustments['frequency_multiplier'])
-        
-        # Calculate heat island effect (higher for urban areas)
-        urban_counties = ['Milwaukee', 'Dane', 'Brown', 'Racine', 'Kenosha', 'La Crosse', 'Eau Claire']
-        heat_island_factor = 1.15 if county_name in urban_counties else 1.0
-        
-        final_exposure = min(0.80, climate_adjusted_exposure * heat_island_factor)
-        
+        from utils.wisconsin_climate_data import get_wisconsin_heat_days
+
+        annual_heat_days = get_wisconsin_heat_days(county_name) or 12
+        # Wisconsin observed annual heat-day range: roughly 5 (far north)
+        # to 20 (southern urban). Normalize to [0, 0.95].
+        base_exposure = max(0.0, min(0.95, annual_heat_days / 20.0))
+
+        # Horizon gate (Q7): the NOAA frequency multiplier is a 2050
+        # mid-century projection and only applies to the trajectory
+        # horizon. For the present-day 12-month PHRAT score it must be
+        # 1.0 so the strategic composite reflects current conditions.
+        if horizon == 'trajectory_2050':
+            frequency_multiplier = self.climate_adjustments['frequency_multiplier']
+        else:
+            frequency_multiplier = 1.0
+
+        climate_adjusted_exposure = min(
+            0.95,
+            base_exposure * frequency_multiplier
+        )
+
         return {
-            'base_exposure': county_exposure,
+            'horizon': horizon,
+            'base_exposure': base_exposure,
+            'annual_heat_days': annual_heat_days,
+            'frequency_multiplier_applied': frequency_multiplier,
             'climate_adjusted': climate_adjusted_exposure,
-            'heat_island_factor': heat_island_factor,
-            'final_exposure': final_exposure,
-            'confidence': 0.85  # High confidence in climate projections
+            'heat_island_factor': 1.0,
+            'final_exposure': climate_adjusted_exposure,
+            'confidence': 0.85
         }
+
 
     def _calculate_enhanced_vulnerability(self, county_name: str, jurisdiction_id: str = None) -> Dict[str, float]:
         """
-        Calculate vulnerability to extreme heat with enhanced demographic and health factors.
-        
-        This method assesses population vulnerability to extreme heat by analyzing:
-        1. Demographic factors (age, poverty, housing quality, social isolation)
-        2. Health conditions (cardiovascular disease, diabetes, medication dependencies)
-        3. Access to cooling resources (air conditioning, cooling centers)
-        4. Special populations (tribal communities, rural areas, urban heat islands)
-        
-        Vulnerability is calculated using CDC Social Vulnerability Index (SVI) methodology
-        enhanced with heat-specific factors relevant to Wisconsin populations.
-        
-        Args:
-            county_name (str): Name of Wisconsin county
-            jurisdiction_id (str, optional): Specific jurisdiction ID for tribal areas
-            
-        Returns:
-            Dict[str, float]: Dictionary containing:
-                - base_vulnerability: Core demographic vulnerability (0.0-1.0)
-                - health_vulnerability: Heat-specific health factors
-                - social_vulnerability: Social isolation and support factors
-                - housing_vulnerability: Air conditioning and housing quality
-                - final_vulnerability: Combined vulnerability score (0.0-1.0)
-                - confidence: Assessment confidence level
-                
-        Note:
-            Higher values indicate greater vulnerability. Rural and tribal areas
-            often score higher due to limited cooling resources and health access.
+        Calculate heat vulnerability from CDC SVI 2022 themes + Census ACS
+        population aged 65+ percentage.
+
+        Replaces the previous hand-keyed per-county base_vulnerability
+        dictionary (72 author-assigned values) and the hand-picked +25%
+        "high heat vulnerability" list of 6 counties. Weights follow
+        heat-specific vulnerability literature: socioeconomic status and
+        housing/AC access dominate, with elderly share applied as a
+        heat-physiology-specific factor.
         """
-        
-        # Enhanced vulnerability factors specific to extreme heat
-        base_vulnerability = {
-            # High vulnerability counties (aging population, poverty, health conditions)
-            'Milwaukee': 0.82,    # Highest poverty, aging housing, health disparities
-            'Racine': 0.78,       # High poverty, older housing stock
-            'Kenosha': 0.75,      # Industrial area, mixed demographics
-            'Rock': 0.73,         # Mixed demographics, some poverty
-            'Iron': 0.79,         # Rural, aging population, limited resources
-            'Florence': 0.77,     # Rural, limited infrastructure
-            'Forest': 0.76,       # Rural, aging population
-            'Ashland': 0.74,      # Rural, higher poverty, tribal areas
-            'Menominee': 0.81,    # Tribal area, higher poverty
-            'Bayfield': 0.72,     # Rural, aging population, remote
-            'Douglas': 0.71,      # Rural, moderate poverty
-            'Burnett': 0.70,      # Rural, limited resources
-            'Vilas': 0.73,        # Rural, aging seasonal population
-            'Price': 0.72,        # Rural, aging population
-            
-            # Moderate vulnerability counties
-            'Dane': 0.58,         # College town, better resources, younger population
-            'Waukesha': 0.52,     # Higher income, better housing
-            'Brown': 0.65,        # Mixed urban/rural, some industrial
-            'Winnebago': 0.67,    # Mixed demographics
-            'Outagamie': 0.64,    # Mixed demographics
-            'Washington': 0.55,   # Higher income suburban
-            'Ozaukee': 0.53,      # Higher income suburban
-            'Jefferson': 0.62,    # Mixed rural/suburban
-            'Walworth': 0.60,     # Rural/resort area
-            'Dodge': 0.63,        # Rural/small town
-            'Fond du Lac': 0.66,  # Mixed demographics
-            'Sheboygan': 0.65,    # Mixed demographics
-            'Calumet': 0.61,      # Rural/small town
-            'Manitowoc': 0.64,    # Mixed demographics
-            'Door': 0.59,         # Resort area, seasonal population
-            
-            # Lower vulnerability counties (younger, higher income, better resources)
-            'St. Croix': 0.56,    # Suburban, higher income
-            'Pierce': 0.58,       # Rural, moderate income
-            'Polk': 0.62,         # Rural, moderate resources
-            'Barron': 0.64,       # Rural, mixed demographics
-            'Chippewa': 0.63,     # Mixed demographics
-            'Dunn': 0.61,         # College town influence
-            'Eau Claire': 0.60,   # University town, better resources
-            'La Crosse': 0.59,    # University town, better resources
-            'Crawford': 0.65,     # Rural, moderate resources
-            'Grant': 0.66,        # Rural, moderate resources
-            'Iowa': 0.64,         # Rural, moderate resources
-            'Lafayette': 0.65,    # Rural, moderate resources
-            'Green': 0.63,        # Rural, moderate resources
-            'Richland': 0.67,     # Rural, moderate resources
-            'Sauk': 0.62,         # Tourist area, mixed demographics
-            'Columbia': 0.61,     # Mixed demographics
-            'Marquette': 0.66,    # Rural, moderate resources
-            'Adams': 0.68,        # Rural, moderate resources
-            'Juneau': 0.67,       # Rural, moderate resources
-            'Wood': 0.64,         # Mixed demographics
-            'Portage': 0.63,      # Mixed demographics
-            'Waupaca': 0.65,      # Rural, moderate resources
-            'Waushara': 0.68,     # Rural, moderate resources
-            'Green Lake': 0.64,   # Rural, moderate resources
-            'Winnebago': 0.67,    # Mixed demographics
-            'Langlade': 0.69,     # Rural, aging population
-            'Lincoln': 0.68,      # Rural, aging population
-            'Oneida': 0.67,       # Rural, aging population
-            'Marinette': 0.70,    # Rural, aging population
-            'Oconto': 0.69,       # Rural, aging population
-            'Sawyer': 0.68,       # Rural, aging population
-            'Washburn': 0.67,     # Rural, aging population
-            'Rusk': 0.69,         # Rural, aging population
-            'Taylor': 0.68,       # Rural, aging population
-            'Clark': 0.67,        # Rural, aging population
-            'Jackson': 0.66,      # Rural, aging population
-            'Trempealeau': 0.65,  # Rural, aging population
-            'Monroe': 0.66,       # Rural, aging population
-            'Vernon': 0.67,       # Rural, aging population
-            'Buffalo': 0.66,      # Rural, aging population
-            'Pepin': 0.65         # Rural, aging population
-        }
-        
-        county_vulnerability = base_vulnerability.get(county_name, 0.65)  # Default for unlisted counties
-        
-        # Apply additional vulnerability factors specific to extreme heat
-        heat_specific_adjustments = {
-            'elderly_population': 1.2,      # Adults aged 65+ at higher risk
-            'chronic_conditions': 1.15,     # Diabetes, heart disease, respiratory
-            'medication_effects': 1.1,      # Medications affecting heat regulation
-            'housing_quality': 1.18,        # Poor AC, insulation, older housing
-            'outdoor_workers': 1.12,        # Agricultural, construction workers
-            'social_isolation': 1.08        # Limited social support networks
-        }
-        
-        # Apply heat-specific vulnerability multiplier
-        heat_vulnerability_factor = 1.25 if county_name in [
-            'Milwaukee', 'Racine', 'Kenosha', 'Iron', 'Florence', 'Menominee'
-        ] else 1.1
-        
-        final_vulnerability = min(0.85, county_vulnerability * heat_vulnerability_factor)
-        
+        from utils.svi_data import get_svi_data
+        from utils.census_data_loader import wisconsin_census
+
+        try:
+            svi_raw = get_svi_data(county_name) or {}
+            svi = {
+                'socioeconomic': svi_raw.get('socioeconomic', 0.5),
+                'housing_transportation': svi_raw.get('housing_transportation', 0.5),
+                'household_composition': svi_raw.get('household_composition', 0.5),
+                'minority_status': svi_raw.get('minority_status', 0.5),
+            }
+        except Exception as e:
+            logger.warning(f"SVI fetch failed for {county_name}: {e}; using statewide median 0.5")
+            svi = {'socioeconomic': 0.5, 'housing_transportation': 0.5,
+                   'household_composition': 0.5, 'minority_status': 0.5}
+
+        try:
+            elderly_pct = wisconsin_census.get_elderly_population_percentage(county_name) or 18.7
+        except Exception as e:
+            logger.warning(f"Census elderly fetch failed for {county_name}: {e}; using WI median 18.7")
+            elderly_pct = 18.7
+
+        # Normalize elderly%: WI county range roughly 10-30%, map to [0, 1].
+        elderly_factor = max(0.0, min(1.0, (elderly_pct - 10.0) / 20.0))
+
+        vulnerability_raw = (
+            0.30 * svi['socioeconomic'] +
+            0.20 * svi['housing_transportation'] +
+            0.15 * svi['household_composition'] +
+            0.10 * svi['minority_status'] +
+            0.25 * elderly_factor
+        )
+
+        final_vulnerability = max(0.0, min(0.85, vulnerability_raw))
+
         return {
-            'base_vulnerability': county_vulnerability,
-            'heat_specific_factor': heat_vulnerability_factor,
+            'base_vulnerability': vulnerability_raw,
+            'svi_themes': svi,
+            'elderly_pct': elderly_pct,
+            'elderly_factor': elderly_factor,
             'final_vulnerability': final_vulnerability,
-            'confidence': 0.80  # Good confidence in demographic data
+            'confidence': 0.80
         }
+
 
     def _calculate_climate_resilience(self, county_name: str) -> Dict[str, float]:
-        """Calculate resilience with climate adaptation considerations."""
-        
-        # Base resilience incorporating climate adaptation capacity
-        base_resilience = {
-            # Higher resilience counties (more resources, better adaptation)
-            'Dane': 0.78,         # Strong county resources, university research
-            'Waukesha': 0.74,     # Good county resources, higher income
-            'Milwaukee': 0.68,    # Many resources but high demand
-            'Washington': 0.72,   # Good suburban resources
-            'Ozaukee': 0.71,      # Good suburban resources
-            'Brown': 0.70,        # Good urban resources
-            'Winnebago': 0.68,    # Moderate urban resources
-            'Outagamie': 0.67,    # Moderate urban resources
-            'La Crosse': 0.69,    # University town resources
-            'Eau Claire': 0.68,   # University town resources
-            'St. Croix': 0.66,    # Suburban resources
-            'Fond du Lac': 0.65,  # Moderate resources
-            'Sheboygan': 0.64,    # Moderate resources
-            'Manitowoc': 0.63,    # Moderate resources
-            'Door': 0.62,         # Tourist area resources
-            'Sauk': 0.61,         # Tourist area resources
-            
-            # Moderate resilience counties
-            'Racine': 0.58,       # Limited relative to vulnerability
-            'Kenosha': 0.59,      # Limited cooling centers
-            'Rock': 0.62,         # Moderate resources
-            'Jefferson': 0.60,    # Moderate resources
-            'Walworth': 0.58,     # Limited rural resources
-            'Dodge': 0.57,        # Limited rural resources
-            'Columbia': 0.60,     # Moderate resources
-            'Green': 0.58,        # Limited rural resources
-            'Pierce': 0.56,       # Limited rural resources
-            'Polk': 0.54,         # Limited rural resources
-            'Barron': 0.53,       # Limited rural resources
-            'Chippewa': 0.56,     # Limited rural resources
-            'Dunn': 0.57,         # Limited rural resources
-            'Wood': 0.59,         # Moderate resources
-            'Portage': 0.58,      # Moderate resources
-            'Waupaca': 0.55,      # Limited rural resources
-            'Calumet': 0.56,      # Limited rural resources
-            'Marquette': 0.54,    # Limited rural resources
-            'Green Lake': 0.55,   # Limited rural resources
-            'Adams': 0.53,        # Limited rural resources
-            'Juneau': 0.52,       # Limited rural resources
-            'Waushara': 0.51,     # Limited rural resources
-            
-            # Lower resilience counties (rural, limited resources)
-            'Crawford': 0.50,     # Limited rural resources
-            'Grant': 0.51,        # Limited rural resources
-            'Iowa': 0.49,         # Limited rural resources
-            'Lafayette': 0.48,    # Limited rural resources
-            'Richland': 0.47,     # Limited rural resources
-            'Vernon': 0.46,       # Limited rural resources
-            'Monroe': 0.47,       # Limited rural resources
-            'Jackson': 0.48,      # Limited rural resources
-            'Trempealeau': 0.47,  # Limited rural resources
-            'Buffalo': 0.46,      # Limited rural resources
-            'Pepin': 0.45,        # Limited rural resources
-            'Clark': 0.47,        # Limited rural resources
-            'Taylor': 0.46,       # Limited rural resources
-            'Rusk': 0.45,         # Limited rural resources
-            'Sawyer': 0.44,       # Limited rural resources
-            'Washburn': 0.43,     # Limited rural resources
-            'Burnett': 0.42,      # Limited rural resources
-            'Langlade': 0.45,     # Limited rural resources
-            'Lincoln': 0.44,      # Limited rural resources
-            'Oneida': 0.43,       # Limited rural resources
-            'Vilas': 0.42,        # Limited rural resources
-            'Forest': 0.41,       # Limited rural resources
-            'Florence': 0.40,     # Limited rural resources
-            'Iron': 0.39,         # Limited rural resources
-            'Ashland': 0.42,      # Limited rural resources
-            'Bayfield': 0.41,     # Limited rural resources
-            'Douglas': 0.43,      # Limited rural resources
-            'Marinette': 0.46,    # Limited rural resources
-            'Oconto': 0.45,       # Limited rural resources
-            'Menominee': 0.38,    # Tribal area, very limited resources
-            'Price': 0.44         # Limited rural resources
-        }
-        
-        county_resilience = base_resilience.get(county_name, 0.50)  # Default for unlisted counties
-        
-        # Apply climate adaptation penalty (many areas not prepared for new heat levels)
-        climate_adaptation_penalty = 0.85  # 15% reduction due to inadequate climate adaptation
-        
-        final_resilience = county_resilience * climate_adaptation_penalty
-        
+        """
+        Calculate heat resilience from inverse CDC SVI socioeconomic and
+        housing-transportation themes.
+
+        Replaces the previous hand-keyed per-county base_resilience dictionary
+        (72 author-assigned values with judgment comments such as "Strong
+        county resources, university research" and "Limited rural resources")
+        and the uncited 15% climate-adaptation penalty applied uniformly to
+        every county.
+
+        Mirrors the inverse-SVI pattern used in
+        utils/natural_hazards_risk.py._calculate_em_resilience. A continuous
+        capacity index (cooling-center counts per capita, hospital beds per
+        capita) could be folded in here as a smooth term if a cited Wisconsin
+        source becomes available.
+        """
+        from utils.svi_data import get_svi_data
+
+        try:
+            svi_raw = get_svi_data(county_name) or {}
+            svi_socio = svi_raw.get('socioeconomic', 0.5)
+            svi_housing = svi_raw.get('housing_transportation', 0.5)
+        except Exception as e:
+            logger.warning(f"SVI fetch failed for {county_name}: {e}; using statewide median 0.5")
+            svi_socio = 0.5
+            svi_housing = 0.5
+
+        resilience_raw = 0.5
+        resilience_raw += (1.0 - svi_socio) * 0.20
+        resilience_raw += (1.0 - svi_housing) * 0.10
+
+        final_resilience = max(0.1, min(0.9, resilience_raw))
+
         return {
-            'base_resilience': county_resilience,
-            'climate_adaptation_penalty': climate_adaptation_penalty,
+            'base_resilience': resilience_raw,
+            'svi_socioeconomic': svi_socio,
+            'svi_housing_transportation': svi_housing,
+            'climate_adaptation_penalty': 1.0,
             'final_resilience': final_resilience,
-            'confidence': 0.75  # Moderate confidence in resilience assessment
+            'confidence': 0.75
         }
 
-    def _calculate_wet_bulb_risk(self, county_name: str) -> Dict[str, float]:
-        """Calculate wet bulb temperature risk - critical for human survivability."""
-        
-        # Wisconsin wet bulb temperature risk by region
-        # Based on humidity patterns and temperature projections
-        wet_bulb_risk = {
-            # Higher humidity areas - more dangerous wet bulb conditions
-            'Milwaukee': 0.72,    # Urban + lake humidity
-            'Racine': 0.70,       # Lakeshore humidity
-            'Kenosha': 0.71,      # Lakeshore humidity
-            'Dane': 0.65,         # Inland humidity
-            'Rock': 0.68,         # Southern humidity
-            'Walworth': 0.66,     # Lakes region humidity
-            'Jefferson': 0.64,    # Moderate humidity
-            'Dodge': 0.63,        # Moderate humidity
-            'Waukesha': 0.67,     # Suburban humidity
-            'Washington': 0.65,   # Moderate humidity
-            'Ozaukee': 0.68,      # Lakeshore humidity
-            'Sheboygan': 0.69,    # Lakeshore humidity
-            'Manitowoc': 0.68,    # Lakeshore humidity
-            'Calumet': 0.64,      # Moderate humidity
-            'Fond du Lac': 0.66,  # Moderate humidity
-            'Winnebago': 0.65,    # Moderate humidity
-            'Outagamie': 0.64,    # Moderate humidity
-            'Brown': 0.67,        # Bay area humidity
-            'Door': 0.70,         # Peninsula humidity
-            'Marinette': 0.66,    # Moderate humidity
-            'Oconto': 0.65,       # Moderate humidity
-            
-            # Western Wisconsin - moderate wet bulb risk
-            'Crawford': 0.62,     # River valley humidity
-            'Grant': 0.63,        # River valley humidity
-            'Iowa': 0.61,         # Moderate humidity
-            'Lafayette': 0.60,    # Moderate humidity
-            'Green': 0.62,        # Moderate humidity
-            'Richland': 0.60,     # Moderate humidity
-            'Sauk': 0.63,         # River valley humidity
-            'Columbia': 0.64,     # River valley humidity
-            'Marquette': 0.61,    # Moderate humidity
-            'Adams': 0.59,        # Lower humidity
-            'Juneau': 0.58,       # Lower humidity
-            'Wood': 0.60,         # Moderate humidity
-            'Portage': 0.61,      # Moderate humidity
-            'Waupaca': 0.59,      # Moderate humidity
-            'Waushara': 0.58,     # Lower humidity
-            'Green Lake': 0.60,   # Lakes area humidity
-            'La Crosse': 0.64,    # River valley humidity
-            'Trempealeau': 0.62,  # River valley humidity
-            'Jackson': 0.59,      # Moderate humidity
-            'Monroe': 0.58,       # Moderate humidity
-            'Vernon': 0.60,       # River valley humidity
-            'Buffalo': 0.61,      # River valley humidity
-            'Pepin': 0.60,        # River valley humidity
-            'Pierce': 0.62,       # River valley humidity
-            'St. Croix': 0.63,    # River valley humidity
-            'Polk': 0.58,         # Moderate humidity
-            'Barron': 0.57,       # Moderate humidity
-            'Chippewa': 0.59,     # Moderate humidity
-            'Dunn': 0.58,         # Moderate humidity
-            'Eau Claire': 0.60,   # Moderate humidity
-            'Clark': 0.56,        # Lower humidity
-            'Taylor': 0.55,       # Lower humidity
-            'Rusk': 0.56,         # Lower humidity
-            'Sawyer': 0.55,       # Lower humidity
-            'Washburn': 0.54,     # Lower humidity
-            'Burnett': 0.53,      # Lower humidity
-            
-            # Northern Wisconsin - generally lower wet bulb risk
-            'Langlade': 0.54,     # Lower humidity
-            'Lincoln': 0.53,      # Lower humidity
-            'Oneida': 0.52,       # Lower humidity
-            'Vilas': 0.51,        # Lower humidity
-            'Forest': 0.50,       # Lower humidity
-            'Florence': 0.49,     # Lower humidity
-            'Iron': 0.48,         # Lower humidity
-            'Ashland': 0.52,      # Lake effect humidity
-            'Bayfield': 0.53,     # Lake effect humidity
-            'Douglas': 0.54,      # Lake effect humidity
-            'Price': 0.51,        # Lower humidity
-            'Menominee': 0.55     # Moderate humidity
-        }
-        
-        county_wet_bulb = wet_bulb_risk.get(county_name, 0.58)  # Default for unlisted counties
-        
-        # Apply climate change multiplier (increasing humidity with warming)
-        climate_humidity_increase = 1.2  # 20% increase in wet bulb risk
-        
-        final_wet_bulb_risk = min(0.85, county_wet_bulb * climate_humidity_increase)
-        
+
+    def _calculate_wet_bulb_risk(self, county_name: str, horizon: str = 'present_day') -> Dict[str, float]:
+        """
+        Calculate wet-bulb temperature risk from a statewide NOAA Great Lakes
+        mid-century baseline.
+
+        The previous hand-keyed per-county wet-bulb dictionary (72 author-
+        assigned values) had no source citation; per-county wet-bulb
+        projections at this resolution are not publicly available for
+        Wisconsin. A single statewide baseline (midpoint of NOAA Great Lakes
+        region wet-bulb projections) is used instead. If higher-resolution
+        NOAA gridded wet-bulb data becomes available, this function should
+        derive a county-specific value from that grid.
+        """
+        # NOAA Great Lakes region projected mid-century wet-bulb risk midpoint
+        statewide_baseline = 0.60
+        # Horizon gate (Q7): the 20% humidity rise is a mid-century
+        # projection and only applies to the trajectory horizon.
+        if horizon == 'trajectory_2050':
+            climate_humidity_increase = 1.2
+        else:
+            climate_humidity_increase = 1.0
+        final_wet_bulb_risk = min(0.85, statewide_baseline * climate_humidity_increase)
+
         return {
-            'base_wet_bulb_risk': county_wet_bulb,
+            'horizon': horizon,
+            'base_wet_bulb_risk': statewide_baseline,
             'climate_humidity_factor': climate_humidity_increase,
             'final_wet_bulb_risk': final_wet_bulb_risk,
-            'confidence': 0.70  # Moderate confidence in wet bulb projections
+            'confidence': 0.65,
+            'note': 'Statewide NOAA Great Lakes baseline; per-county wet-bulb grid not yet integrated'
         }
 
-    def _calculate_climate_trend_factor(self, county_name: str) -> Dict[str, float]:
-        """Calculate climate change trend multiplier for heat risk."""
-        
-        # Base trend factor by region (how much climate change is affecting each area)
-        regional_trends = {
-            # Southern Wisconsin - highest warming trend
-            'southern': 1.45,     # 45% increase in heat risk
-            # Central Wisconsin - moderate warming trend  
-            'central': 1.35,      # 35% increase in heat risk
-            # Northern Wisconsin - lower but still significant warming
-            'northern': 1.25,     # 25% increase in heat risk
-            # Western Wisconsin - moderate warming trend
-            'western': 1.30       # 30% increase in heat risk
-        }
-        
-        # Assign counties to regions
-        county_regions = {
-            # Southern Wisconsin
-            'Milwaukee': 'southern', 'Dane': 'southern', 'Waukesha': 'southern',
-            'Racine': 'southern', 'Kenosha': 'southern', 'Rock': 'southern',
-            'Walworth': 'southern', 'Jefferson': 'southern', 'Dodge': 'southern',
-            'Washington': 'southern', 'Ozaukee': 'southern', 'Green': 'southern',
-            'Lafayette': 'southern', 'Iowa': 'southern', 'Grant': 'southern',
-            
-            # Central Wisconsin  
-            'Wood': 'central', 'Portage': 'central', 'Waupaca': 'central',
-            'Winnebago': 'central', 'Outagamie': 'central', 'Fond du Lac': 'central',
-            'Sheboygan': 'central', 'Manitowoc': 'central', 'Calumet': 'central',
-            'Green Lake': 'central', 'Marquette': 'central', 'Adams': 'central',
-            'Juneau': 'central', 'Waushara': 'central', 'Columbia': 'central',
-            'Sauk': 'central', 'Richland': 'central', 'Crawford': 'central',
-            
-            # Northern Wisconsin
-            'Brown': 'northern', 'Marinette': 'northern', 'Oconto': 'northern',
-            'Langlade': 'northern', 'Lincoln': 'northern', 'Oneida': 'northern',
-            'Vilas': 'northern', 'Forest': 'northern', 'Florence': 'northern',
-            'Iron': 'northern', 'Bayfield': 'northern', 'Douglas': 'northern',
-            'Ashland': 'northern', 'Price': 'northern', 'Door': 'northern',
-            'Menominee': 'northern',
-            
-            # Western Wisconsin
-            'La Crosse': 'western', 'Trempealeau': 'western', 'Jackson': 'western',
-            'Monroe': 'western', 'Vernon': 'western', 'Buffalo': 'western',
-            'Pepin': 'western', 'Pierce': 'western', 'St. Croix': 'western',
-            'Polk': 'western', 'Barron': 'western', 'Chippewa': 'western',
-            'Dunn': 'western', 'Eau Claire': 'western', 'Clark': 'western',
-            'Taylor': 'western', 'Rusk': 'western', 'Sawyer': 'western',
-            'Washburn': 'western', 'Burnett': 'western'
-        }
-        
-        region = county_regions.get(county_name, 'central')
-        base_trend = regional_trends[region]
-        
-        # Apply additional urban heat island amplification
-        urban_counties = ['Milwaukee', 'Dane', 'Brown', 'Racine', 'Kenosha', 'La Crosse', 'Eau Claire']
-        urban_amplification = 1.1 if county_name in urban_counties else 1.0
-        
-        final_trend_factor = base_trend * urban_amplification
-        
+
+    def _calculate_climate_trend_factor(self, county_name: str, horizon: str = 'present_day') -> Dict[str, float]:
+        """
+        Apply a single statewide warming trend factor from NOAA WICCI.
+
+        The previous N/S/E/W regional gradient (per-county region assignment
+        with +25%/30%/35%/45% trend bonuses) and the +10% urban-county
+        amplification list were hand-coded county lists with the same anti-
+        pattern documented in utils/natural_hazards_risk.py. NOAA WICCI 2021
+        Assessment projects ~3-5 degrees F warming statewide by mid-century
+        with only a small north/south gradient; the per-county geographic
+        differentiation in the heat formula now comes from the exposure
+        component (NOAA annual heat-day counts), not from a hand-keyed
+        trend multiplier.
+        """
+        # Horizon gate (Q7): the NOAA WICCI 1.35 mid-century warming
+        # midpoint applies only to the trajectory horizon. For the
+        # present-day 12-month PHRAT score the trend factor is 1.0 so
+        # the EVR HIF reduces to the base heat HIF (1.3) without
+        # silently saturating against the 1.6 cap.
+        if horizon == 'trajectory_2050':
+            statewide_trend = 1.35
+        else:
+            statewide_trend = 1.0
+
         return {
-            'region': region,
-            'base_trend': base_trend,
-            'urban_amplification': urban_amplification,
-            'final_trend_factor': final_trend_factor,
-            'confidence': 0.85  # High confidence in climate trends
+            'horizon': horizon,
+            'region': 'wisconsin_statewide',
+            'base_trend': statewide_trend,
+            'urban_amplification': 1.0,
+            'final_trend_factor': statewide_trend,
+            'confidence': 0.85
         }
 
-    def _calculate_comprehensive_risk(self, exposure: Dict, vulnerability: Dict, 
-                                    resilience: Dict, wet_bulb: Dict, 
+
+    def _calculate_comprehensive_risk(self, exposure: Dict, vulnerability: Dict,
+                                    resilience: Dict, wet_bulb: Dict,
                                     climate_trend: Dict) -> float:
-        """Calculate comprehensive risk score from all components."""
-        
-        # Extract final values
-        exposure_score = exposure['final_exposure']
-        vulnerability_score = vulnerability['final_vulnerability']
-        resilience_score = resilience['final_resilience']
-        wet_bulb_score = wet_bulb['final_wet_bulb_risk']
-        trend_factor = climate_trend['final_trend_factor']
-        
-        # Apply the corrected standardized risk formula
+        """
+        Calculate comprehensive extreme-heat risk using a SINGLE transparent
+        EVR-consistent transform.
+
+        Formula:
+            risk = E_combined * V * (2.0 - R) * HIF_combined
+
+        Where:
+            E_combined = 0.7 * base_exposure + 0.3 * wet_bulb_exposure
+                (humidity is part of heat exposure, not a separate amplifier)
+            V          = final_vulnerability
+            R          = final_resilience
+            HIF_combined = base_HIF (1.3) * climate_trend_factor, capped at 1.6
+                (climate trend amplifies health consequences of heat)
+
+        Result is clamped to [0, 1] inside calculate_residual_risk.
+
+        This replaces the prior two-stage formula (base EVR then uncapped
+        wet-bulb and trend multipliers, with a late 0.1-0.9 clamp in
+        data_processor.py) which produced opaque amplification and
+        artificial bunching at the top of the heat domain.
+        """
         from utils.risk_calculation import calculate_residual_risk
-        base_risk = calculate_residual_risk(
-            exposure=exposure_score,
+
+        # Extract final component values, defensively clamped to [0, 1]
+        exposure_score = max(0.0, min(1.0, exposure['final_exposure']))
+        vulnerability_score = max(0.0, min(1.0, vulnerability['final_vulnerability']))
+        resilience_score = max(0.0, min(1.0, resilience['final_resilience']))
+        wet_bulb_score = max(0.0, min(1.0, wet_bulb['final_wet_bulb_risk']))
+        trend_factor = max(0.5, min(2.0, climate_trend['final_trend_factor']))
+
+        # Single combined exposure term: heat frequency + humidity
+        combined_exposure = (0.7 * exposure_score) + (0.3 * wet_bulb_score)
+        combined_exposure = max(0.0, min(1.0, combined_exposure))
+
+        # Single combined health-impact factor: base heat HIF * climate trend
+        # Heat HIF baseline is 1.3 (elevated). Trend factor typically 1.0-1.3.
+        # Capped at 1.6 to keep the HIF inside a defensible health-amplifier range.
+        base_heat_hif = 1.3
+        combined_hif = min(1.6, base_heat_hif * trend_factor)
+
+        # Single EVR-consistent transform (output is clamped to [0, 1] internally)
+        final_risk = calculate_residual_risk(
+            exposure=combined_exposure,
             vulnerability=vulnerability_score,
             resilience=resilience_score,
-            health_impact_factor=1.3  # Higher health impacts due to vulnerable populations
+            health_impact_factor=combined_hif
         )
-        
-        # Apply wet bulb temperature amplification
-        wet_bulb_amplified = base_risk * (1 + wet_bulb_score * 0.5)
-        
-        # Apply climate trend factor
-        climate_adjusted = wet_bulb_amplified * trend_factor
-        
-        # Allow full geographic differentiation - cap only at data_processor level
-        # This preserves climate and urban heat island variation
-        # SVI adjustment (reduced to 20%) provides vulnerability scaling
-        final_risk = climate_adjusted
-        
+
+        logger.debug(
+            "Extreme heat EVR: E_base=%.2f, wet_bulb=%.2f -> E_combined=%.2f; "
+            "V=%.2f; R=%.2f; trend=%.2f -> HIF_combined=%.2f; risk=%.3f",
+            exposure_score, wet_bulb_score, combined_exposure,
+            vulnerability_score, resilience_score, trend_factor,
+            combined_hif, final_risk
+        )
+
         return final_risk
 
     def _determine_risk_level(self, risk_score: float) -> str:
@@ -730,18 +490,41 @@ class ClimateAdjustedHeatRisk:
         return concerns
 
     def _get_fallback_assessment(self, county_name: str) -> Dict[str, Any]:
-        """Provide fallback assessment when calculation fails."""
+        """Return an explicit "unavailable" assessment when calculation fails.
+
+        Previously this method silently assigned every county overall_risk=0.70
+        ("High") on any exception, which corrupted the PHRAT composite by
+        injecting a fabricated High value whenever the heat calculator failed.
+        Real data is required: when the calculation cannot be completed, the
+        domain is marked unavailable so the composite will renormalize over
+        the remaining real-data domains and the dashboard surfaces the gap
+        honestly.
+        """
         return {
             'county_name': county_name,
-            'overall_risk': 0.70,  # Conservative high estimate
-            'risk_level': 'High',
-            'error': 'Unable to calculate detailed assessment',
-            'key_concerns': [
-                'Climate change increasing heat risk',
-                'Vulnerable populations at risk',
-                'Limited cooling infrastructure'
-            ],
-            'methodology': 'Fallback assessment'
+            'overall_risk': None,
+            'risk_level': 'Unavailable',
+            'horizon': 'present_day_12_month',
+            'exposure': {'final_exposure': None},
+            'vulnerability': {'final_vulnerability': None},
+            'resilience': {'final_resilience': None},
+            'wet_bulb_risk': {'final_wet_bulb_risk': None},
+            'climate_trend_factor': {'final_trend_factor': None},
+            'trajectory_2050': None,
+            'metrics': {
+                'heat_advisories': None,
+                'annual_heat_days': None,
+                'ed_visits': None,
+            },
+            'data_quality': {
+                'available': False,
+                'reason': 'Climate-adjusted heat risk calculation failed',
+                'classification': 'unavailable',
+            },
+            'error': 'Unable to calculate climate-adjusted heat assessment',
+            'key_concerns': [],
+            'methodology': 'Heat risk unavailable - no synthetic substitute used',
+            'data_sources': [],
         }
 
 # Initialize the climate-adjusted heat risk calculator
