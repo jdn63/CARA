@@ -23,10 +23,38 @@ import logging
 from flask import Blueprint, redirect, url_for, g, flash
 
 from utils.em_counties import get_county_for_slug
-from utils.data_processor import get_county_id
+from utils.data_processor import get_wi_jurisdictions
 
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_county_jurisdiction_id(county_name):
+    """Resolve a Wisconsin county name to its primary LHD jurisdiction id
+    from the live jurisdictions list.
+
+    The legacy `get_county_id()` returns a hardcoded zero-padded county
+    code (e.g. Calumet -> '08') that does NOT match the real jurisdiction
+    ids in `get_wi_jurisdictions()` (Calumet's primary LHD is id '10').
+    Passing the hardcoded code into the dashboard view hits the broken
+    ID_MAPPING shim in routes/dashboard.py and surfaces as
+    "Jurisdiction with ID 108 not found" to the user.
+
+    Returns the primary LHD id as a string, or None if no LHD covers
+    the county.
+    """
+    if not county_name:
+        return None
+    target = county_name.strip().lower()
+    candidates = [
+        j for j in get_wi_jurisdictions()
+        if (j.get('county') or '').strip().lower() == target
+    ]
+    if not candidates:
+        return None
+    # Prefer the LHD flagged primary; fall back to the first match.
+    primary = next((j for j in candidates if j.get('primary')), candidates[0])
+    return str(primary.get('id'))
 
 em_bp = Blueprint('em', __name__)
 
@@ -80,7 +108,17 @@ def em_dashboard(county_slug):
         )
         return redirect(url_for('public.index'))
 
-    jurisdiction_id = get_county_id(county_name)
+    jurisdiction_id = _resolve_county_jurisdiction_id(county_name)
+    if not jurisdiction_id:
+        logger.warning(
+            f"EM dashboard: no primary LHD found for county={county_name}"
+        )
+        flash(
+            "No public health agency is currently mapped to that county. "
+            "Please pick another county from the list.",
+            "warning",
+        )
+        return redirect(url_for('public.index'))
     logger.info(
         f"EM dashboard: county={county_name} slug={county_slug} -> "
         f"jurisdiction_id={jurisdiction_id} (discipline pinned to em)"
@@ -108,7 +146,16 @@ def em_print_summary(county_slug):
         )
         return redirect(url_for('public.index'))
 
-    jurisdiction_id = get_county_id(county_name)
+    jurisdiction_id = _resolve_county_jurisdiction_id(county_name)
+    if not jurisdiction_id:
+        logger.warning(
+            f"EM print summary: no primary LHD found for county={county_name}"
+        )
+        flash(
+            "No public health agency is currently mapped to that county.",
+            "warning",
+        )
+        return redirect(url_for('public.index'))
     logger.info(
         f"EM print summary: county={county_name} -> jurisdiction_id={jurisdiction_id}"
     )

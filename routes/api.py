@@ -16,7 +16,13 @@ from utils.predictive_analysis import RiskPredictor
 from utils.herc_data import get_herc_statistics, get_all_herc_regions
 from utils.wem_data import get_wem_statistics, get_all_wem_regions
 from utils import geo_data
-from utils.data_refresh_scheduler import get_scheduler_status, refresh_now
+from utils.data_refresh_scheduler import (
+    get_scheduler_status,
+    refresh_now,
+    start_scheduler,
+    stop_scheduler,
+    initialize as initialize_scheduler,
+)
 from utils.security_manager import require_api_key
 from utils.api_responses import api_success, api_error, api_not_found, api_server_error
 
@@ -218,6 +224,61 @@ def invalidate_herc_cache_api():
         }, f"HERC cache cleared. {count} region(s) will recalculate on next dashboard load.")
     except Exception as e:
         logger.error(f"Error invalidating HERC cache: {str(e)}")
+        return api_server_error(str(e))
+
+
+@api_bp.route('/scheduler-start', methods=['POST'])
+@require_api_key('admin')
+def scheduler_start_api():
+    """Manually start the data refresh scheduler (admin only).
+
+    Use this when the scheduler did not auto-start at boot (for example after
+    a cold deploy on Render where the background-init thread crashed silently
+    or never spawned). Safe to call repeatedly: start_scheduler() returns
+    False if it is already running.
+    """
+    try:
+        try:
+            initialize_scheduler()
+        except Exception as init_exc:
+            logger.error(f"scheduler initialize() raised: {init_exc}", exc_info=True)
+            return api_server_error(f"initialize failed: {init_exc}")
+
+        started = start_scheduler(run_in_background=True)
+        status = get_scheduler_status()
+
+        logger.info(f"API access: Scheduler manual start requested (admin). started={started}, running={status.get('running')}")
+
+        return api_success({
+            'started_now': started,
+            'already_running': not started,
+            'running': status.get('running', False),
+            'source_count': len(status.get('sources', [])),
+            'timestamp': datetime.now().isoformat()
+        }, "Scheduler start requested")
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {str(e)}", exc_info=True)
+        return api_server_error(str(e))
+
+
+@api_bp.route('/scheduler-stop', methods=['POST'])
+@require_api_key('admin')
+def scheduler_stop_api():
+    """Manually stop the data refresh scheduler (admin only)."""
+    try:
+        stopped = stop_scheduler()
+        status = get_scheduler_status()
+
+        logger.info(f"API access: Scheduler manual stop requested (admin). stopped={stopped}, running={status.get('running')}")
+
+        return api_success({
+            'stopped_now': stopped,
+            'was_already_stopped': not stopped,
+            'running': status.get('running', False),
+            'timestamp': datetime.now().isoformat()
+        }, "Scheduler stop requested")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {str(e)}", exc_info=True)
         return api_server_error(str(e))
 
 

@@ -1,7 +1,15 @@
 {
   "clean_round": false,
-  "drift_count": 14,
+  "drift_count": 21,
   "drifted": [
+    {
+      "id": "epa_ehe_guidebook",
+      "url": "https://www.epa.gov/heatislands/excessive-heat-events-guidebook"
+    },
+    {
+      "id": "epa_heat_islands_guide",
+      "url": "https://www.epa.gov/heatislands/guide-reducing-heat-islands"
+    },
     {
       "id": "wi_dhs_climate_heat",
       "url": "https://www.dhs.wisconsin.gov/climate/heat.htm"
@@ -39,12 +47,24 @@
       "url": "https://www.dhs.wisconsin.gov/mosquito/index.htm"
     },
     {
+      "id": "epa_airnow",
+      "url": "https://www.airnow.gov/"
+    },
+    {
+      "id": "epa_smoke_ready",
+      "url": "https://www.epa.gov/smoke-ready-toolbox-wildfires"
+    },
+    {
       "id": "stop_the_bleed",
       "url": "https://www.stopthebleed.org/"
     },
     {
       "id": "nist_csf_2",
       "url": "https://www.nist.gov/cyberframework"
+    },
+    {
+      "id": "nws_stormready",
+      "url": "https://www.weather.gov/stormready/"
     },
     {
       "id": "asdso",
@@ -57,6 +77,14 @@
     {
       "id": "ready_winter",
       "url": "https://www.ready.gov/winter-weather"
+    },
+    {
+      "id": "wem_resources",
+      "url": "https://wem.wi.gov/"
+    },
+    {
+      "id": "wem_preparedness",
+      "url": "https://wem.wi.gov/preparedness/"
     }
   ],
   "failed": [
@@ -266,7 +294,7 @@
     }
   ],
   "failed_count": 34,
-  "last_run_at": "2026-05-21T04:20:37.526507",
+  "last_run_at": "2026-05-21T22:45:38.918837",
   "last_run_date": "2026-05-21",
   "ok_count": 47,
   "total_sources": 81,

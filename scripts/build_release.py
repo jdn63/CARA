@@ -139,8 +139,8 @@ def main():
     files = collect_files()
     print(f'Collected {len(files)} files for inclusion.')
 
-    cara_zip_name = f'cara_wisconsin_github.zip'
-    template_zip_name = f'cara_template_github.zip'
+    cara_zip_name = f'cara_wisconsin_updated.zip'
+    template_zip_name = f'cara_template_updated.zip'
 
     cara_zip = build_zip(cara_zip_name, files, version)
     print(f'Created: {cara_zip}  ({cara_zip.stat().st_size // 1024} KB, {len(files)} files)')

@@ -419,18 +419,23 @@ def initialize_background_services(app):
     
     def init_scheduler(app):
         """Initialize the data refresh scheduler in the background"""
+        logger.info("init_scheduler thread entered")
         with app.app_context():
             try:
                 from utils.scheduler_init import start_scheduler_with_delay
                 # Start the scheduler with a 10-second delay to allow the app to fully initialize
-                start_scheduler_with_delay(delay_seconds=10)
-                logger.info("Scheduled data refresh initialization with 10-second delay")
+                started = start_scheduler_with_delay(delay_seconds=10)
+                logger.info(f"start_scheduler_with_delay returned {started}; 10-second delay armed")
             except Exception as e:
-                logger.error(f"Failed to initialize data refresh scheduler: {str(e)}")
-    
+                logger.error(f"Failed to initialize data refresh scheduler: {str(e)}", exc_info=True)
+
     # Start scheduler in a separate thread to avoid blocking app startup
-    scheduler_thread = threading.Thread(target=init_scheduler, args=(app,), daemon=True)
-    scheduler_thread.start()
+    try:
+        scheduler_thread = threading.Thread(target=init_scheduler, args=(app,), daemon=True)
+        scheduler_thread.start()
+        logger.info(f"scheduler init thread spawned (alive={scheduler_thread.is_alive()})")
+    except Exception as e:
+        logger.error(f"Failed to spawn scheduler init thread: {str(e)}", exc_info=True)
 
     # Pre-warm the per-jurisdiction dashboard cache so the first user
     # click on /dashboard/<jid> or /em-dashboard/<slug> hits a warm
