@@ -206,6 +206,56 @@ def create_app(config_overrides=None):
     else:
         logger.info(f"Skipping background services on worker {worker_id}")
 
+    # Request-triggered fallback: if the boot-time init above did not actually
+    # start the scheduler (observed on Render: silent failures with no traceback
+    # in the retained log window), make the first request after worker startup
+    # bring the scheduler up. Idempotent: start_scheduler() guards against
+    # double-start via its own _scheduler_running flag, and the lock here
+    # prevents concurrent first requests from racing the initialize() call.
+    import threading as _t
+    _first_req_state = {"done": False, "lock": _t.Lock()}
+
+    @app.before_request
+    def _ensure_scheduler_running():
+        # Fast path: already confirmed running, do nothing.
+        if _first_req_state["done"]:
+            return
+        # Skip cheap requests (static assets, favicon) so a one-time init
+        # latency hit doesn't fall on a trivial asset fetch. The next dynamic
+        # request will trigger it.
+        from flask import request as _req
+        if _req.endpoint in ("static",) or (_req.path or "").startswith("/static/"):
+            return
+        with _first_req_state["lock"]:
+            if _first_req_state["done"]:
+                return
+            try:
+                from utils.data_refresh_scheduler import (
+                    get_scheduler_status as _gs,
+                    initialize as _init,
+                    start_scheduler as _start,
+                )
+                status = _gs()
+                if status.get("running"):
+                    logger.info("First-request scheduler check: already running, no action")
+                    _first_req_state["done"] = True
+                    return
+                logger.info("First-request scheduler check: running=False, attempting auto-start")
+                _init()
+                _start(run_in_background=True)
+                # Re-read status to confirm scheduler is now running before
+                # latching done=True. If start failed silently, leave the
+                # flag unset so the next request retries.
+                if _gs().get("running"):
+                    logger.info("First-request auto-start succeeded; scheduler running")
+                    _first_req_state["done"] = True
+                else:
+                    logger.warning("First-request auto-start did not flip running=True; will retry on next request")
+            except Exception as e:
+                # Do not latch done=True on exception so a transient error
+                # (e.g. file lock, brief DB hiccup) can be retried.
+                logger.error(f"First-request scheduler auto-start failed: {e}", exc_info=True)
+
     enable_worker = is_primary_worker and (
         os.environ.get("ENABLE_EXPORT_WORKER", "").lower() == "true" or
         os.environ.get("REPLIT_DEV_DOMAIN") is not None or

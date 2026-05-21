@@ -4716,3 +4716,451 @@ Content drift detected (substantive review recommended; page body changed since 
 - ready_winter: https://www.ready.gov/winter-weather
 - wem_resources: https://wem.wi.gov/
 - wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/
+
+## 2026-05-21 quarterly re-verification round
+
+Ran `scripts/verify_action_plan_sources.py` against 81 sources. Result: 47 returned HTTP 200, 34 failed, 20 showed content drift since the previous round.
+
+Failed URLs requiring reviewer action:
+
+- heat_gov: HTTP 403 (https://www.heat.gov/)
+- fema_extreme_heat_factsheet: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf)
+- fema_extreme_temps_sltt: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf)
+- fema_hma_guide_v2_1: HTTP 403 (https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide)
+- fema_hmp_guide: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning)
+- cdc_han: HTTP 404 (https://emergency.cdc.gov/han/)
+- mrc_program: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MRC/Pages/default.aspx)
+- wi_dhs_communicable: HTTP 403 (https://www.dhs.wisconsin.gov/disease/communicable.htm)
+- cdc_vector_borne: HTTP 404 (https://www.cdc.gov/ncezid/dvbd/index.html)
+- cdc_wildfire_smoke: HTTP 404 (https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html)
+- cdc_winter_weather: HTTP 404 (https://www.cdc.gov/disasters/winter/index.html)
+- cdc_tornado_health: HTTP 404 (https://www.cdc.gov/disasters/tornadoes/index.html)
+- samhsa_mass_violence: HTTP 404 (https://www.samhsa.gov/mental-health/mass-violence)
+- hhs_ocr_hipaa_security: HTTP 403 (https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+- cisa_phi_sector: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector)
+- cisa_cpg: HTTP 403 (https://www.cisa.gov/cross-sector-cybersecurity-performance-goals)
+- cisa_shields_up: HTTP 403 (https://www.cisa.gov/shields-up)
+- cisa_active_shooter: HTTP 403 (https://www.cisa.gov/topics/physical-security/active-shooter-preparedness)
+- fbi_active_shooter: HTTP 403 (https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources)
+- fema_p_1000: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000)
+- fema_cpg_101: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/plan)
+- fema_cpg_201: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment)
+- fema_ndrf: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery)
+- fema_npg: HTTP 403 (https://www.fema.gov/emergency-managers/national-preparedness/goal)
+- fema_p_361: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/safe-rooms)
+- fema_dam_safety: HTTP 403 (https://www.fema.gov/emergency-managers/risk-management/dam-safety)
+- fema_nfip: HTTP 403 (https://www.fema.gov/flood-insurance)
+- fema_floodplain: HTTP 403 (https://www.fema.gov/floodplain-management)
+- cdc_chempack: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx)
+- cdc_sns: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/SNS/Pages/default.aspx)
+- aspr_mcm: SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)'))) (https://aspr.hhs.gov/MCM/Pages/default.aspx)
+- dot_erg: HTTP 403 (https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg)
+- cisa_chem: HTTP 403 (https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector)
+- fema_debris_management: HTTP 403 (https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf)
+
+Content drift detected (substantive review recommended; page body changed since the last recorded hash):
+
+- epa_ehe_guidebook: https://www.epa.gov/heatislands/excessive-heat-events-guidebook
+- epa_heat_islands_guide: https://www.epa.gov/heatislands/guide-reducing-heat-islands
+- wi_dhs_climate_heat: https://www.dhs.wisconsin.gov/climate/heat.htm
+- naccho_heat_toolkit: https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module
+- naccho_pphr: https://www.naccho.org/programs/public-health-preparedness/pphr
+- hhs_aspr_tracie: https://asprtracie.hhs.gov/
+- samhsa_dtac: https://www.samhsa.gov/dtac
+- nctsn_pfa: https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition
+- wi_dhs_preparedness: https://www.dhs.wisconsin.gov/preparedness/index.htm
+- wi_dhs_tickborne: https://www.dhs.wisconsin.gov/tick/index.htm
+- wi_dhs_mosquito: https://www.dhs.wisconsin.gov/mosquito/index.htm
+- epa_airnow: https://www.airnow.gov/
+- epa_smoke_ready: https://www.epa.gov/smoke-ready-toolbox-wildfires
+- stop_the_bleed: https://www.stopthebleed.org/
+- nist_csf_2: https://www.nist.gov/cyberframework
+- asdso: https://damsafety.org/
+- wi_dnr_dams: https://dnr.wisconsin.gov/topic/Dams
+- ready_winter: https://www.ready.gov/winter-weather
+- wem_resources: https://wem.wi.gov/
+- wem_preparedness: https://wem.wi.gov/preparedness/

@@ -1,6 +1,6 @@
 {
   "clean_round": false,
-  "drift_count": 21,
+  "drift_count": 20,
   "drifted": [
     {
       "id": "epa_ehe_guidebook",
@@ -61,10 +61,6 @@
     {
       "id": "nist_csf_2",
       "url": "https://www.nist.gov/cyberframework"
-    },
-    {
-      "id": "nws_stormready",
-      "url": "https://www.weather.gov/stormready/"
     },
     {
       "id": "asdso",
@@ -294,7 +290,7 @@
     }
   ],
   "failed_count": 34,
-  "last_run_at": "2026-05-21T22:45:38.918837",
+  "last_run_at": "2026-05-21T23:17:09.404387",
   "last_run_date": "2026-05-21",
   "ok_count": 47,
   "total_sources": 81,
