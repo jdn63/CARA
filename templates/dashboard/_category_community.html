@@ -1,4 +1,5 @@
     {% import "dashboard/_freshness_badge.html" as fb %}
+    {% import "dashboard/_collapsible.html" as col %}
     <!-- Category: Community Resources and Utilities -->
     <div class="category-section">
         <div class="category-header category-community">Community Resources and Utilities (supplementary)</div>
@@ -116,9 +117,9 @@
                     
                     <!-- Multi-Dimensional Analysis (if components are available) -->
                     {% if risk_data.utilities is defined and risk_data.utilities.components is defined %}
+                        {% call col.section('utilities-multidim', 'Multi-Dimensional Risk Analysis') %}
                         <div class="row">
                             <div class="col-md-12">
-                                <h6 class="text-muted mb-3">Multi-Dimensional Risk Analysis</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -242,6 +243,7 @@
                                 </div>
                             </div>
                         </div>
+                        {% endcall %}
                     {% endif %}
                     
                     <!-- Explanatory text -->

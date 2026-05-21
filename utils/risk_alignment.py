@@ -47,7 +47,9 @@ def compute_display_scores(risk_data):
         'cybersecurity': 'cybersecurity_risk',
         'air_quality': 'air_quality_risk',
         'dam_failure': 'dam_failure_risk',
-        'vector_borne_disease': 'vector_borne_disease_risk'
+        'vector_borne_disease': 'vector_borne_disease_risk',
+        'hazmat_industrial': 'hazmat_industrial_risk',
+        'hazmat_agricultural': 'hazmat_agricultural_risk'
     }
     
     for normalized_key, field_name in major_risks.items():
@@ -96,10 +98,13 @@ def format_risk_name(risk_key):
         'air_quality': 'Air Quality Risk',
         'dam_failure': 'Dam Failure Risk',
         'vector_borne_disease': 'Vector-Borne Disease Risk',
+        'hazmat_industrial': 'Hazardous Materials (Industrial) Risk',
+        'hazmat_agricultural': 'Hazardous Materials (Agricultural) Risk',
         'flood': 'Flood Risk',
         'tornado': 'Tornado Risk',
         'winter_storm': 'Winter Storm Risk',
-        'thunderstorm': 'Thunderstorm Risk',
+        'thunderstorm': 'Hail & Lightning Risk',
+        'straight_line_wind': 'Straight-Line Wind Risk',
         'wildfire': 'Wildfire Risk',
         'drought': 'Drought Risk',
         'earthquake': 'Earthquake Risk',

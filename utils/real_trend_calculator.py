@@ -140,7 +140,8 @@ def _map_hazard_to_storm_category(hazard_type: str) -> Optional[str]:
         'flood': 'flood',
         'tornado': 'tornado',
         'winter_storm': 'winter',
-        'thunderstorm': 'thunderstorm'
+        'thunderstorm': 'thunderstorm',
+        'straight_line_wind': 'straight_line_wind'
     }
     return mapping.get(hazard_type)
 
@@ -389,7 +390,7 @@ def get_trend_score(risk_type: str, county_name: str) -> Dict[str, Any]:
     """
     clean_county = county_name.replace(' County', '').strip() if county_name else ''
     
-    if risk_type in ('flood', 'tornado', 'winter_storm', 'thunderstorm'):
+    if risk_type in ('flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind'):
         result = calculate_natural_hazard_trend(clean_county, risk_type)
         demo_trend = calculate_demographic_trend(clean_county)
         if demo_trend['score'] > 0.5:
@@ -430,7 +431,7 @@ def get_all_trend_scores(county_name: str) -> Dict[str, Dict[str, Any]]:
     Useful for dashboard display.
     """
     risk_types = [
-        'flood', 'tornado', 'winter_storm', 'thunderstorm',
+        'flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind',
         'extreme_heat', 'air_quality', 'infectious_disease',
         'active_shooter', 'cybersecurity'
     ]

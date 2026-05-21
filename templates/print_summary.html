@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Risk Assessment Summary</h2>
+                <h2>{% if active_discipline == 'em' %}County Emergency Management Risk Summary{% else %}Risk Assessment Summary{% endif %}</h2>
                 <div class="btn-group">
-                    <a href="/dashboard/{{ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">
+                    <a href="{{ back_url if back_url else '/dashboard/' ~ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">
                         Back to Dashboard
                     </a>
                     <a href="/action-plan/{{ risk_data.jurisdiction_id }}" class="btn btn-outline-secondary">
@@ -37,16 +37,32 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <p class="text-muted">Generated for: {{ risk_data.location }} on {{ current_date }}</p>
             <p class="alert alert-info">
-                <span class="badge bg-info">v2.5</span> Comprehensive Wisconsin coverage: 95 unique public health departments (84 local health departments + 11 tribal nations) across 7 HERC regions.
+                <span class="badge bg-info">v2.5</span>
+                {% if active_discipline == 'em' %}
+                Comprehensive Wisconsin coverage: 72 counties organized into 7 Wisconsin Emergency Management (WEM) regions.
+                {% else %}
+                Comprehensive Wisconsin coverage: 95 unique public health departments (84 local health departments + 11 tribal nations) across 7 Healthcare Emergency Readiness Coalition (HERC) regions.
+                {% endif %}
             </p>
             <div class="alert alert-info mt-2">
+                {% if active_discipline == 'em' %}
+                <strong>Strategic Planning Risk Summary (Emergency Management):</strong> This summary presents hazard scores under the Emergency Management weighting profile, which emphasizes natural-hazard exposure and infrastructure impact to support county emergency management planning. Risk scores reflect structural baseline factors (60%) and seasonal patterns (25%) to inform hazard mitigation plan updates, grant prioritization, and resource allocation. Current events shown for context but do not drive long-term planning recommendations.
+                {% else %}
                 <strong>Strategic Planning Risk Assessment:</strong> This summary provides risk analysis optimized for annual preparedness planning. Risk scores emphasize structural baseline factors (60%) and seasonal patterns (25%) to support strategic resource allocation decisions. Current events shown for context but do not drive long-term planning recommendations.
+                {% endif %}
             </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-12">
+            <p class="text-muted small mb-2">
+                {% if active_discipline == 'em' %}
+                Hazard scores below reflect the Emergency Management weighting profile for {{ risk_data.location }} county emergency management planning, with emphasis on natural-hazard exposure and infrastructure impact.
+                {% else %}
+                Risk scores below reflect the Public Health weighting profile for {{ risk_data.location }}, supporting local public health preparedness planning.
+                {% endif %}
+            </p>
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -61,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {# Use canonical display scores for consistent alignment with Action Plan #}
                     {% for risk_name, score in display_scores.items() %}
                     <tr>
-                        <td>{{ risk_name.replace('_', ' ').title() }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}</td>
+                        <td>{{ risk_name|format_risk_type }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}</td>
                         <td>{{ "%.2f"|format(score) }}</td>
                         <td>
                             <span class="badge bg-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
@@ -87,7 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif risk_name == 'winter_storm' %}
                                 FEMA NRI (static CSV), NOAA NCEI Storm Events, NOAA/WICCI Climate Projections, CDC SVI, Census ACS
                             {% elif risk_name == 'thunderstorm' %}
-                                NOAA NCEI Storm Events, FEMA NRI (static CSV), CDC SVI, Census ACS, NOAA/EPA Climate Projections
+                                NOAA NCEI Storm Events (hail + lightning EVENT_TYPEs), FEMA NRI (static CSV), CDC SVI, Census ACS, NOAA/EPA Climate Projections
+                            {% elif risk_name == 'straight_line_wind' %}
+                                NOAA NCEI Storm Events (Thunderstorm Wind / High Wind / Strong Wind / Funnel Cloud EVENT_TYPEs), FEMA NRI (static CSV), CDC SVI, Census ACS, NOAA/EPA Climate Projections, SPC derecho climatology
                             {% elif risk_name == 'dam_failure' %}
                                 WI DNR Dam Safety Database (ArcGIS FeatureServer), USACE National Inventory of Dams (ArcGIS FeatureServer), OpenFEMA NFIP Claims, CDC SVI, Census ACS
                             {% elif risk_name == 'vector_borne_disease' %}
@@ -115,7 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif risk_name == 'winter_storm' %}
                                 EVR framework: Exposure (FEMA NRI winter risk, northern location, lake effect, ice storm climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), power grid vulnerability, rural isolation), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical winter events used for validation.
                             {% elif risk_name == 'thunderstorm' %}
-                                EVR framework: Exposure (NOAA severity index, lightning density, heavy rainfall frequency, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %, flood susceptibility, tree coverage), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical thunderstorm events used for validation.
+                                EVR framework (Hail + Lightning only; v28.6 split from prior single thunderstorm domain): Exposure (NOAA hail EVENT_TYPEs, lightning density, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), exposed roof/auto stock), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical hail and lightning events used for validation.
+                            {% elif risk_name == 'straight_line_wind' %}
+                                EVR framework (damaging non-tornadic convective wind incl. derechos; v28.6 split from prior single thunderstorm domain): Exposure (NOAA Storm Events wind bucket - Thunderstorm Wind / High Wind / Strong Wind / Funnel Cloud, derecho-corridor climatology, climate trend multiplier), Vulnerability (mobile-home stock dominant + tree-fall susceptibility + 4 CDC SVI themes), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical wind events used for validation.
                             {% elif risk_name == 'dam_failure' %}
                                 EVR framework: Exposure (dam density from WI DNR Dam Safety Database, hazard classification severity, flood zone overlap from NFIP claims), Vulnerability (est. % of county population in dam inundation zones based on high/significant hazard dam counts and storage capacity, 4 CDC SVI themes, population aged 65+ (%)), Resilience (per-dam Emergency Action Plan credit from NID plus inverse SVI socioeconomic and housing scores). Real dam inventory data from WI DNR (~4,100 active dams statewide).
                             {% elif risk_name == 'vector_borne_disease' %}
@@ -134,26 +154,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <div class="row mt-4">
         <div class="col-12">
+            {% if active_discipline == 'em' %}
+            <h3>FEMA Core Capabilities and Mitigation Strategies</h3>
+            {% else %}
             <h3>CDC PHEP Capabilities and Mitigation Strategies</h3>
+            {% endif %}
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
                             <th>Risk Type</th>
-                            <th>Related PHEP Capabilities</th>
+                            <th>{% if active_discipline == 'em' %}Related FEMA Core Capabilities{% else %}Related PHEP Capabilities{% endif %}</th>
                             <th>Recommended Preparedness Activities</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for risk_name, score in display_scores.items() %}
+                        {% set _ap = (domain_action_plans or {}).get(risk_name) if active_discipline == 'em' else None %}
                         <tr>
                             <td>
-                                {{ risk_name.replace('_', ' ').title() }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}
+                                {{ risk_name|format_risk_type }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}
                                 <br>
                                 <small class="text-muted">Score: {{ "%.2f"|format(score) }}</small>
                             </td>
                             <td>
-                                {% if risk_name == 'health' %}
+                                {% if _ap and _ap.framework_capabilities %}
+                                <ul class="mb-0">
+                                    {% for _it in _ap.framework_capabilities['items'] %}
+                                    <li>{{ _it }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% elif risk_name == 'health' %}
                                 <ul class="mb-0">
                                     <li>Public Health Surveillance and Epidemiological Investigation</li>
                                     <li>Medical Countermeasure Dispensing and Administration</li>
@@ -239,7 +270,23 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% endif %}
                             </td>
                             <td>
-                                {% if risk_name == 'health' %}
+                                {% if _ap and _ap.tiers %}
+                                {% for _tier in _ap.tiers %}
+                                <div class="mb-2">
+                                    <strong class="small">{{ _tier.label }}</strong>
+                                    <ul class="mb-0">
+                                        {% for _act in _tier.activities %}
+                                        <li>
+                                            {{ _act.text }}
+                                            {% if _act.source %}
+                                            &nbsp;<small class="text-muted">[<a href="{{ _act.source.url }}" target="_blank" rel="noopener noreferrer">{{ _act.source.org }}: {{ _act.source.title }}</a>]</small>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endfor %}
+                                {% elif risk_name == 'health' %}
                                 <ul class="mb-0">
                                     <li>Enhance disease surveillance systems and reporting mechanisms</li>
                                     <li>Improve vaccination outreach and accessibility</li>

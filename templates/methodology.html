@@ -34,16 +34,22 @@
 
     <div class="alert alert-success mb-4" id="overview">
         <h4 class="alert-heading" style="color: var(--primary-blue, #1f4788);">Comprehensive Wisconsin Coverage</h4>
-        <p>CARA provides risk assessments for <strong>95 unique public health departments</strong> (101 total jurisdiction entries including multi-county secondary mappings) across the state of Wisconsin, organized into <strong>7 Healthcare Emergency Readiness Coalition (HERC) regions</strong>.</p>
+        <p>CARA serves both Public Health and Emergency Management audiences and provides coverage across both regional structures used in Wisconsin preparedness work.</p>
         <div class="row">
             <div class="col-md-6">
+                <h6 class="fw-bold">Public Health perspective</h6>
                 <ul class="mb-0">
+                    <li><strong>95</strong> unique public health departments (101 total jurisdiction entries including multi-county secondary mappings)</li>
                     <li><strong>84</strong> local health departments</li>
+                    <li><strong>11</strong> federally-recognized tribal nations</li>
+                    <li><strong>7</strong> Healthcare Emergency Readiness Coalition (HERC) regions</li>
                 </ul>
             </div>
             <div class="col-md-6">
+                <h6 class="fw-bold">Emergency Management perspective</h6>
                 <ul class="mb-0">
-                    <li><strong>11</strong> federally-recognized tribal nations</li>
+                    <li><strong>72</strong> Wisconsin counties (county emergency management agencies)</li>
+                    <li><strong>7</strong> Wisconsin Emergency Management (WEM) regions</li>
                 </ul>
             </div>
         </div>
@@ -649,7 +655,7 @@
 
             <h6>Five Components</h6>
             <ol>
-                <li><strong>Exposure:</strong> NOAA annual heat-day count normalized to [0, 0.95]. For the present-day 12-month score the NOAA frequency multiplier is 1.0; the 2050 trajectory applies the 1.4 multiplier.</li>
+                <li><strong>Exposure:</strong> annual heat-day count per county normalized to [0, 0.95]. v28.9 source hierarchy: CDC Environmental Public Health Tracking measure 421 (days at or above 90F per county per year) as the canonical observed source, with the legacy NCEI Climate-at-a-Glance heuristic (cache-only) and the statewide constant as cascading fallbacks. The displayed dashboard caption ("Source: ...") reflects which level of the hierarchy was actually used. <em>Threshold reconciliation:</em> EPHT measure 421 counts days at or above 90F, while the legacy NCEI heuristic was anchored on a ~100F monthly-maximum proxy. The same [0, 20] normalization band is retained because the [0, 0.95] mapping was calibrated against typical EPHT 90F observed counts in Wisconsin (roughly 5 in the far north to 20 in southern urban counties); the 100F-anchored heuristic values fall inside the same band by construction, so cascading between the two sources does not distort the EVR exposure scale. The threshold mismatch is the explicit reason EPHT is now canonical and the 100F heuristic is a fallback. For the present-day 12-month score the frequency multiplier is 1.0; the 2050 trajectory applies the 1.4 multiplier.</li>
                 <li><strong>Vulnerability:</strong> Weighted CDC SVI 2022 themes (socioeconomic 30%, housing-transportation 20%, household-composition 15%, minority-status 10%) plus Census ACS population aged 65+ factor (25%). Same value for both horizons.</li>
                 <li><strong>Resilience:</strong> Inverse CDC SVI socioeconomic and housing-transportation themes from a 0.5 baseline, clamped to [0.1, 0.9]. Same value for both horizons.</li>
                 <li><strong>Wet Bulb Temperature:</strong> Statewide NOAA Great Lakes baseline of 0.60. Present-day horizon applies humidity factor 1.0; 2050 trajectory applies 1.2.</li>
@@ -666,7 +672,7 @@
                 <li><strong>2&ndash;4&deg;F warming</strong> projected for Wisconsin by 2050 (NOAA WICCI midpoint 1.35 used as the trajectory climate-trend factor)</li>
                 <li><strong>20% wet-bulb humidity rise</strong> applied to a statewide NOAA Great Lakes baseline of 0.60 in the trajectory wet-bulb component</li>
             </ul>
-            <p class="small mb-0"><strong>Data Sources:</strong> NOAA climate normals, CDC SVI 2022, U.S. Census ACS, WICCI 2021 Assessment. Per-county wet-bulb grid and a continuous urban-heat-island signal are not yet integrated; both currently use statewide values.</p>
+            <p class="small mb-0"><strong>Data Sources:</strong> CDC Environmental Public Health Tracking measure 421 (annual days at or above 90F per county; v28.9 canonical observed source, 12-24 month publication lag), NCEI Climate-at-a-Glance (legacy heuristic fallback), NOAA climate normals (long-term baseline), CDC SVI 2022, U.S. Census ACS, WICCI 2021 Assessment. Per-county wet-bulb grid and a continuous urban-heat-island signal are not yet integrated; both currently use statewide values.</p>
         </div>
     </div>
 

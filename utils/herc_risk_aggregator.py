@@ -150,7 +150,7 @@ class HERCRiskAggregator:
                 'extreme_heat', 'air_quality', 'cybersecurity',
                 'utilities', 'dam_failure', 'vector_borne_disease',
             )
-            NH_COMPONENTS = ('flood', 'tornado', 'winter_storm', 'thunderstorm')
+            NH_COMPONENTS = ('flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind')
             TEMPORAL_HAZARDS = (
                 'flood', 'tornado', 'winter_storm', 'extreme_heat',
                 'thunderstorm', 'health', 'active_shooter',
@@ -274,6 +274,7 @@ class HERCRiskAggregator:
             tornado_avg = _two_stage_mean(nh_by_county, 'tornado')
             winter_storm_avg = _two_stage_mean(nh_by_county, 'winter_storm')
             thunderstorm_avg = _two_stage_mean(nh_by_county, 'thunderstorm')
+            straight_line_wind_avg = _two_stage_mean(nh_by_county, 'straight_line_wind')
 
             unique_counties_count = len(domain_by_county)
             
@@ -323,6 +324,7 @@ class HERCRiskAggregator:
                 'tornado_risk': tornado_avg,
                 'winter_storm_risk': winter_storm_avg,
                 'thunderstorm_risk': thunderstorm_avg,
+                'straight_line_wind_risk': straight_line_wind_avg,
 
                 # Natural hazards breakdown for template
                 'natural_hazards': {
@@ -330,6 +332,7 @@ class HERCRiskAggregator:
                     'tornado': tornado_avg,
                     'winter_storm': winter_storm_avg,
                     'thunderstorm': thunderstorm_avg,
+                    'straight_line_wind': straight_line_wind_avg,
                 }
             }
 

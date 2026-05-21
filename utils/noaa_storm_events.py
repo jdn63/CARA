@@ -39,8 +39,11 @@ WINTER_EVENT_TYPES = {
 }
 
 THUNDERSTORM_EVENT_TYPES = {
-    "Thunderstorm Wind", "Lightning", "Hail", "Strong Wind",
-    "High Wind", "Funnel Cloud"
+    "Lightning", "Hail"
+}
+
+STRAIGHT_LINE_WIND_EVENT_TYPES = {
+    "Thunderstorm Wind", "Strong Wind", "High Wind", "Funnel Cloud"
 }
 
 TORNADO_EVENT_TYPES = {"Tornado"}
@@ -53,6 +56,7 @@ FLOOD_EVENT_TYPES = {
 HAZARD_CATEGORIES = {
     "winter": WINTER_EVENT_TYPES,
     "thunderstorm": THUNDERSTORM_EVENT_TYPES,
+    "straight_line_wind": STRAIGHT_LINE_WIND_EVENT_TYPES,
     "tornado": TORNADO_EVENT_TYPES,
     "flood": FLOOD_EVENT_TYPES
 }
@@ -247,6 +251,8 @@ def _empty_county_record() -> Dict[str, Any]:
                        "injuries": 0, "fatalities": 0, "event_types": {}},
             "thunderstorm": {"event_count": 0, "property_damage": 0.0, "crop_damage": 0.0,
                              "injuries": 0, "fatalities": 0, "event_types": {}},
+            "straight_line_wind": {"event_count": 0, "property_damage": 0.0, "crop_damage": 0.0,
+                                   "injuries": 0, "fatalities": 0, "event_types": {}},
             "tornado": {"event_count": 0, "property_damage": 0.0, "crop_damage": 0.0,
                         "injuries": 0, "fatalities": 0, "event_types": {}},
             "flood": {"event_count": 0, "property_damage": 0.0, "crop_damage": 0.0,

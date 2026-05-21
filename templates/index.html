@@ -8,7 +8,7 @@
                 <h2 class="h4 mb-0">Comprehensive Automated Risk Assessment</h2>
             </div>
             <div class="card-body">
-                <p class="lead">This tool streamlines the public health emergency preparedness risk assessment process by automating the collection and analysis of publicly available data. It helps local and Tribal health agencies identify, prioritize, and mitigate the most significant risks affecting their communities.</p>
+                <p class="lead">A risk assessment tool for Wisconsin's public health and emergency management agencies. CARA continuously gathers authoritative federal and state data and turns it into jurisdiction-level scores. This helps local and Tribal practitioners identify, prioritize, and mitigate the most significant risks affecting their communities.</p>
             </div>
         </div>
     </div>
@@ -28,21 +28,52 @@
                 </div>
                 {% endif %}
 
+                {# Discipline-aware tab visibility: HERC tab shows only in PH mode, WEM tab shows only in EM mode. #}
                 <ul class="nav nav-tabs mb-3" id="selectionTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="jurisdiction-tab" data-bs-toggle="tab" data-bs-target="#jurisdiction-content" type="button" role="tab" aria-controls="jurisdiction-content" aria-selected="true">Jurisdiction</button>
                     </li>
+                    {% if active_discipline != 'em' %}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="herc-tab" data-bs-toggle="tab" data-bs-target="#herc-content" type="button" role="tab" aria-controls="herc-content" aria-selected="false">HERC Regions</button>
                     </li>
+                    {% endif %}
+                    {% if active_discipline == 'em' %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="wem-tab" data-bs-toggle="tab" data-bs-target="#wem-content" type="button" role="tab" aria-controls="wem-content" aria-selected="false">WEM Regions</button>
+                    </li>
+                    {% endif %}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="gis-export-tab" data-bs-toggle="tab" data-bs-target="#gis-export-content" type="button" role="tab" aria-controls="gis-export-content" aria-selected="false">Download Data</button>
                     </li>
                 </ul>
 
                 <div class="tab-content" id="selectionTabsContent">
-                    <!-- Jurisdiction Selection Tab -->
+                    {# Jurisdiction Selection Tab. In Public Health mode the dropdown lists 84 LHDs and navigates to /dashboard/<id>. In Emergency Management mode the same tab swaps to a 72-county dropdown that navigates to /em-dashboard/<county_slug>; EM users think and plan at the county level. #}
                     <div class="tab-pane fade show active" id="jurisdiction-content" role="tabpanel" aria-labelledby="jurisdiction-tab">
+                        {% if active_discipline == 'em' %}
+                        <form id="emCountyForm" action="/em-dashboard/" method="GET">
+                            <div class="mb-3">
+                                <label for="em_county" class="form-label">Select Wisconsin County</label>
+                                <select class="form-select" id="em_county" name="county_slug" required onchange="selectEmCounty(this.value, this.options[this.selectedIndex].text);">
+                                    <option value="">Choose a county...</option>
+                                    {% if em_counties %}
+                                        {% for county in em_counties %}
+                                        <option value="{{ county.id }}">{{ county.name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No counties available</option>
+                                    {% endif %}
+                                </select>
+                                {% if not em_counties %}
+                                <small class="text-muted">Unable to load counties. Please try again later.</small>
+                                {% endif %}
+                                <div class="form-text mt-2">
+                                    Select from 72 Wisconsin counties. Risk scores use EM weights (infrastructure-focused vulnerability and resilience).
+                                </div>
+                            </div>
+                        </form>
+                        {% else %}
                         <form id="riskAssessmentForm" action="/dashboard/" method="GET">
                             <div class="mb-3">
                                 <label for="jurisdiction" class="form-label">Select Public Health Jurisdiction</label>
@@ -64,9 +95,11 @@
                                 </div>
                             </div>
                         </form>
+                        {% endif %}
                     </div>
                     
-                    <!-- HERC Selection Tab -->
+                    {% if active_discipline != 'em' %}
+                    <!-- HERC Selection Tab (Public Health discipline) -->
                     <div class="tab-pane fade" id="herc-content" role="tabpanel" aria-labelledby="herc-tab">
                         <form id="hercAssessmentForm" action="/herc-dashboard/" method="GET">
                             <div class="mb-3">
@@ -91,6 +124,32 @@
                         </form>
                     </div>
                     
+                    {% endif %}
+
+                    {% if active_discipline == 'em' %}
+                    <!-- WEM Selection Tab (Emergency Management discipline) -->
+                    <div class="tab-pane fade" id="wem-content" role="tabpanel" aria-labelledby="wem-tab">
+                        <form id="wemAssessmentForm" action="/wem-dashboard/" method="GET">
+                            <div class="mb-3">
+                                <label for="wem_region" class="form-label">Select WEM Region</label>
+                                <select class="form-select" id="wem_region" name="wem_id" required onchange="selectWemRegion(this.value, this.options[this.selectedIndex].text);">
+                                    <option value="">Choose a WEM region...</option>
+                                    {% if wem_regions %}
+                                        {% for region in wem_regions %}
+                                        <option value="{{ region.id }}">{{ region.name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No WEM regions available</option>
+                                    {% endif %}
+                                </select>
+                                <div class="form-text mt-2">
+                                    Select from 7 Wisconsin Emergency Management regions. Risk scores use EM weights (infrastructure-focused vulnerability and resilience).
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+
                     <!-- GIS Export Tab -->
                     <div class="tab-pane fade" id="gis-export-content" role="tabpanel" aria-labelledby="gis-export-tab">
                         <div class="row">
@@ -238,6 +297,24 @@
                             
                             // Navigate to the HERC dashboard
                             window.location.href = `/herc-dashboard/${hercId}`;
+                        }
+                    }
+
+                    function selectWemRegion(wemId, wemName) {
+                        if (wemId) {
+                            localStorage.setItem('selectedWemId', wemId);
+                            localStorage.setItem('selectedWemName', wemName);
+                            // Navigate to the WEM dashboard (EM discipline)
+                            window.location.href = `/wem-dashboard/${wemId}`;
+                        }
+                    }
+
+                    function selectEmCounty(countySlug, countyName) {
+                        if (countySlug) {
+                            localStorage.setItem('selectedEmCountySlug', countySlug);
+                            localStorage.setItem('selectedEmCountyName', countyName);
+                            // Navigate to the EM county dashboard
+                            window.location.href = `/em-dashboard/${countySlug}`;
                         }
                     }
                     

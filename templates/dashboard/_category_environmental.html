@@ -1,4 +1,5 @@
     {% import "dashboard/_freshness_badge.html" as fb %}
+    {% import "dashboard/_collapsible.html" as col %}
     <!-- Category: Environmental -->
     <div class="category-section">
         <div class="category-header category-environmental">Environmental (30% combined weight)</div>
@@ -6,6 +7,7 @@
             ('airnow', 'EPA AirNow'),
             ('hvi', 'WI DHS Heat Vulnerability Index'),
             ('nws_heat', 'NOAA NWS heat forecast'),
+            ('cdc_epht_heat', 'CDC EPHT heat exposure'),
             ('dam_inventory', 'WI DNR / USACE NID dam inventory')
         ]) }}
         <div class="row g-2">
@@ -48,6 +50,7 @@
                         <div class="col-md-9">
                             <!-- Strategic Air Quality Assessment Display -->
                             {% if risk_data.air_quality_components is defined %}
+                                {% call col.section('airquality-trends', 'Regional Wildfire Smoke Trends') %}
                                 <div class="mb-2">
                                     <h6 class="text-muted mb-1">Regional Wildfire Smoke Trends (NOAA/WICCI)</h6>
                                     <div class="d-flex justify-content-between align-items-center">
@@ -63,6 +66,7 @@
                                         <span class="badge bg-danger">+110% episodes</span>
                                     </div>
                                 </div>
+                                {% endcall %}
                             {% endif %}
                         </div>
                     </div>
@@ -120,6 +124,7 @@
                         {% endif %}
                     </div>
                     
+                    {% call col.section('heat-details', 'Risk Components & Metrics') %}
                     <!-- Risk Component Breakdown -->
                     <div class="mb-3">
                         <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
@@ -204,7 +209,12 @@
                                 {% if risk_data.extreme_heat_metrics is defined %}
                                 <tr>
                                     <td>Annual Heat Days (>90°F)</td>
-                                    <td>{{ risk_data.extreme_heat_metrics.annual_heat_days if risk_data.extreme_heat_metrics.annual_heat_days is defined and risk_data.extreme_heat_metrics.annual_heat_days is not none and risk_data.extreme_heat_metrics.annual_heat_days != "N/A" else "14" }}</td>
+                                    <td>
+                                        {{ risk_data.extreme_heat_metrics.annual_heat_days if risk_data.extreme_heat_metrics.annual_heat_days is defined and risk_data.extreme_heat_metrics.annual_heat_days is not none and risk_data.extreme_heat_metrics.annual_heat_days != "N/A" else "14" }}
+                                        {% if risk_data.extreme_heat_metrics.heat_days_source is defined and risk_data.extreme_heat_metrics.heat_days_source %}
+                                          <div class="small text-muted">Source: {{ risk_data.extreme_heat_metrics.heat_days_source }}</div>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Annual Heat-Related ED Visits</td>
@@ -246,13 +256,14 @@
                             Adults aged 65 and older, outdoor workers, and those without air conditioning are most vulnerable.
                         </small>
                     </div>
+                    {% endcall %}
 
                     {#
                         Climate trajectory panel (Q7 remediation, 2026-05-20).
                         Reads the trajectory_2050 sub-block computed by
                         utils/climate_adjusted_risk and surfaces it as a
                         separate planning-horizon view. The score above is
-                        the present-day 12-month value used by PHRAT; the
+                        the present-day 12-month value used by the {{ discipline_label|default('PHRAT') }} composite; the
                         2025-2050 projection here is informational only.
                     #}
                     {% set _traj = risk_data.extreme_heat_metrics.trajectory_2050 if risk_data.extreme_heat_metrics is defined else None %}
@@ -263,7 +274,7 @@
                                 <strong class="small" style="color: #1f4788;">
                                     Climate Trajectory (2025&ndash;2050)
                                 </strong>
-                                <span class="badge bg-secondary small">Planning horizon, not in PHRAT</span>
+                                <span class="badge bg-secondary small">Planning horizon, not in {{ discipline_label|default('PHRAT') }} composite</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small">
                                 <span>Projected heat risk score:</span>
@@ -335,6 +346,7 @@
                         {% endif %}
                     </div>
                     
+                    {% call col.section('dam-details', 'Risk Components & Metrics') %}
                     {% if risk_data.dam_failure_components is defined %}
                     <div class="mb-3">
                         <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
@@ -457,6 +469,7 @@
                             </tbody>
                         </table>
                     </div>
+                    {% endcall %}
                     <div class="mt-3">
                         <small class="text-muted">
                             Sources: WI DNR Dam Safety Database, USACE NID, OpenFEMA NFIP, CDC SVI, U.S. Census

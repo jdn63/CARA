@@ -1,0 +1,84 @@
+hazmat_agricultural:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 8: Medical Countermeasure Dispensing and Administration"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 1: Community Preparedness"
+        - "Capability 6: Information Sharing"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): agricultural chemical exposure mapping and farmworker vulnerability"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): WPS compliance, ag retailer safety, anhydrous ammonia and drift mitigation"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): seasonal review aligned with the spring and fall application calendar"
+        - "Coordination of Local Mitigation Planning: WI DATCP, UW Extension, county conservation, LEPC alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Coordinate with WI DATCP on the agricultural chemical application calendar, the county's high-volume product list, and licensed agrichemical facility inventory before the spring application season"
+          source_id: wi_datcp_agchem
+        - text: "Confirm the CHEMPACK access plan explicitly covers organophosphate and carbamate cholinesterase-inhibitor exposure scenarios that are realistic for agricultural counties, not only industrial nerve-agent scenarios"
+          source_id: cdc_chempack
+        - text: "Refresh rural clinician and emergency department guidance on CHEMM pulmonary, cholinergic, and dermal exposure protocols for agricultural pesticides and anhydrous ammonia"
+          source_id: chemm
+        - text: "Distribute multilingual outreach to migrant and seasonal farmworker clinics on pesticide exposure recognition, decontamination steps, and how to seek emergency care"
+          source_id: cdc_phep
+
+      this_year:
+        - text: "Train rural emergency department clinicians on atropine and pralidoxime use, CHEMPACK request triggers, and CHEMM-based decision support for organophosphate and carbamate poisoning"
+          source_id: cdc_chempack
+        - text: "Partner with WI DATCP and UW Extension on farmworker health education aligned with EPA Worker Protection Standard training, notification, and decontamination requirements"
+          source_id: epa_wps
+        - text: "Coordinate with the Wisconsin Poison Center on acute pesticide-related illness surveillance using NIOSH SENSOR-Pesticides case definitions and forward de-identified case data to the rural occupational health network"
+          source_id: niosh_ag
+        - text: "Update PIO message templates for anhydrous ammonia release at agricultural retailers, large-scale pesticide spills on rural roads, and grain-bin fumigation incidents using CERC principles"
+          source_id: cdc_cerc
+
+      multi_year:
+        - text: "Build sustained farmworker community health worker capacity for pesticide exposure prevention, post-exposure care navigation, and longitudinal exposure surveillance in rural and migrant populations"
+          source_id: naccho_pphr
+        - text: "Integrate agricultural-chemical medical countermeasures objectives into the next PHEP work plan and rural healthcare coalition planning so CHEMPACK and SNS readiness include agricultural exposure scenarios"
+          source_id: cdc_phep
+        - text: "Develop a long-term partnership with the NIOSH Agricultural Centers and UW Extension on rural occupational health surveillance, intervention research, and Wisconsin-specific exposure studies"
+          source_id: niosh_ag
+        - text: "Establish an ATSDR-aligned exposure investigation and case-registry process for acute and chronic agricultural chemical incidents to support trend analysis and future risk reduction"
+          source_id: atsdr_mhmi
+
+    em:
+
+      pre_season:
+        - text: "Confirm the LEPC has current EPCRA Tier II submissions from agricultural retailers, anhydrous ammonia bulk facilities, and cooperatives operating in the county"
+          source_id: epcra_tier2
+        - text: "Verify rural fire department and county hazmat capability against the NFPA 470 standard and document WEM Regional Hazmat Team support agreements for ag-chemical incidents"
+          source_id: nfpa_470
+        - text: "Refresh the hazard mitigation plan's agricultural-chemical risk profile with the current WI DATCP licensee list, bulk storage inventory under ATCP 33, and county application data"
+          source_id: fema_hmp_guide
+        - text: "Pre-position multilingual shelter-in-place and evacuation messaging templates aligned with the spring and fall application peaks and the start of grain-bin fumigation season"
+          source_id: cdc_cerc
+
+      this_year:
+        - text: "Update the local hazard mitigation plan to map agricultural-retailer anhydrous ammonia tanks, anhydrous nurse-tank transport routes, grain-bin fumigation facilities, and rail siding transfer points"
+          source_id: fema_hmp_guide
+        - text: "Coordinate with WI DATCP and the WI DNR Spills program on agricultural-chemical incident reporting, post-incident sampling, and Agricultural Chemical Cleanup Program follow-through"
+          source_id: wi_datcp_agchem
+        - text: "Conduct a tabletop exercise on an anhydrous ammonia release at an agricultural retailer that integrates fire, EMS, hospital, public health, and the CHEMPACK request workflow"
+          source_id: cdc_chempack
+        - text: "Update mutual-aid agreements with neighboring rural counties and WEM Regional Hazmat Teams through the Wisconsin SERB and LEPC structure for catastrophic agricultural chemical release scenarios"
+          source_id: wem_serb
+
+      multi_year:
+        - text: "Pursue FEMA Hazard Mitigation Assistance funding for agricultural-chemical risk reduction projects including secondary containment at bulk retailers, perimeter monitoring, and buffer requirements near schools and clinics"
+          source_id: fema_hma_guide_v2_1
+        - text: "Build a standing partnership with WI DATCP, UW Extension, and county conservation districts on long-term agricultural-chemical risk reduction and pollution prevention"
+          source_id: wi_datcp_agchem
+        - text: "Develop multi-county response capability for catastrophic agricultural chemical release scenarios with WEM regional hazmat team support and pre-arranged hospital surge agreements"
+          source_id: wem_resources
+        - text: "Integrate agricultural chemical risk into long-term rural land-use, zoning, and watershed planning documents so future exposure-population growth near retailers and transfer points is constrained"
+          source_id: fema_hmp_guide

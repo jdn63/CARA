@@ -65,6 +65,7 @@ def _damage_to_kp_scale(damage_amount: float, hazard_type: str) -> int:
         'tornado': (50_000, 2_000_000),
         'winter_storm': (50_000, 1_000_000),
         'thunderstorm': (25_000, 500_000),
+        'straight_line_wind': (50_000, 2_000_000),
     }
     low_thresh, high_thresh = thresholds.get(hazard_type, (50_000, 2_000_000))
 
@@ -111,7 +112,7 @@ def _get_storm_raw_data(county_name: str) -> Dict[str, Dict[str, Any]]:
 
         by_category = storm_data.get('by_category', {})
         result = {}
-        for cat_key in ['flood', 'tornado', 'winter_storm', 'thunderstorm']:
+        for cat_key in ['flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind']:
             cat_data = by_category.get(cat_key, {})
             if cat_data:
                 result[cat_key] = {

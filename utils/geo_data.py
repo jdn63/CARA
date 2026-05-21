@@ -16,12 +16,23 @@ def load_boundary_data(region_type: str) -> Dict:
     try:
         # Get the absolute path to the data directory
         data_dir = Path(__file__).parent.parent / 'data'
-        boundaries_file = data_dir / f'wi_{region_type.lower()}_regions.geojson'
-        
-        logger.info(f"Looking for boundary file: {boundaries_file}")
+        # Search-path list: legacy flat path (HERC) first, then the
+        # canonical data/geojson/ location used by the WEM dissolve
+        # script (scripts/build_wem_geojson.py). New regions should
+        # write into data/geojson/wisconsin_{region}_regions.geojson;
+        # the legacy data/wi_{region}_regions.geojson path is kept so
+        # the HERC boundary file (data/wi_herc_regions.geojson) keeps
+        # loading without a rename.
+        candidates = [
+            data_dir / f'wi_{region_type.lower()}_regions.geojson',
+            data_dir / 'geojson' / f'wisconsin_{region_type.lower()}_regions.geojson',
+        ]
+        boundaries_file = next((p for p in candidates if p.exists()), None)
 
-        if not boundaries_file.exists():
-            logger.warning(f"Boundary file not found: {boundaries_file}")
+        logger.info(f"Looking for {region_type} boundary file, candidates: {[str(c) for c in candidates]}")
+
+        if boundaries_file is None:
+            logger.warning(f"No boundary file found for {region_type} in any candidate path")
             return generate_simplified_boundaries(region_type)
         
         logger.info(f"Found boundary file: {boundaries_file}, attempting to read")

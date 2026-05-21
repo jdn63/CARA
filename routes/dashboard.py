@@ -16,6 +16,7 @@ from utils.data_processor import process_risk_data, get_historical_risk_data
 from utils.predictive_analysis import RiskPredictor
 from utils.metadata_config import EXCLUDED_RISK_FIELDS
 from utils.risk_alignment import compute_display_scores
+from utils.discipline import get_active_discipline, discipline_label
 
 # Set up logger for this module
 logger = logging.getLogger(__name__)
@@ -114,29 +115,30 @@ def dashboard(jurisdiction_id):
             jurisdiction_id = mapped_id
             
         from utils.persistent_cache import get_from_persistent_cache, set_in_persistent_cache
-        
-        # Cache key versioned to v2 (2026-05-20) so warm caches that
-        # pre-date the S004 surfacing (data-quality banner refinements,
-        # blocked_fetches list, nndss_data attachment with H3 pertussis
-        # caveat, community freshness badges) are invalidated cleanly
-        # at deploy. Bump the version suffix whenever the rendered
-        # context shape changes in a way that older cached payloads
-        # cannot satisfy.
-        full_cache_key = f"dashboard_full_v5_{jurisdiction_id}"
+
+        # Discipline-aware cache key (v6, 2026-05-20). Phase 1 introduces the
+        # global PH/EM toggle; the cached payload differs by discipline
+        # because process_risk_data() applies different weights, so the
+        # key MUST include discipline. Bumped to v6 so v5 caches (which
+        # were discipline-blind) are invalidated cleanly at deploy.
+        discipline = get_active_discipline()
+        full_cache_key = f"dashboard_full_v6_{discipline}_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
-        
+
         if cached_context:
-            logger.info(f"Using fully cached dashboard context for jurisdiction {jurisdiction_id}")
+            logger.info(f"Using fully cached dashboard context for jurisdiction {jurisdiction_id} (discipline={discipline})")
             return render_template('dashboard.html',
                                  risk_data=cached_context['risk_data'],
                                  alerts=cached_context['alerts'],
                                  current_conditions=cached_context['current_conditions'],
                                  predictions=cached_context['predictions'],
                                  temporal_risk_data=cached_context['temporal_risk_data'],
+                                 active_discipline=discipline,
+                                 discipline_label=discipline_label(discipline),
                                  now=datetime.now())
-        
-        logger.info(f"Generating fresh dashboard data for jurisdiction {jurisdiction_id}")
-        risk_data = process_risk_data(jurisdiction_id)
+
+        logger.info(f"Generating fresh dashboard data for jurisdiction {jurisdiction_id} (discipline={discipline})")
+        risk_data = process_risk_data(jurisdiction_id, discipline=discipline)
         risk_data = sanitize_risk_data(risk_data)
         
         if not risk_data:
@@ -275,6 +277,8 @@ def dashboard(jurisdiction_id):
                              current_conditions=current_conditions,
                              predictions=predictions,
                              temporal_risk_data=temporal_risk_data,
+                             active_discipline=discipline,
+                             discipline_label=discipline_label(discipline),
                              now=datetime.now())
         
     except Exception as e:
@@ -330,8 +334,9 @@ def print_summary(jurisdiction_id):
             jurisdiction_id = mapped_id
             
         # Get risk data for the selected jurisdiction
-        logger.info(f"Generating print summary for jurisdiction {jurisdiction_id}")
-        risk_data = process_risk_data(jurisdiction_id)
+        discipline = get_active_discipline()
+        logger.info(f"Generating print summary for jurisdiction {jurisdiction_id} (discipline={discipline})")
+        risk_data = process_risk_data(jurisdiction_id, discipline=discipline)
         risk_data = sanitize_risk_data(risk_data)
         
         if not risk_data:
@@ -344,11 +349,45 @@ def print_summary(jurisdiction_id):
         
         # Compute canonical display scores for consistent alignment
         display_scores = compute_display_scores(risk_data)
-        
+
+        # Discipline-aware action plan content layer. Mirrors the
+        # /action-plan view so that the print summary's capabilities and
+        # mitigation strategies section can swap to FEMA Core
+        # Capabilities and EM-appropriate activities in EM mode.
+        from utils.action_plan_content import get_domain_action_plan
+        _ap_domains = (
+            'extreme_heat', 'flood', 'tornado', 'winter_storm',
+            'thunderstorm', 'straight_line_wind',
+            'dam_failure', 'vector_borne_disease',
+            'air_quality', 'active_shooter', 'cybersecurity', 'health',
+            'hazmat_industrial', 'hazmat_agricultural',
+        )
+        domain_action_plans = {
+            d: get_domain_action_plan(d, discipline) for d in _ap_domains
+        }
+
+        # Build the Back-to-Dashboard link. In EM mode, if the
+        # jurisdiction maps to a Wisconsin county (i.e. is reachable via
+        # /em-dashboard/<slug>), prefer the slug URL so the user lands
+        # back on the EM county view they came from instead of the
+        # underlying LHD URL.
+        back_url = f"/dashboard/{risk_data.get('jurisdiction_id', jurisdiction_id)}"
+        if discipline == 'em':
+            from utils.em_counties import get_slug_for_jurisdiction_id
+            slug = get_slug_for_jurisdiction_id(
+                risk_data.get('jurisdiction_id', jurisdiction_id)
+            )
+            if slug:
+                back_url = f"/em-dashboard/{slug}"
+
         return render_template('print_summary.html', 
                              risk_data=risk_data,
                              display_scores=display_scores,
-                             current_date=current_date)
+                             current_date=current_date,
+                             active_discipline=discipline,
+                             discipline_label=discipline_label(discipline),
+                             domain_action_plans=domain_action_plans,
+                             back_url=back_url)
         
     except Exception as e:
         logger.error(f"Error generating print summary for jurisdiction {jurisdiction_id}: {str(e)}")
@@ -366,9 +405,13 @@ def action_plan(jurisdiction_id):
             logger.info(f"Using special ID mapping for action plan: {jurisdiction_id} -> {mapped_id}")
             jurisdiction_id = mapped_id
             
-        # Get risk data for the selected jurisdiction
-        logger.info(f"Generating action plan for jurisdiction {jurisdiction_id}")
-        risk_data = process_risk_data(jurisdiction_id)
+        # Get risk data for the selected jurisdiction. NOTE: Action plan
+        # CONTENT remains Public-Health-tailored until Phase 2; EM mode
+        # only reweights the scores driving the prioritization. The EM
+        # banner in base.html surfaces this caveat to the user.
+        discipline = get_active_discipline()
+        logger.info(f"Generating action plan for jurisdiction {jurisdiction_id} (discipline={discipline})")
+        risk_data = process_risk_data(jurisdiction_id, discipline=discipline)
         risk_data = sanitize_risk_data(risk_data)
         
         if not risk_data:
@@ -381,11 +424,31 @@ def action_plan(jurisdiction_id):
         
         current_date = datetime.now().strftime("%B %d, %Y")
         
+        # Discipline-aware action plan content layer. v28.3 piloted on
+        # extreme_heat; Task #9 extended the pattern to all remaining
+        # domains. Each domain has its own data/action_plans/<domain>.yaml
+        # with PH + EM activities and source citations.
+        from utils.action_plan_content import get_domain_action_plan
+        _ap_domains = (
+            'extreme_heat', 'flood', 'tornado', 'winter_storm',
+            'thunderstorm', 'straight_line_wind',
+            'dam_failure', 'vector_borne_disease',
+            'air_quality', 'active_shooter', 'cybersecurity', 'health',
+            'hazmat_industrial', 'hazmat_agricultural',
+        )
+        domain_action_plans = {
+            d: get_domain_action_plan(d, discipline) for d in _ap_domains
+        }
+
         return render_template('action_plan.html', 
                              risk_data=risk_data,
                              top_risks=top_risks,
                              excluded_fields=EXCLUDED_RISK_FIELDS,
-                             current_date=current_date)
+                             current_date=current_date,
+                             active_discipline=discipline,
+                             discipline_label=discipline_label(discipline),
+                             domain_action_plans=domain_action_plans,
+                             action_plan_feedback_email='jdn63@georgetown.edu')
         
     except Exception as e:
         logger.error(f"Error generating action plan for jurisdiction {jurisdiction_id}: {str(e)}")

@@ -78,6 +78,21 @@
       "northern_wisconsin": 1.12
     }
   },
+  "straight_line_wind": {
+    "exposure_multiplier": 1.25,
+    "notes": "EPA/NOAA: 15-30% increase in severe convective wind environments by 2050; derecho frequency and intensity projected to rise across the upper-Midwest corridor (Brooks et al., NOAA SPC; EPA Climate Indicators). Warmer, moister atmosphere amplifies downburst potential.",
+    "sub_factors": {
+      "derecho_frequency": 1.3,
+      "downburst_intensity": 1.22,
+      "high_wind_warning_days": 1.18
+    },
+    "confidence": "medium",
+    "regional_variation": {
+      "southern_wisconsin": 1.3,
+      "central_wisconsin": 1.25,
+      "northern_wisconsin": 1.18
+    }
+  },
   "county_climate_zones": {
     "southern_wisconsin": [
       "Grant",

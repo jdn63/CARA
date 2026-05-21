@@ -1,0 +1,85 @@
+hazmat_industrial:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 8: Medical Countermeasure Dispensing and Administration"
+        - "Capability 10: Medical Surge"
+        - "Capability 11: Nonpharmaceutical Interventions"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 6: Information Sharing"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): fixed-facility chemical exposure and transportation-corridor hazmat risk"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): EPCRA compliance, facility siting, response capability investment"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): annual LEPC review and exercise cycle"
+        - "Coordination of Local Mitigation Planning: LEPC, fire service, WEM Regional Hazmat Team alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Verify CHEMPACK container location, inventory, and 24/7 access pathway with the regional CHEMPACK coordinator and partner hospitals so nerve agent and cyanide antidotes are reachable within the one-hour response window"
+          source_id: cdc_chempack
+        - text: "Confirm the local Strategic National Stockpile receipt, staging, and storage (RSS) plan addresses chemical-incident timelines, not only biological events, and identifies a chemical-capable RSS partner"
+          source_id: cdc_sns
+        - text: "Refresh emergency department clinician guidance on CHEMM decision support for nerve agent, vesicant, pulmonary agent, and cyanide exposures before the high-incident industrial activity months"
+          source_id: chemm
+        - text: "Validate hospital decontamination capacity, PPE inventory, and patient-throughput plan with the regional healthcare coalition for the contaminated-patient scenario"
+          source_id: hhs_aspr_tracie
+
+      this_year:
+        - text: "Exercise rapid CHEMPACK access and clinical-use scenarios with regional hospitals and EMS in line with ASPR medical countermeasures operational readiness expectations"
+          source_id: aspr_mcm
+        - text: "Coordinate with the LEPC for routine access to EPCRA Tier II facility chemical inventories so public health and hospital planners can pre-identify likely exposure agents and antidote needs"
+          source_id: epcra_tier2
+        - text: "Run an ATSDR Managing Hazardous Materials Incidents training cycle for emergency department, EMS, and public health staff covering pre-hospital, hospital, and chemical-specific medical management"
+          source_id: atsdr_mhmi
+        - text: "Update PIO message templates for chemical release events covering shelter-in-place vs evacuation decision support, plume direction uncertainty, and post-incident health follow-up using CERC principles"
+          source_id: cdc_cerc
+
+      multi_year:
+        - text: "Build sustained healthcare coalition capability for chemical mass-casualty response including burn surge, pulmonary intensive care, pediatric chemical exposure, and behavioral health follow-up"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate CHEMPACK readiness, SNS chemical-event RSS, and clinical CHEMM training into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Develop a long-term clinician training pipeline on chemical agent toxicology, atropine and pralidoxime administration, hydroxocobalamin use, and CHEMM-based decision support for low-frequency, high-consequence events"
+          source_id: chemm
+        - text: "Establish standing data-sharing arrangements with the Wisconsin Poison Center and ATSDR for chemical exposure surveillance, case follow-up, and post-incident registry building"
+          source_id: atsdr_mhmi
+
+    em:
+
+      pre_season:
+        - text: "Confirm the LEPC has reviewed current EPCRA Tier II facility submissions, emergency response plans, and hazard analyses before the planning year begins"
+          source_id: epcra_tier2
+        - text: "Verify county hazmat response capability against the NFPA 470 competency standard and document WEM Regional Hazmat Team support agreements for technician-level incidents"
+          source_id: nfpa_470
+        - text: "Validate that current-edition DOT Emergency Response Guidebooks are on every primary response apparatus across fire service and law enforcement"
+          source_id: dot_erg
+        - text: "Refresh the county Hazmat annex to the Emergency Operations Plan with current FEMA CPG 101 alignment and integrated public health, hospital, and EMS roles"
+          source_id: fema_cpg_101
+
+      this_year:
+        - text: "Update the local hazard mitigation plan to include EPA Risk Management Program (RMP) facility risk, PHMSA pipeline incident history, and rail hazmat traffic patterns crossing the county"
+          source_id: fema_hmp_guide
+        - text: "Coordinate with the regional CISA Chemical Sector security advisor on convergence risks at high-consequence facilities including cyber-physical attack scenarios and supply-chain disruption"
+          source_id: cisa_chem
+        - text: "Conduct a multi-discipline tabletop exercise integrating fire, law enforcement, public health, hospitals, EMS, and the CHEMPACK request workflow for a fixed-facility chemical release scenario"
+          source_id: cdc_chempack
+        - text: "Update mutual-aid agreements with WEM Regional Hazmat Teams and verify request procedures through the Wisconsin State Emergency Response Board and LEPC structure"
+          source_id: wem_serb
+
+      multi_year:
+        - text: "Pursue FEMA Hazard Mitigation Assistance funding for fixed-facility chemical risk reduction projects including buffer zones, fenceline sensor networks, and shelter-in-place retrofits for nearby vulnerable buildings"
+          source_id: fema_hma_guide_v2_1
+        - text: "Build a standing partnership with EPA Region 5 and the Wisconsin DNR Spills program for incident reporting, post-incident environmental assessment, and corrective-action follow-through"
+          source_id: wi_dnr_spills
+        - text: "Develop multi-jurisdictional response capability with neighboring counties and the WEM region for catastrophic chemical release scenarios that exceed single-county capacity"
+          source_id: wem_resources
+        - text: "Integrate hazardous-materials risk reduction into long-term land-use, zoning, and freight-transportation planning documents to limit future exposure-population growth near high-consequence facilities"
+          source_id: fema_hmp_guide

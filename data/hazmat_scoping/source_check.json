@@ -1,0 +1,135 @@
+{
+  "run_date": "2026-05-20",
+  "sample_counties": {
+    "Milwaukee": {
+      "fips": "55079",
+      "profile": "urban / industrial"
+    },
+    "Crawford": {
+      "fips": "55023",
+      "profile": "rural rail corridor (BNSF Mississippi River)"
+    },
+    "Dodge": {
+      "fips": "55027",
+      "profile": "ag-intensive"
+    }
+  },
+  "sources": [
+    {
+      "name": "EPA RMP facilities (access-restricted since 2023)",
+      "url": "https://www.epa.gov/rmp/rmp-reading-room",
+      "status": 404,
+      "final_url": "https://www.epa.gov/rmp/rmp-reading-room",
+      "bytes_sampled": 6518,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "rolling; facilities update on 5-year RMP cycle",
+      "license": "U.S. public domain, but distribution is now gated",
+      "geocoded": "point (lat/lon) - only via Reading Room request",
+      "notes": "Facility-level RMP downloads were removed from public APIs in 2023. State-level RMP facility counts are still published in EPA RMP National Overview PDFs. For Wisconsin, the most recent National Overview lists approximately 280 active RMP facilities. CARA can use the aggregate count and the RMP National Overview state summaries; per-facility geocoding requires a Reading Room request or a CDX FOIA. Recommendation: rely on EPA TRI and Wisconsin DNR Tier II as primary fixed-facility indicators; treat RMP counts as a supplementary weighting factor.",
+      "error": null
+    },
+    {
+      "name": "EPA TRI facilities (Envirofacts)",
+      "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/ROWS/0:50/JSON",
+      "status": 200,
+      "final_url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/ROWS/0:50/JSON",
+      "bytes_sampled": 77106,
+      "wi_record_count_in_sample": 51,
+      "update_cadence": "annual (reporting year + ~18 months publication lag)",
+      "license": "U.S. public domain",
+      "geocoded": "point (lat/lon)",
+      "error": null
+    },
+    {
+      "name": "PHMSA Hazardous Materials Incident Reports",
+      "url": "https://www.phmsa.dot.gov/hazmat-program-management-data-and-statistics/data-operations/incident-statistics",
+      "status": 403,
+      "final_url": "https://www.phmsa.dot.gov/hazmat-program-management-data-and-statistics/data-operations/incident-statistics",
+      "bytes_sampled": 492,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "monthly bulk CSV; full ~50-year history available",
+      "license": "U.S. public domain",
+      "geocoded": "point (lat/lon) for most incidents post-2000",
+      "notes": "Bulk Hazardous Materials Incident Reports CSV is published by PHMSA OHMS for calendar years 1971-present. Filter by ORIGIN_STATE_ABBR = 'WI'. Typical Wisconsin volume is roughly 350-500 reportable hazmat incidents per year across all modes (highway, rail, water, air). Operational integration would mirror the existing CARA pattern: scheduler downloads the CSV monthly, persists to PostgreSQL, request path reads from cache only. WAF blocks scripted GETs, so the download step needs either a session cookie or a manual quarterly drop into data/phmsa/.",
+      "error": "HTTP 403 returned to scripted access (PHMSA WAF). The page loads normally in a browser. Bulk CSVs are downloaded manually."
+    },
+    {
+      "name": "FRA North American Rail Network (lines)",
+      "url": "https://geo.dot.gov/server/rest/services/Hosted/North_American_Rail_Lines/FeatureServer/0",
+      "status": 200,
+      "final_url": "https://geo.dot.gov/server/rest/services/Hosted/North_American_Rail_Lines/FeatureServer/0?f=json",
+      "bytes_sampled": 65,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "annual refresh by DOT BTS",
+      "license": "U.S. public domain",
+      "geocoded": "linestring (national coverage)",
+      "notes": "Use ArcGIS REST query with where=STATEAB='WI' and outFields=NET,RROWNER1,SUBDIV,TRACKS to get WI rail lines as GeoJSON.",
+      "error": null
+    },
+    {
+      "name": "USGS Pesticide National Synthesis Project (county-level use)",
+      "url": "https://water.usgs.gov/nawqa/pnsp/usage/maps/county-level/",
+      "status": 200,
+      "final_url": "https://water.usgs.gov/nawqa/pnsp/usage/maps/county-level/",
+      "bytes_sampled": 10686,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "annual estimates published with ~3-year lag",
+      "license": "U.S. public domain",
+      "geocoded": "county (FIPS)",
+      "notes": "Per-active-ingredient annual estimates 1992-2019. Download per compound or use the aggregated EPest-high/low tables. Wisconsin counties present for every year.",
+      "error": null
+    },
+    {
+      "name": "USDA NASS Quick Stats (Census of Ag, county-level)",
+      "url": "https://quickstats.nass.usda.gov/api",
+      "status": 200,
+      "final_url": "https://quickstats.nass.usda.gov/api",
+      "bytes_sampled": 101670,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "5-year Census of Agriculture; annual NASS surveys",
+      "license": "U.S. public domain; free API with key",
+      "geocoded": "county (FIPS)",
+      "notes": "Free API key from quickstats.nass.usda.gov/api. Provides county acres in production, fertilizer/chemical expenditure, CAFO counts.",
+      "error": null
+    },
+    {
+      "name": "Wisconsin DNR EPCRA Tier II facilities",
+      "url": "https://dma.wi.gov/DMA/wem",
+      "status": 200,
+      "final_url": "https://wem.wi.gov",
+      "bytes_sampled": 505898,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "annual reporting deadline March 1",
+      "license": "Wisconsin public records",
+      "geocoded": "address-level; requires geocoding pass",
+      "notes": "Full facility list is not currently published as bulk download. Public access is via county LEPC FOIA or DNR records request. RMP + TRI cover the highest-risk subset of these facilities.",
+      "error": null
+    },
+    {
+      "name": "PHMSA National Pipeline Mapping System (NPMS) public viewer",
+      "url": "https://www.npms.phmsa.dot.gov/PublicViewer/",
+      "status": 200,
+      "final_url": "https://pvnpms.phmsa.dot.gov/PublicViewer/",
+      "bytes_sampled": 6353,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "rolling, monthly refresh",
+      "license": "Public viewer; downloads require operator/agency role",
+      "geocoded": "linestring (with redaction at zoom level)",
+      "notes": "Bulk pipeline mileage by county is published in PHMSA Annual Reports CSVs (separate from NPMS). Use those for county-level exposure indicator; NPMS itself is restricted for full GIS.",
+      "error": null
+    },
+    {
+      "name": "WEM Regional Hazmat Response Teams (resilience layer)",
+      "url": "https://wem.wi.gov/",
+      "status": 200,
+      "final_url": "https://wem.wi.gov/",
+      "bytes_sampled": 505898,
+      "wi_record_count_in_sample": null,
+      "update_cadence": "static roster; annual review",
+      "license": "Wisconsin public records",
+      "geocoded": "host-city addresses (requires geocoding)",
+      "notes": "8 Type I/II teams covering the state. Used for distance-to-nearest-hazmat-team resilience indicator.",
+      "error": null
+    }
+  ]
+}

@@ -491,7 +491,14 @@ def _calculate_strategic_vaccination_risk(
     if _active:
         _max_b = max(b for _, b in _active)
         _others = len(_active) - 1
-        stacked_outbreak_boost = min(0.40, _max_b + 0.05 * _others)
+        # v28.7 review fix (Part 2 E3): raised stacking cap from 0.40 to
+        # 0.60. Under the 0.40 cap, a single high-tier flag (e.g.
+        # mpox cluster at 0.30) plus several lower-tier active flags
+        # was getting clipped before reaching its full simultaneous-
+        # outbreak boost, which masked compound risk. 0.60 still bounds
+        # the multiplier below pathological levels while letting two or
+        # more concurrent high-tier flags express their combined burden.
+        stacked_outbreak_boost = min(0.60, _max_b + 0.05 * _others)
     else:
         stacked_outbreak_boost = 0.0
     outbreak_conditions['stacked_outbreak_boost'] = stacked_outbreak_boost

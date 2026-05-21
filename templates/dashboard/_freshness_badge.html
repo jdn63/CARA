@@ -22,8 +22,8 @@
 
 {% macro badge_row(dq, sources) -%}
     {%- if dq and dq.source_freshness is mapping -%}
-    <div class="freshness-badges small mb-2" aria-label="Data source freshness">
-        <span class="text-muted me-2" style="font-size: 0.75rem;">Source freshness:</span>
+    <div class="freshness-badges mb-2" aria-label="Data source freshness">
+        <span class="text-muted me-2">Source freshness:</span>
         {%- for source_id, label in sources -%}
             {{ badge(dq, source_id, label) }}
         {%- endfor -%}

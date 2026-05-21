@@ -37,7 +37,7 @@
                         {% else %}
                         <span class="text-muted small">Absolute Risk Score:
                         {{ show_work_btn('overall-info', 'Overall Risk Score Calculation',
-                        '<div class="formula-line">Score = PHRAT Quadratic Mean of 7 Domains</div>'
+                        '<div class="formula-line">Score = ' ~ (discipline_label|default('Public Health')) ~ '-weighted Quadratic Mean of 7 Domains</div>'
                         ~ '<div class="formula-line">= sqrt(Σ(w_i × domain_i²))</div>'
                         ~ '<ul class="component-list">'
                         ~ '<li>Natural Hazards (28%): ' ~ "%.3f"|format(risk_data.natural_hazards_risk|default(0)) ~ '</li>'
@@ -49,7 +49,7 @@
                         ~ '<li>Vector-Borne Disease (7%): ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</li>'
                         ~ '</ul>'
                         ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.total_risk_score) ~ '</div>'
-                        ~ '<div class="data-source">7-domain weighted quadratic mean (PHRAT p=2)</div>'
+                        ~ '<div class="data-source">7-domain weighted quadratic mean (p=2) using ' ~ (discipline_label|default('Public Health')) ~ ' weights</div>'
                         ) }}
                         </span>
                         <div class="display-4 mb-1">{{ "%.2f"|format(risk_data.total_risk_score) }}</div>

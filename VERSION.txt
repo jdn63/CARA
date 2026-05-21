@@ -1,69 +1,131 @@
 CARA - Comprehensive Automated Risk Assessment
-Version: 2.6
-Release date: 2026-05-20
-Push: v26
+Version: 2.8
+Release date: 2026-05-21
+Push: v28.9
 
 Changelog summary:
-- v26: Strategic Preparedness Baseline (Option 1) for infectious disease risk.
-  Adds a P-times-C floor on the displayed infectious-disease score so the
-  number never drops below a meaningful preparedness level on quiet
-  surveillance weeks. New utils/strategic_baseline.py computes a per-disease
-  and severity-weighted aggregate baseline from already-cached county
-  vulnerability inputs (SVI, MMR, COPD, primary-care density); no HTTP.
-  New disease_severity_profiles block in config/risk_weights.yaml covers
-  15 diseases (measles, pertussis, meningococcal, seasonal flu, COVID-19,
-  RSV, H5N1, mpox, legionellosis + 6 enteric), each with CFR,
-  hospitalization rate, R0, vulnerable-population multiplier, and an
-  explicit literature citation + source URL (CDC Pink Book, Yellow Book,
-  MMWR, FoodNet, WHO). utils/disease_surveillance.get_disease_metrics()
-  computes acute_risk_score (unchanged formula) then takes max(acute,
-  aggregate_baseline). New templates/dashboard/_strategic_baseline_panel.html
-  surfaces aggregate / current acute / displayed scores side by side plus
-  the full per-disease table with linked citations. Acute path is
-  unchanged; the floor only ever raises the displayed score. Returned
-  data shape leaves the Option 2 (two-component side-by-side) upgrade
-  fully unblocked.
-- v25: Upgrade HERC region dashboard to fully mirror jurisdiction dashboard.
-  herc_dashboard.html rebuilt with: BSTA temporal risk table (regional averages),
-  all 7 PHRAT primary domain tiles (added Air Quality, Dam Failure, VBD which
-  were previously missing), category-header layout (Biological 24%, Natural
-  Hazards 28%, Environmental 30%, Security 18%), supplementary domain tiles
-  (Cybersecurity, Utilities with clear "not in PHRAT" labeling), show-work
-  popovers on every domain tile showing regional averages across N jurisdictions,
-  unified 0.6/0.3 risk thresholds consistent with jurisdiction dashboard.
-  routes/herc.py updated to extract temporal_risk_data and current_season as
-  separate template variables matching routes/dashboard.py pattern.
-- v24: Add county-level communicable disease metrics from two new data sources.
-  New utils/health_metrics_data.py module provides:
-    (1) Flu vaccination rate from County Health Rankings 2025 CSV (BRFSS survey);
-        replaces statewide 52.1% flat rate with county-specific values ranging
-        22% (Taylor/Polk) to 69% (Dane). Drives flu herd immunity gap analysis
-        in strategic vaccination risk assessment.
-    (2) Primary care physician access from CHR (physicians per 100k); integrated
-        as a resilience modifier in the disease EVR formula. Adams County: 9.6/100k
-        vs Waukesha: 140/100k. Adds up to +0.15 resilience for high-access counties.
-    (3) COPD prevalence from CDC PLACES Socrata API (crude prevalence, no key
-        required); integrated as a vulnerability modifier in the disease EVR formula.
-        Forest: 10.2% vs Waukesha: 4.1%. Adds up to +0.15 vulnerability for
-        high-COPD counties. All three sources cached 30 days; CHR annual update.
-- v23: Replace dead DHS GeoService COVID vaccination API with WI DHS WIR
-  county immunization CSV (county-immunization-data.csv). MMR (1) rates
-  for 24-month olds now loaded for all 72 Wisconsin counties from the most
-  recent year available (2025). County-specific rates now drive both the
-  disease risk score and the strategic vaccination outbreak risk multiplier
-  in disease_surveillance.py. 30-day persistent cache; health-ranking
-  formula retained as a fallback if the CSV is unavailable.
-- v22: Temporarily hide Tribal jurisdictions from public dropdown and block
-  direct URL access to Tribal dashboards pending Tribal data sovereignty
-  protocol finalization. No Tribal data or logic removed. Fully reversible;
-  see .local/tribal_access_reversal.md for exact steps.
-- v21: Update GitHub Actions to Node.js 24-compatible versions:
-  actions/checkout@v3 -> @v4, actions/setup-python@v4 -> @v5
-- v20: README replaced with clean 7-domain version; county_baselines.yaml
-  force-committed to fix CI test failures in CARA-template; VERSION.txt
-  canary file added to confirm successful pushes
-- v19: Geometric tribal county weights via spatial overlay (EPSG:3174);
-  trust land inclusion; Ho-Chunk Nation expanded to 13 counties; tribal
-  metadata excluded from Risk Summary and Action Plan; Tribal Nation
-  Methodology section added; em-dash formatting fixes across all templates
-- v18 and earlier: see README.md Version History section
+- v28.9: Methodology audit fixes + WCAG 2.1 AA accessibility pass.
+  Methodology: (M1) Wired CDC EPHT measure 421 into the heat-exposure
+  scoring formula in `utils/climate_adjusted_risk.py`. Prior to v28.9
+  the formula still called `get_wisconsin_heat_days() or 12` even
+  though v28.8 had introduced EPHT, so heat scores never actually
+  reflected EPHT data. The provenance-aware
+  `_get_annual_heat_days_with_provenance()` helper is now consumed
+  directly with an EPHT -> NCEI heuristic (cache-only) -> statewide
+  constant fallback hierarchy, and the returned metrics dict carries
+  `heat_days_source` for the dashboard caption. (M2) Removed the
+  legacy second-stage SVI weighted-average blend in
+  `utils/data_processor.py` that re-mixed `socioeconomic_svi_factor`
+  into the extreme-heat domain after EVR already integrated it inside
+  `_calculate_enhanced_vulnerability`. Heat risk is now single-pass
+  SVI; the "Heat SVI single-pass invariant" section in
+  `ARCHITECTURE.md` documents the rule. (M3) `templates/methodology.html`
+  updated to describe the new EPHT-canonical source hierarchy and the
+  90F vs 100F threshold reconciliation. (M4)
+  `tests/test_cache_only_invariant.py` now exercises a real integer
+  jurisdiction ID ("1" Adams) instead of the bogus "milwaukee_county"
+  string which always raised ValueError before reaching any fetcher,
+  giving the cache-only invariant real coverage.
+  Accessibility (WCAG 2.1 AA): Fixed the user-reported dark-on-dark
+  Strategic Preparedness Baseline panel by dropping `text-muted` from
+  the two sub-caption lines so the parent `text-light` cascades.
+  Raised `.alert-warning` text to #664d03 (7.5:1 AAA), switched
+  `.text-on-warning` to pure black (11.7:1), overrode `.text-muted` and
+  `.text-secondary` to #595f66 (5.0:1), removed the global
+  `*:focus { outline: none }` regression in `accessibility.css` so
+  keyboard focus rings reappear in browsers without `:focus-visible`
+  support, added `aria-pressed` and `aria-current` to the discipline
+  toggle, marked the navbar logo `alt=""` plus `aria-hidden="true"`
+  (the "CARA" wordmark already names the brand), gave the BSTA
+  seasonal-curve SVG a descriptive parent `aria-label` with
+  `aria-hidden` on its inner primitives, added `aria-haspopup="dialog"`
+  to show-work popover triggers, and reserved a 44x44 CSS-px touch
+  target on `.show-work-btn` per WCAG 2.5.5.
+- v28.8: NIHHIS Phase A. CDC Environmental Public Health Tracking (EPHT)
+  introduced as the canonical observed source for the Extreme Heat
+  domain's annual heat-day exposure input, replacing the prior
+  synthetic statewide constant and the NCEI Climate-at-a-Glance
+  monthly-max heuristic. New module `utils/cdc_epht_heat.py` fetches
+  measure 421 (days >=90F per county per year) and measure 1064
+  (heat-related ED visit rate) via the shared http_client circuit
+  breaker, parses the per-county series, retains the latest non-null
+  year per county, and persists per-county payloads to the file cache.
+  A single statewide DB cache row is written so the dashboard
+  freshness panel surfaces a `cdc_epht_heat` badge. Scheduler entry
+  `refresh_all_cdc_epht_heat` registered in `utils/data_source_
+  refresher.py`, `utils/source_registry.py` (annual cadence, 500-day
+  freshness window to absorb the 12-24 month EPHT publication lag),
+  and `data/config/scheduler_config.json`. `utils/extreme_heat_
+  metrics.ExtremeHeatMetrics` now resolves the heat-day input via a
+  provenance-aware helper that consults EPHT first, falls back to the
+  NCEI heuristic (cache-only per the v28.7 explicit-failure contract),
+  and finally returns None so the freshness pipeline can render an
+  honest "Data unavailable" rather than a synthetic value. The
+  `get_wisconsin_heat_days()` constant 12 is intentionally retained,
+  untouched, only as a deeply-buried last-resort fallback in the
+  elderly-population and ED-visit estimator paths where no real
+  per-county replacement is yet wired. Provenance fields
+  `heat_days_source` and `heat_days_year` are threaded through
+  `climate_adjusted_risk.py` and `data_processor.py` into the
+  extreme-heat metrics dict, and the dashboard heat tile in
+  `templates/dashboard/_category_environmental.html` renders a small
+  "Source: ..." caption directly under the heat-days row so the user
+  can see whether the count comes from EPHT, the NCEI heuristic, or is
+  unavailable. ARCHITECTURE.md updated with a CDC EPHT section
+  documenting the source order, registry settings, known limitations
+  (publication lag, 90F vs 100F threshold note, small-cell
+  suppression, Phase B follow-ups for measure 1064 wiring), and the
+  cache-only request-path invariant compliance. Mandatory triggers
+  in replit.md extended with EPHT-related keywords.
+
+- v28.7: Review-follow-up batch.
+
+  Part 1 (developer/architect fixes):
+  1. Weighted-RMS natural-hazards composite. config/risk_weights.yaml
+     natural_hazards_weights are now applied as actual weights inside
+     utils/data_processor.py via sqrt(sum(w_i*v_i^2)/sum(w_i)) with
+     renormalization when a sub-hazard is missing. The thunderstorm and
+     straight_line_wind pair are collapsed inside an inner 40/60 sub-RMS
+     so their combined contribution remains 0.25. YAML comment block
+     promoted to enforcement contract; weights are no longer just docs.
+  2. scripts/link_check_action_plans.py added; walks every URL in
+     data/action_plans/_sources.yaml, writes link_failed status to
+     data/action_plans/_verifier_status.json. Not wired into the
+     request path.
+  3. utils/soql_safe.py centralizes Socrata single-quote escaping with
+     safe_eq() and safe_in() helpers. utils/nndss_enteric.py and
+     utils/nndss_communicable.py now route every $where interpolation
+     through the helper. Defense in depth against future config or
+     input-driven label paths.
+  4. utils/extreme_heat_metrics.py heat-days fetch: explicit failure
+     mode. Cache misses, FIPS lookup misses, NOAA non-200 responses,
+     and exceptions now return None instead of silently substituting
+     the synthetic get_wisconsin_heat_days() climatology proxy. The
+     freshness pipeline can now render an honest "data unavailable"
+     rather than a synthetic value branded as real. Full NIHHIS /
+     Heat.gov pipeline replacement deferred to follow-up.
+  5. utils/data_freshness.py: tiered staleness (green/yellow/orange/
+     red) with banner_warranted property. Dashboard banner now fires
+     only at orange+ (more than 2x expected window or past absolute
+     180-day cap) rather than on every single-day overshoot.
+  6. ARCHITECTURE.md: documented the (2.0 - Resilience) EVR multiplier
+     model and how it differs from the FEMA NRI divisor; documented
+     v28.7 tiered-freshness scheme and the action-plan link checker.
+  7. utils/svi_helpers.py: apply_svi_multiplier(base, themes, weights,
+     cap) helper. Air-quality SVI composition switched from a
+     multiplicative pair of theme multipliers to an additive form so
+     two themes at neutral 0.5 yield 1.25 instead of 1.265. Cybersec,
+     dam_failure, and vbd retrofit deferred to follow-up.
+  8. tests/test_cache_only_invariant.py: monkey-patches every requests
+     call to raise and asserts process_risk_data runs to completion.
+     Locks in the cache-only invariant against future regressions.
+  9. utils/data_processor.py: hoisted `import math` to the top-level
+     numeric-hazards block (was previously imported inside the loop).
+ 10. routes/em.py _pin_em_mode(): documented that flask.g is request-
+     local and cannot leak into another user's session or a subsequent
+     request, with reference to flask/ctx.py.
+
+  Part 2 (epi/EM):
+ 11. Pertussis removed entirely.
+
+- v28.6 and prior: see git history.

@@ -1,0 +1,84 @@
+air_quality:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 1: Community Preparedness"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 11: Nonpharmaceutical Interventions"
+        - "Capability 10: Medical Surge"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): wildfire-smoke and air-quality profile"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): cleaner-air-space and filtration actions"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: schools, congregate facilities, utilities"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Confirm health-alert triggers tied to EPA AirNow AQI forecasts and PM2.5 thresholds are documented in the agency's air-quality annex"
+          source_id: epa_airnow
+        - text: "Refresh sensitive-group guidance for individuals with asthma, COPD, cardiovascular disease, pregnancy, and outdoor occupational exposure"
+          source_id: cdc_wildfire_smoke
+        - text: "Identify clean-air-space locations with enhanced filtration for extended smoke events and confirm accessibility for individuals with access-and-functional needs"
+          source_id: epa_smoke_ready
+        - text: "Verify syndromic-surveillance signals for respiratory illness, asthma exacerbations, and cardiovascular events are operational"
+          source_id: cdc_nssp
+
+      this_year:
+        - text: "Create multilingual public-health messaging templates tied to AirNow AQI severity levels, with targeted guidance for sensitive groups, schools, and outdoor workers"
+          source_id: epa_smoke_ready
+        - text: "Establish coordinated outreach with home-healthcare, pulmonary, and cardiac providers for medication management and wellness checks during extended smoke events"
+          source_id: hhs_aspr_tracie
+        - text: "Coordinate with schools, childcare, and outdoor-recreation programs on indoor air-quality guidance and activity-modification protocols"
+          source_id: epa_smoke_ready
+        - text: "Coordinate with WI DHS preparedness staff on regional mutual-aid pathways for respiratory-care surge during multi-day events"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a community health worker program for respiratory-health education and asthma management in high-risk communities"
+          source_id: cdc_phep
+        - text: "Develop epidemiological monitoring and health-impact analysis capacity for air-quality-related illness trends over time"
+          source_id: cdc_nssp
+        - text: "Integrate air-quality and wildfire-smoke planning into the next PHEP work plan and the agency's climate-and-health work alongside extreme heat"
+          source_id: cdc_brace
+        - text: "Establish behavioral-health support resources for communities affected by extended smoke or air-quality emergencies and associated displacement or anxiety"
+          source_id: samhsa_dtac
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan addresses wildfire-smoke and degraded-air-quality as a climate-driven hazard with downstream impacts on Wisconsin"
+          source_id: fema_hmp_guide
+        - text: "Verify cleaner-air-space designations with municipal facilities, libraries, schools, and faith partners and confirm filtration capacity, backup power, and accessibility"
+          source_id: epa_smoke_ready
+        - text: "Pre-position public messaging templates aligned with EPA AirNow AQI tiers for PIO and partner-agency use"
+          source_id: epa_airnow
+        - text: "Confirm coordination roles with the local health department, utilities, school districts, and WEM regional staff before the smoke season"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to include outdoor-worker exposure, sensitive populations, and critical facilities lacking adequate filtration"
+          source_id: fema_hmp_guide
+        - text: "Identify HVAC-upgrade and portable-filtration priorities at critical facilities (cleaner-air spaces, congregate care, schools, EOCs) for the next HMA cycle"
+          source_id: epa_smoke_ready
+        - text: "Adopt or update facility-operations standards for activating cleaner-air spaces and modifying outdoor work and school activities at defined AQI thresholds"
+          source_id: epa_smoke_ready
+        - text: "Integrate air-quality and wildfire-smoke resilience into upcoming multi-hazard mitigation projects so they remain HMA-eligible under the current Program and Policy Guide (which removed standalone air-quality eligibility)"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Develop a multi-year strategy for filtration upgrades at schools, congregate care, and cleaner-air spaces aligned with HMA multi-hazard scoping"
+          source_id: epa_smoke_ready
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on shared cleaner-air-space capacity and messaging coordination"
+          source_id: wem_resources
+        - text: "Establish a long-term retrofit pathway for critical facilities bundling filtration, weatherization, and backup-power improvements"
+          source_id: fema_hmp_guide
+        - text: "Expand Weather-Ready Nation Ambassador and partner relationships across hospitals, schools, and employers to amplify air-quality messaging"
+          source_id: noaa_wrn

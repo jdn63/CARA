@@ -7,23 +7,21 @@
    Designed to upgrade cleanly to Option 2 (two-component side-by-side
    display) without further template surgery: the table already separates
    Current Activity from Strategic Baseline.
+
+   v28.9: wrapped in a click-to-expand collapsible (collapsed by default).
 #}
+{% import "dashboard/_collapsible.html" as col %}
 {% set sb = risk_data.health_metrics.strategic_baseline if risk_data.health_metrics is mapping else None %}
 {% if sb is mapping and sb.per_disease is mapping %}
-<div class="mb-3">
-    <h6 class="text-muted mb-2">Strategic Preparedness Baseline
-        <span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;"
-              title="Per-disease consequence-side floor on the infectious-disease score. Ensures the displayed risk never drops below a meaningful preparedness level on quiet surveillance weeks. See utils/strategic_baseline.py.">
-            P x C floor
-        </span>
-    </h6>
+{% set baseline_badge %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Per-disease consequence-side floor on the infectious-disease score. Ensures the displayed risk never drops below a meaningful preparedness level on quiet surveillance weeks. See utils/strategic_baseline.py.">P x C floor</span>{% endset %}
+{% call col.section('infectious-strategic-baseline', 'Strategic Preparedness Baseline', badge_html=baseline_badge, open=false) %}
     <div class="row g-2 mb-2">
         <div class="col-md-4">
             <div class="card bg-secondary text-light h-100">
                 <div class="card-body p-2">
                     <div class="text-uppercase small">Aggregate baseline</div>
                     <div class="h4 mb-0">{{ "%.2f"|format(sb.aggregate_baseline|default(0.0)) }}</div>
-                    <div class="small text-muted">severity-weighted mean across disease portfolio</div>
+                    <div class="small">severity-weighted mean across disease portfolio</div>
                 </div>
             </div>
         </div>
@@ -32,7 +30,7 @@
                 <div class="card-body p-2">
                     <div class="text-uppercase small">Current acute score</div>
                     <div class="h4 mb-0">{{ "%.2f"|format(risk_data.health_metrics.acute_risk_score|default(0.0)) }}</div>
-                    <div class="small text-muted">NSSP activity x vaccination risk multiplier</div>
+                    <div class="small">NSSP activity x vaccination risk multiplier</div>
                 </div>
             </div>
         </div>
@@ -117,5 +115,5 @@
         {{ sb.method|default('') }}
     </div>
     {% endif %}
-</div>
+{% endcall %}
 {% endif %}

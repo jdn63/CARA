@@ -8,7 +8,11 @@
             <h2 class="mb-3">Risk Assessment Results</h2>
             <p class="text-muted">Location: {{ risk_data.location }}</p>
             <div class="alert alert-success">
-                Comprehensive Wisconsin coverage: 95 unique public health departments (84 local health departments + 11 tribal nations) across 7 HERC regions.
+                {% if active_discipline == 'em' %}
+                Comprehensive Wisconsin coverage: 72 counties organized into 7 Wisconsin Emergency Management (WEM) regions.
+                {% else %}
+                Comprehensive Wisconsin coverage: 95 unique public health departments (84 local health departments + 11 tribal nations) across 7 Healthcare Emergency Readiness Coalition (HERC) regions.
+                {% endif %}
                 <span class="badge bg-info ms-2">v2.5</span>
             </div>
         </div>

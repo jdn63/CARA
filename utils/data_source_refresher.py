@@ -837,7 +837,7 @@ def refresh_all_cdc_nndss_communicable() -> Dict[str, Any]:
     Refresh the CDC NNDSS Wisconsin communicable disease cache.
 
     NNDSS publishes weekly state-level case counts for reportable
-    diseases (measles, pertussis, meningococcal, etc.) on Tuesdays
+    diseases (measles, meningococcal, etc.) on Tuesdays
     for the prior MMWR week. The data is statewide-only, so a single
     fetch warms the cache for all 72 counties; we record the result
     as a single source entry with county_name=None.
@@ -1121,8 +1121,239 @@ def run_all_refreshes() -> Dict[str, Any]:
     results['sources']['h5n1'] = refresh_all_h5n1()
     results['sources']['mpox'] = refresh_all_mpox()
     results['sources']['nndss_enteric'] = refresh_all_nndss_enteric()
+    results['sources']['cdc_epht_heat'] = refresh_all_cdc_epht_heat()
 
     results['finished_at'] = datetime.utcnow().isoformat()
     
     logger.info("Full data cache refresh complete")
     return results
+
+
+def refresh_all_cdc_epht_heat() -> Dict[str, Any]:
+    """
+    Refresh CDC Environmental Public Health Tracking (EPHT) heat
+    exposure metrics for all 72 Wisconsin counties (annual cadence).
+
+    This is the v28.8 NIHHIS Phase A integration. It warms the
+    persistent per-county cache for two EPHT measures (annual days
+    >=90F and heat-related ED visit rate) so the Extreme Heat domain
+    exposure sub-formula in utils/climate_adjusted_risk.py reads
+    observed county-resolved values instead of the prior synthetic
+    statewide constant or the NCEI monthly-max heuristic.
+
+    Schedules on the annual track (8760h) because EPHT publishes once
+    per year and lags real time by 12-24 months. The dashboard
+    freshness window is widened correspondingly (500 days) so the
+    badge does not flag an inherently lagged source as stale.
+
+    Cache-only request-path invariant: this function is never invoked
+    from a user request. The underlying fetcher uses the shared
+    http_client circuit breaker; on any EPHT outage the prior cached
+    values remain valid until their persistent-cache expiry elapses.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+    with app.app_context():
+        from utils.cdc_epht_heat import warm_all_wi_counties
+        try:
+            return warm_all_wi_counties()
+        except Exception as exc:
+            logger.exception("EPHT refresh raised unexpectedly: %s", exc)
+            return {
+                'source_type': 'cdc_epht_heat',
+                'error': f"{type(exc).__name__}: {exc}",
+                'success': 0,
+                'failed': 1,
+            }
+
+
+def refresh_action_plan_source_verifier() -> Dict[str, Any]:
+    """
+    Quarterly re-verification of every URL cited in
+    `data/action_plans/_sources.yaml`.
+
+    This is not an external-data fetcher: it runs the standalone
+    `scripts/verify_action_plan_sources.py` logic out-of-band so that
+    broken citations or content drift surface within at most a quarter
+    instead of relying on a human to spot-check. It respects the
+    cache-only request-path invariant documented in ARCHITECTURE.md by
+    never being invoked from a user request - only the scheduler calls
+    this function.
+
+    Behavior:
+    - Always fetches every cited URL and writes a status snapshot to
+      `data/action_plans/_verifier_status.json` so the dashboard (or an
+      operator) can surface the most recent round.
+    - On a fully clean run (every URL HTTP 200, no content drift) the
+      scheduler bumps each source's `verified:` date and appends a
+      summary section to `_research_log.md`, mirroring the
+      `--bump --log` invocation a human would run.
+    - On any failure or drift, the verified dates are NOT bumped (so the
+      stale-citation signal in the dashboard does not silently advance),
+      the research log is still appended so the SME work group has a
+      written trail, and the status file records the failed/drifted URLs
+      so a dashboard banner can pick them up.
+
+    Returns a scheduler-compatible results dict. `failed > 0` with
+    `success == 0` and `fallback == 0` causes the scheduler to mark this
+    job as errored (see refresh_data_source() in
+    utils.data_refresh_scheduler), which is the alert path: the next
+    scheduler-status read will show the error and the last_error string.
+    """
+    import importlib.util
+    import json as _json
+
+    started_at = datetime.utcnow().isoformat()
+
+    results: Dict[str, Any] = {
+        'source_type': 'action_plan_source_verifier',
+        'started_at': started_at,
+        'success': 0,
+        'failed': 0,
+        'fallback': 0,
+        'errors': [],
+    }
+
+    script_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        'scripts',
+        'verify_action_plan_sources.py',
+    )
+    if not os.path.exists(script_path):
+        msg = f"Verifier script not found at {script_path}"
+        logger.error(msg)
+        results['error'] = msg
+        results['failed'] = 1
+        return results
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            'verify_action_plan_sources', script_path
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load spec from {script_path}")
+        verifier = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(verifier)
+    except Exception as e:
+        msg = f"Failed to load verifier script: {type(e).__name__}: {e}"
+        logger.error(msg)
+        results['error'] = msg
+        results['failed'] = 1
+        return results
+
+    try:
+        raw = verifier.load_sources()
+        sources = (raw or {}).get('sources') or {}
+        if not sources:
+            msg = "No sources found in _sources.yaml"
+            logger.error(msg)
+            results['error'] = msg
+            results['failed'] = 1
+            return results
+
+        logger.info(
+            "Action-plan source verifier: checking %d cited URL(s)",
+            len(sources),
+        )
+        verify_results = verifier.verify_all(sources)
+
+        ok = [r for r in verify_results if r.get('ok')]
+        failed = [r for r in verify_results if not r.get('ok')]
+        drifted = [r for r in verify_results if r.get('drift')]
+
+        from datetime import date as _date
+        today = _date.today().isoformat()
+
+        clean_round = not failed and not drifted
+
+        if clean_round:
+            try:
+                bumped = verifier.bump_verified_dates(verify_results, today)
+                verifier.update_hash_store(verify_results)
+                logger.info(
+                    "Action-plan source verifier: clean round; bumped "
+                    "verified date to %s for %d source(s)",
+                    today, bumped,
+                )
+            except Exception as e:
+                logger.warning(
+                    "Verifier bump step failed: %s: %s",
+                    type(e).__name__, e,
+                )
+        else:
+            logger.warning(
+                "Action-plan source verifier: %d failed, %d drifted; "
+                "skipping verified-date bump until SME review",
+                len(failed), len(drifted),
+            )
+
+        try:
+            verifier.append_research_log(verify_results, today)
+        except Exception as e:
+            logger.warning(
+                "Verifier research-log append failed: %s: %s",
+                type(e).__name__, e,
+            )
+
+        status_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'data', 'action_plans', '_verifier_status.json',
+        )
+        status_payload = {
+            'last_run_at': datetime.utcnow().isoformat(),
+            'last_run_date': today,
+            'total_sources': len(verify_results),
+            'ok_count': len(ok),
+            'failed_count': len(failed),
+            'drift_count': len(drifted),
+            'clean_round': clean_round,
+            'failed': [
+                {
+                    'id': r.get('id'),
+                    'url': r.get('url'),
+                    'status': r.get('status'),
+                    'error': r.get('error'),
+                }
+                for r in failed
+            ],
+            'drifted': [
+                {'id': r.get('id'), 'url': r.get('url')}
+                for r in drifted
+            ],
+            'verified_dates_bumped': clean_round,
+        }
+        try:
+            os.makedirs(os.path.dirname(status_path), exist_ok=True)
+            with open(status_path, 'w', encoding='utf-8') as f:
+                _json.dump(status_payload, f, indent=2, sort_keys=True)
+                f.write("\n")
+        except Exception as e:
+            logger.warning(
+                "Failed to write verifier status file %s: %s: %s",
+                status_path, type(e).__name__, e,
+            )
+
+        results['success'] = len(ok)
+        results['failed'] = len(failed)
+        results['drift'] = len(drifted)
+        results['total'] = len(verify_results)
+        results['clean_round'] = clean_round
+        for r in failed:
+            err = r.get('error') or f"HTTP {r.get('status')}"
+            results['errors'].append(f"{r.get('id')}: {err} ({r.get('url')})")
+        for r in drifted:
+            results['errors'].append(
+                f"{r.get('id')}: content drift since previous round "
+                f"({r.get('url')})"
+            )
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+    except Exception as e:
+        msg = f"Verifier run failed: {type(e).__name__}: {e}"
+        logger.exception(msg)
+        results['error'] = msg
+        results['failed'] = max(results.get('failed', 0), 1)
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results

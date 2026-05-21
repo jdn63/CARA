@@ -1,0 +1,274 @@
+{
+  "clean_round": false,
+  "drift_count": 14,
+  "drifted": [
+    {
+      "id": "wi_dhs_climate_heat",
+      "url": "https://www.dhs.wisconsin.gov/climate/heat.htm"
+    },
+    {
+      "id": "naccho_heat_toolkit",
+      "url": "https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module"
+    },
+    {
+      "id": "naccho_pphr",
+      "url": "https://www.naccho.org/programs/public-health-preparedness/pphr"
+    },
+    {
+      "id": "hhs_aspr_tracie",
+      "url": "https://asprtracie.hhs.gov/"
+    },
+    {
+      "id": "samhsa_dtac",
+      "url": "https://www.samhsa.gov/dtac"
+    },
+    {
+      "id": "nctsn_pfa",
+      "url": "https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition"
+    },
+    {
+      "id": "wi_dhs_preparedness",
+      "url": "https://www.dhs.wisconsin.gov/preparedness/index.htm"
+    },
+    {
+      "id": "wi_dhs_tickborne",
+      "url": "https://www.dhs.wisconsin.gov/tick/index.htm"
+    },
+    {
+      "id": "wi_dhs_mosquito",
+      "url": "https://www.dhs.wisconsin.gov/mosquito/index.htm"
+    },
+    {
+      "id": "stop_the_bleed",
+      "url": "https://www.stopthebleed.org/"
+    },
+    {
+      "id": "nist_csf_2",
+      "url": "https://www.nist.gov/cyberframework"
+    },
+    {
+      "id": "asdso",
+      "url": "https://damsafety.org/"
+    },
+    {
+      "id": "wi_dnr_dams",
+      "url": "https://dnr.wisconsin.gov/topic/Dams"
+    },
+    {
+      "id": "ready_winter",
+      "url": "https://www.ready.gov/winter-weather"
+    }
+  ],
+  "failed": [
+    {
+      "error": null,
+      "id": "heat_gov",
+      "status": 403,
+      "url": "https://www.heat.gov/"
+    },
+    {
+      "error": null,
+      "id": "fema_extreme_heat_factsheet",
+      "status": 403,
+      "url": "https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf"
+    },
+    {
+      "error": null,
+      "id": "fema_extreme_temps_sltt",
+      "status": 403,
+      "url": "https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf"
+    },
+    {
+      "error": null,
+      "id": "fema_hma_guide_v2_1",
+      "status": 403,
+      "url": "https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide"
+    },
+    {
+      "error": null,
+      "id": "fema_hmp_guide",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning"
+    },
+    {
+      "error": null,
+      "id": "cdc_han",
+      "status": 404,
+      "url": "https://emergency.cdc.gov/han/"
+    },
+    {
+      "error": "SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MRC/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
+      "id": "mrc_program",
+      "status": null,
+      "url": "https://aspr.hhs.gov/MRC/Pages/default.aspx"
+    },
+    {
+      "error": null,
+      "id": "wi_dhs_communicable",
+      "status": 403,
+      "url": "https://www.dhs.wisconsin.gov/disease/communicable.htm"
+    },
+    {
+      "error": null,
+      "id": "cdc_vector_borne",
+      "status": 404,
+      "url": "https://www.cdc.gov/ncezid/dvbd/index.html"
+    },
+    {
+      "error": null,
+      "id": "cdc_wildfire_smoke",
+      "status": 404,
+      "url": "https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html"
+    },
+    {
+      "error": null,
+      "id": "cdc_winter_weather",
+      "status": 404,
+      "url": "https://www.cdc.gov/disasters/winter/index.html"
+    },
+    {
+      "error": null,
+      "id": "cdc_tornado_health",
+      "status": 404,
+      "url": "https://www.cdc.gov/disasters/tornadoes/index.html"
+    },
+    {
+      "error": null,
+      "id": "samhsa_mass_violence",
+      "status": 404,
+      "url": "https://www.samhsa.gov/mental-health/mass-violence"
+    },
+    {
+      "error": null,
+      "id": "hhs_ocr_hipaa_security",
+      "status": 403,
+      "url": "https://www.hhs.gov/hipaa/for-professionals/security/index.html"
+    },
+    {
+      "error": null,
+      "id": "cisa_phi_sector",
+      "status": 403,
+      "url": "https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector"
+    },
+    {
+      "error": null,
+      "id": "cisa_cpg",
+      "status": 403,
+      "url": "https://www.cisa.gov/cross-sector-cybersecurity-performance-goals"
+    },
+    {
+      "error": null,
+      "id": "cisa_shields_up",
+      "status": 403,
+      "url": "https://www.cisa.gov/shields-up"
+    },
+    {
+      "error": null,
+      "id": "cisa_active_shooter",
+      "status": 403,
+      "url": "https://www.cisa.gov/topics/physical-security/active-shooter-preparedness"
+    },
+    {
+      "error": null,
+      "id": "fbi_active_shooter",
+      "status": 403,
+      "url": "https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources"
+    },
+    {
+      "error": null,
+      "id": "fema_p_1000",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000"
+    },
+    {
+      "error": null,
+      "id": "fema_cpg_101",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/plan"
+    },
+    {
+      "error": null,
+      "id": "fema_cpg_201",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment"
+    },
+    {
+      "error": null,
+      "id": "fema_ndrf",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery"
+    },
+    {
+      "error": null,
+      "id": "fema_npg",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/goal"
+    },
+    {
+      "error": null,
+      "id": "fema_p_361",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/risk-management/safe-rooms"
+    },
+    {
+      "error": null,
+      "id": "fema_dam_safety",
+      "status": 403,
+      "url": "https://www.fema.gov/emergency-managers/risk-management/dam-safety"
+    },
+    {
+      "error": null,
+      "id": "fema_nfip",
+      "status": 403,
+      "url": "https://www.fema.gov/flood-insurance"
+    },
+    {
+      "error": null,
+      "id": "fema_floodplain",
+      "status": 403,
+      "url": "https://www.fema.gov/floodplain-management"
+    },
+    {
+      "error": "SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /CHEMPACK/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
+      "id": "cdc_chempack",
+      "status": null,
+      "url": "https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx"
+    },
+    {
+      "error": "SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /SNS/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
+      "id": "cdc_sns",
+      "status": null,
+      "url": "https://aspr.hhs.gov/SNS/Pages/default.aspx"
+    },
+    {
+      "error": "SSLError: HTTPSConnectionPool(host='aspr.hhs.gov', port=443): Max retries exceeded with url: /MCM/Pages/default.aspx (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
+      "id": "aspr_mcm",
+      "status": null,
+      "url": "https://aspr.hhs.gov/MCM/Pages/default.aspx"
+    },
+    {
+      "error": null,
+      "id": "dot_erg",
+      "status": 403,
+      "url": "https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg"
+    },
+    {
+      "error": null,
+      "id": "cisa_chem",
+      "status": 403,
+      "url": "https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector"
+    },
+    {
+      "error": null,
+      "id": "fema_debris_management",
+      "status": 403,
+      "url": "https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf"
+    }
+  ],
+  "failed_count": 34,
+  "last_run_at": "2026-05-21T04:20:37.526507",
+  "last_run_date": "2026-05-21",
+  "ok_count": 47,
+  "total_sources": 81,
+  "verified_dates_bumped": false
+}

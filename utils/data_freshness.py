@@ -46,7 +46,60 @@ for _alias, _cid in _ALIAS.items():
 
 # Absolute upper bound on cache age. Beyond this, even "stale-but-real" is
 # considered too old to use; the domain should be marked unavailable.
+#
+# v28.8: this is now a default floor, not a hard ceiling. Sources whose
+# expected_max_age_days is wider than 180 days (annual feeds like CDC
+# EPHT that publish with a 12-24 month lag) opt into a per-source
+# absolute cap of 2x their expected window via
+# `_absolute_limit_for_source()` below. This preserves the original
+# "stop trusting silently stale data" intent for short-cadence feeds
+# while not penalizing inherently lagged annual feeds whose freshness
+# expectation already accounts for the lag.
 ABSOLUTE_STALE_LIMIT_DAYS = 180
+
+
+def _absolute_limit_for_source(expected_max_age_days: int) -> int:
+    """Effective absolute cache-age ceiling for a source.
+
+    For short-cadence sources (expected window <= 180 days) the
+    historical 180-day cap applies unchanged. For long-cadence sources
+    (annual EPHT, FEMA NRI, etc.) the cap is 2x the expected window
+    so a 500-day expectation gets a 1000-day absolute ceiling instead
+    of being silently truncated to 180 days.
+    """
+    if expected_max_age_days <= ABSOLUTE_STALE_LIMIT_DAYS:
+        return ABSOLUTE_STALE_LIMIT_DAYS
+    return 2 * expected_max_age_days
+
+
+# v28.7 review fix #6: tiered staleness.
+# Translate raw age-vs-expected ratio into a four-tier color band so the
+# dashboard banner only fires at orange+ rather than on every "stale by
+# one day" cache entry. The tiers are defined as multiples of the
+# source-specific expected_max_age_days window:
+#   green  : age <= 1.0x window (fresh)
+#   yellow : 1.0x < age <= 2.0x window (slightly stale; no banner)
+#   orange : 2.0x < age <= absolute hard cap (significantly stale; banner)
+#   red    : age > absolute hard cap (unavailable; replaced with synthetic)
+_TIER_GREEN = 'green'
+_TIER_YELLOW = 'yellow'
+_TIER_ORANGE = 'orange'
+_TIER_RED = 'red'
+_BANNER_TIERS = {_TIER_ORANGE, _TIER_RED}
+
+
+def _classify_tier(age_days: Optional[float], expected_max_age_days: int) -> str:
+    """Return the freshness tier for a given age. Unknown age = red."""
+    if age_days is None:
+        return _TIER_RED
+    absolute_cap = _absolute_limit_for_source(expected_max_age_days)
+    if age_days > absolute_cap:
+        return _TIER_RED
+    if age_days <= expected_max_age_days:
+        return _TIER_GREEN
+    if age_days <= 2.0 * expected_max_age_days:
+        return _TIER_YELLOW
+    return _TIER_ORANGE
 
 
 @dataclass
@@ -60,6 +113,12 @@ class FreshnessReport:
     expected_max_age_days: int
     label: str               # short human-readable string for UI badges
     detail: str              # longer human-readable explanation
+    tier: str = _TIER_GREEN  # 'green' | 'yellow' | 'orange' | 'red' (v28.7)
+
+    @property
+    def banner_warranted(self) -> bool:
+        """True iff this report's tier should fire the dashboard banner."""
+        return self.tier in _BANNER_TIERS
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -71,6 +130,8 @@ class FreshnessReport:
             'expected_max_age_days': self.expected_max_age_days,
             'label': self.label,
             'detail': self.detail,
+            'tier': self.tier,
+            'banner_warranted': self.banner_warranted,
         }
 
 
@@ -129,13 +190,16 @@ def assess_freshness(
             expected_max_age_days=expected_max_age_days,
             label='Data unavailable',
             detail='No cached data has been retrieved for this source yet.',
+            tier=_TIER_RED,
         )
 
     now = datetime.utcnow()
     age_seconds = max(0.0, (now - fetched_dt).total_seconds())
     age_days = age_seconds / 86400.0
+    tier = _classify_tier(age_days, expected_max_age_days)
+    absolute_cap = _absolute_limit_for_source(expected_max_age_days)
 
-    if age_days > ABSOLUTE_STALE_LIMIT_DAYS:
+    if age_days > absolute_cap:
         return FreshnessReport(
             available=False,
             fresh=False,
@@ -146,9 +210,10 @@ def assess_freshness(
             label=f'Data {int(age_days)} days old (too old to use)',
             detail=(
                 f'Cached data is {int(age_days)} days old, exceeding the '
-                f'{ABSOLUTE_STALE_LIMIT_DAYS}-day absolute limit. Treating '
+                f'{absolute_cap}-day absolute limit for this source. Treating '
                 'this domain as unavailable until a successful refresh.'
             ),
+            tier=tier,
         )
 
     if age_days <= expected_max_age_days:
@@ -164,6 +229,7 @@ def assess_freshness(
                 f'Data fetched {_humanize_age(age_days)}; within the '
                 f'{expected_max_age_days}-day expected refresh window.'
             ),
+            tier=tier,
         )
 
     return FreshnessReport(
@@ -179,6 +245,7 @@ def assess_freshness(
             f'source has not refreshed within its expected {expected_max_age_days}-day '
             'window. Values are real but may not reflect the most current conditions.'
         ),
+        tier=tier,
     )
 
 

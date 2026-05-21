@@ -1,0 +1,103 @@
+# Extreme Heat preparedness and mitigation activities.
+#
+# Scope discipline:
+#  - Preparedness and mitigation ONLY. Operational response and
+#    recovery activities belong in incident-action documents, not here.
+#  - Verbs must be planning-tense (identify, map, inventory, establish,
+#    adopt, integrate, train) not operational (activate, deploy, open).
+#  - One-line activity + exactly one `source_id` per item.
+#  - Source IDs must exist in `_sources.yaml`.
+#
+# Tiers describe planning horizons, not severity:
+#  - `pre_season`:   actions to complete each year before May 1.
+#  - `this_year`:    actions to advance during the current planning cycle.
+#  - `multi_year`:   capacity-building actions spanning multiple cycles.
+#
+# Framework_capabilities is a small framing block at the top of the
+# extreme-heat card. PH references CDC PHEP capabilities; EM references
+# FEMA Hazard Mitigation Plan elements.
+
+extreme_heat:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 7: Mass Care"
+        - "Capability 10: Medical Surge"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): heat hazard profile and vulnerability"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): goals, actions, prioritization"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: cross-jurisdictional alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Update the local heat-vulnerability map using social vulnerability index, age, chronic-condition prevalence, and housing-quality layers before the warm season begins"
+          source_id: cdc_brace
+        - text: "Confirm the cooling-shelter inventory with operating hours, accessibility features, transportation access, and pet policies, and publish the list before the first advisory"
+          source_id: naccho_heat_toolkit
+        - text: "Refresh multilingual heat-health messaging and pre-position it with community-based organizations serving the highest-risk neighborhoods"
+          source_id: wi_dhs_climate_heat
+        - text: "Confirm NWS HeatRisk forecast subscriptions and CDC HeatRisk thresholds are integrated into health-department alert workflows"
+          source_id: nws_heatrisk
+
+      this_year:
+        - text: "Establish or renew memoranda of understanding with aging services, home-healthcare providers, and community health workers for wellness-check outreach during heat events"
+          source_id: naccho_heat_toolkit
+        - text: "Add heat-related illness syndromic surveillance to the routine epidemiology cadence using emergency-department and poison-control data feeds"
+          source_id: cdc_phep
+        - text: "Train Medical Reserve Corps volunteers and healthcare partners on recognition of heat-related illness and protective actions for vulnerable groups"
+          source_id: cdc_phep
+        - text: "Coordinate with housing, utility, and weatherization programs to identify residents in housing without reliable cooling and connect them to assistance"
+          source_id: wi_dhs_climate_heat
+
+      multi_year:
+        - text: "Adopt the CDC BRACE five-step framework as the standing planning cadence for climate-driven health risks including extreme heat"
+          source_id: cdc_brace
+        - text: "Build a community health worker program for year-round outreach in heat-vulnerable neighborhoods, with seasonal surge capacity for advisory periods"
+          source_id: naccho_heat_toolkit
+        - text: "Partner with healthcare coalitions and behavioral-health providers to expand longitudinal monitoring of heat-related health outcomes across the catchment area"
+          source_id: cdc_phep
+        - text: "Integrate heat-health objectives into the next PHEP work plan and the agency's strategic health-equity priorities"
+          source_id: cdc_phep
+
+    em:
+
+      pre_season:
+        - text: "Confirm the county hazard mitigation plan's extreme-heat profile reflects the most recent NWS HeatRisk climatology and is current within the 5-year update cycle"
+          source_id: fema_hmp_guide
+        - text: "Verify cooling-center designations with municipal facilities, schools, libraries, and faith partners and confirm backup-power and accessibility status for each site"
+          source_id: epa_ehe_guidebook
+        - text: "Pre-position multilingual public messaging templates aligned with NWS HeatRisk color tiers for use by PIO and partner agencies"
+          source_id: heat_gov
+        - text: "Confirm coordination roles with the local health department, utility companies, school districts, and Wisconsin Emergency Management region staff before the heat season"
+          source_id: fema_extreme_temps_sltt
+
+      this_year:
+        - text: "Update the county risk assessment to include heat-exposed populations such as outdoor workers, residents without home cooling, and people experiencing homelessness"
+          source_id: fema_hmp_guide
+        - text: "Identify utility-resilience priorities (transformer upgrades, vegetation management, demand-response programs) that reduce heat-driven outage risk in coordination with the local utility"
+          source_id: fema_extreme_temps_sltt
+        - text: "Adopt or update building, zoning, and site-plan provisions that support cool-roof, cool-pavement, and tree-canopy practices in heat-burden hotspots"
+          source_id: epa_heat_islands_guide
+        - text: "Integrate extreme-heat resilience measures into upcoming multi-hazard mitigation projects so they remain eligible for FEMA Hazard Mitigation Assistance under the current HMA Guide"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Develop a multi-year urban heat-island reduction strategy combining tree planting, cool roofs, cool pavements, and green infrastructure in priority neighborhoods"
+          source_id: epa_heat_islands_guide
+        - text: "Build a county heat action plan that designates a lead coordinator, activation thresholds tied to NWS HeatRisk, and partner responsibilities across health, public works, transit, and schools"
+          source_id: heat_gov
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the Wisconsin Emergency Management region to align thresholds, sheltering capacity, and mutual-aid expectations"
+          source_id: fema_hmp_guide
+        - text: "Establish a long-term retrofit pathway for critical facilities (shelters, schools, congregate housing) that bundles cooling upgrades with energy-resilience improvements"
+          source_id: fema_extreme_heat_factsheet

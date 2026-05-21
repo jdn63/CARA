@@ -12,8 +12,14 @@ Update:   Weekly (typically Tuesdays for the prior MMWR week)
 Diseases tracked here:
     - Measles, Indigenous
     - Measles, Imported
-    - Pertussis
     - Meningococcal disease, All serogroups
+
+Pertussis was removed in v28.7. The prior "pertussis_elevated" flag was
+a CARA-specific operational heuristic (1.5x 5-year weekly median, floor
+5 cases) without CSTE/CDC published provenance. Re-introduction will be
+considered only when a Farrington- or EARS-style aberration detector
+based on the full multi-year per-week NNDSS distribution can be wired
+in; until then, no pertussis signal is surfaced.
 
 This is the only public machine-readable source for these reportable
 diseases for Wisconsin.  WI DHS WEDSS itself does not expose a public
@@ -30,7 +36,6 @@ References:
 """
 
 import logging
-import requests
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -48,93 +53,11 @@ NNDSS_CACHE_DAYS = 7
 
 _SCRAPER_UA = "CARA-WI-PublicHealth/1.0 (contact: github.com/jdn63)"
 
-# Documented defaults that mirror config/risk_weights.yaml
-# disease_alert_thresholds.pertussis. Used if the config block is missing
-# or malformed (defensive fallback) so the surveillance fetch never crashes
-# on a config error. The config block is the source of truth; this mirror
-# only exists so the function is robust when the yaml has been hand-edited.
-_PERTUSSIS_DEFAULT_THRESHOLDS = {
-    "median_multiplier": 1.5,
-    "min_cases_floor": 5,
-    "method_label": (
-        "CARA heuristic (1.5x 5-year weekly median, floor 5 cases); "
-        "not a CSTE/CDC published threshold"
-    ),
-    "citation_status": (
-        "uncited operational heuristic - see disease_alert_thresholds "
-        "comment block"
-    ),
-}
-
-
-def _get_pertussis_thresholds() -> Dict[str, Any]:
-    """
-    Read pertussis_elevated thresholds from config/risk_weights.yaml
-    (disease_alert_thresholds.pertussis), with documented defaults as
-    defensive fallback. See review finding H3 and the config block
-    comments for rationale, citation status, and the planned
-    Farrington/EARS replacement path.
-
-    Returns a dict with median_multiplier (float), min_cases_floor (int),
-    method_label (str), and citation_status (str). Invalid types or
-    non-positive values fall back to the corresponding default and a
-    warning is logged.
-    """
-    defaults = dict(_PERTUSSIS_DEFAULT_THRESHOLDS)
-    try:
-        from utils.config_manager import get_config_manager
-        cfg = get_config_manager().config or {}
-        block = (cfg.get('disease_alert_thresholds') or {}).get('pertussis') or {}
-    except Exception as exc:
-        logger.warning(
-            f"NNDSS pertussis thresholds: could not load config, using defaults "
-            f"({_PERTUSSIS_DEFAULT_THRESHOLDS}); reason: {exc}"
-        )
-        return defaults
-
-    out = dict(defaults)
-    try:
-        m = float(block.get('median_multiplier', defaults['median_multiplier']))
-        if m > 0:
-            out['median_multiplier'] = m
-        else:
-            logger.warning(
-                f"NNDSS pertussis: median_multiplier must be > 0, got {m}; "
-                f"using default {defaults['median_multiplier']}"
-            )
-    except (TypeError, ValueError) as exc:
-        logger.warning(
-            f"NNDSS pertussis: median_multiplier invalid ({exc}); "
-            f"using default {defaults['median_multiplier']}"
-        )
-    try:
-        f = int(block.get('min_cases_floor', defaults['min_cases_floor']))
-        if f >= 0:
-            out['min_cases_floor'] = f
-        else:
-            logger.warning(
-                f"NNDSS pertussis: min_cases_floor must be >= 0, got {f}; "
-                f"using default {defaults['min_cases_floor']}"
-            )
-    except (TypeError, ValueError) as exc:
-        logger.warning(
-            f"NNDSS pertussis: min_cases_floor invalid ({exc}); "
-            f"using default {defaults['min_cases_floor']}"
-        )
-    label = block.get('method_label')
-    if isinstance(label, str) and label.strip():
-        out['method_label'] = label
-    cite = block.get('citation_status')
-    if isinstance(cite, str) and cite.strip():
-        out['citation_status'] = cite
-    return out
-
 # NNDSS disease label exactly as it appears in the dataset (case-sensitive).
 # These labels are stable; CDC has used them since the NNDSS modernization.
 _DISEASE_LABELS = {
     "measles_indigenous": "Measles, Indigenous",
     "measles_imported": "Measles, Imported",
-    "pertussis": "Pertussis",
     "meningococcal": "Meningococcal disease, All serogroups",
 }
 
@@ -163,12 +86,13 @@ def _fetch_disease(label: str) -> List[Dict[str, Any]]:
     orders by sort_order (a year-week composite int) so the newest records
     appear first regardless of which case convention is in use.
 
-    SECURITY (review finding M3, 2026-05-20): the disease label is
-    interpolated into the Socrata `$where` clause. To guarantee no
-    Socrata-injection path exists even if a future refactor lets the
-    label flow in from config or user input, this function enforces an
-    explicit allowlist check against the internal _DISEASE_LABELS values
-    AND defensively escapes single quotes before interpolation.
+    SECURITY (v28.7): the disease label is interpolated into the Socrata
+    `$where` clause. We enforce an explicit allowlist check against the
+    internal _DISEASE_LABELS values AND route the label through
+    utils/soql_safe.safe_eq() which doubles any embedded single quote
+    per SoQL convention. Defense in depth so no Socrata-injection path
+    opens up even if a future refactor lets the label flow in from
+    config or user input.
     """
     allowed = set(_DISEASE_LABELS.values())
     if label not in allowed:
@@ -177,11 +101,9 @@ def _fetch_disease(label: str) -> List[Dict[str, Any]]:
             f"allowed labels are {sorted(allowed)}"
         )
         return []
-    # Defensive: Socrata uses single-quoted string literals in $where;
-    # escape any embedded single quote by doubling it (SoQL convention).
-    safe_label = label.replace("'", "''")
+    from utils.soql_safe import safe_eq
     params = {
-        "$where": f"upper(states)='WISCONSIN' AND label='{safe_label}'",
+        "$where": "upper(states)='WISCONSIN' AND " + safe_eq("label", label),
         "$select": "year,week,label,m1,m2,m3,m4",
         "$order": "sort_order DESC",
         "$limit": _LOOKBACK_WEEKS,
@@ -239,9 +161,9 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
 
     Returns a structured dict with:
       - diseases: per-disease summary (measles_indigenous, measles_imported,
-        pertussis, meningococcal) with current-week / 4-week / YTD counts
+        meningococcal) with current-week / 4-week / YTD counts
       - outbreak_flags: derived boolean indicators used downstream
-        (active_measles_outbreak, pertussis_elevated, meningococcal_elevated)
+        (active_measles_outbreak granular flags + meningococcal_elevated)
       - report_date / last_updated / data_source provenance fields
 
     Results are cached for 7 days (NNDSS publishes weekly on Tuesdays).
@@ -294,7 +216,6 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
     # Derive outbreak flags from the structured per-disease summaries.
     m_ind = diseases["measles_indigenous"]
     m_imp = diseases["measles_imported"]
-    pert = diseases["pertussis"]
     mening = diseases["meningococcal"]
 
     # Measles outbreak flags. Per CDC/CSTE convention, "active local
@@ -304,18 +225,6 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
     # and keep the historical umbrella ``active_measles_outbreak`` as
     # the OR of all three for backward compatibility with older code.
     # New downstream code should consume the granular flags.
-    #
-    # active_local_transmission: any indigenous measles case in the last
-    #     4 reported weeks. This is the only flag that signals current
-    #     local community spread and triggers an acute outbreak response.
-    # import_pressure_elevated: more than 2 imported cases in the last
-    #     4 reported weeks. Sustained import pressure raises community-
-    #     spread risk but is NOT itself an active outbreak.
-    # ytd_elevated: any indigenous YTD case AND YTD count at or above
-    #     the prior year. Year-level vulnerability signal, not acute.
-    #     Handles the common case where NNDSS m1 (current week) is
-    #     null/zero for the most recent weeks but m2 (YTD) shows active
-    #     circulation earlier in the year.
     active_local_transmission = bool(m_ind["recent_4wk_cases"] > 0)
     import_pressure_elevated = bool(m_imp["recent_4wk_cases"] > 2)
     ytd_elevated = bool(
@@ -324,27 +233,6 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
     )
     active_measles_outbreak = bool(
         active_local_transmission or import_pressure_elevated or ytd_elevated
-    )
-
-    # pertussis_elevated: CARA-specific heuristic alert (NOT a CSTE- or
-    # CDC-published outbreak threshold). Thresholds are externalized to
-    # config/risk_weights.yaml disease_alert_thresholds.pertussis so the
-    # assumptions are inspectable and tunable without code changes.
-    # See that config block for the rationale, citation status, and the
-    # follow-up plan (replace with Farrington/EARS aberration detector
-    # if the multi-year per-week distribution becomes available). The
-    # method_label and citation_status are echoed onto the result dict
-    # below so renderers can surface the caveat to users.
-    pertussis_thresholds = _get_pertussis_thresholds()
-    pertussis_median_multiplier = pertussis_thresholds["median_multiplier"]
-    pertussis_min_cases_floor = pertussis_thresholds["min_cases_floor"]
-    pertussis_alert_floor = max(
-        pertussis_min_cases_floor,
-        int(round(pert["five_year_median"] * pertussis_median_multiplier))
-    )
-    pertussis_elevated = bool(
-        pert["five_year_median"] > 0
-        and pert["current_week_cases"] >= pertussis_alert_floor
     )
 
     # meningococcal_elevated: any current-week case (rare disease, single
@@ -380,22 +268,7 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
             "ytd_elevated": ytd_elevated,
             # Umbrella OR-flag, kept for backward compatibility.
             "active_measles_outbreak": active_measles_outbreak,
-            "pertussis_elevated": pertussis_elevated,
             "meningococcal_elevated": meningococcal_elevated,
-        },
-        # Per review finding H3: the pertussis_elevated flag is a CARA
-        # heuristic, not a CSTE/CDC published threshold. Surface the
-        # current method label, citation status, and the exact alert
-        # floor that fired (or would fire) for this report so renderers
-        # can show the caveat to users.
-        "pertussis_alert_method": {
-            "median_multiplier": pertussis_median_multiplier,
-            "min_cases_floor": pertussis_min_cases_floor,
-            "alert_floor_cases": pertussis_alert_floor,
-            "five_year_median": pert["five_year_median"],
-            "current_week_cases": pert["current_week_cases"],
-            "method_label": pertussis_thresholds["method_label"],
-            "citation_status": pertussis_thresholds["citation_status"],
         },
     }
 
@@ -403,7 +276,6 @@ def fetch_nndss_wi_communicable() -> Dict[str, Any]:
         f"NNDSS fetched {report_date}: "
         f"measles_indig={m_ind['recent_4wk_cases']} (4wk), "
         f"measles_imp={m_imp['recent_4wk_cases']} (4wk), "
-        f"pertussis={pert['current_week_cases']}/wk vs median {pert['five_year_median']}, "
         f"mening_ytd={mening['ytd_cases']} vs prior {mening['prior_ytd_cases']}; "
         f"outbreak_flags={result['outbreak_flags']}"
     )
@@ -427,18 +299,11 @@ def _fallback() -> Dict[str, Any]:
         "diseases": {
             key: _summarise(key, []) for key in _DISEASE_LABELS
         },
-        "pertussis_alert_method": {
-            **_PERTUSSIS_DEFAULT_THRESHOLDS,
-            "alert_floor_cases": None,
-            "five_year_median": None,
-            "current_week_cases": None,
-        },
         "outbreak_flags": {
             "active_local_transmission": False,
             "import_pressure_elevated": False,
             "ytd_elevated": False,
             "active_measles_outbreak": False,
-            "pertussis_elevated": False,
             "meningococcal_elevated": False,
         },
     }

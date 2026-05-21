@@ -9,7 +9,7 @@ These routes handle HERC (Hospital Emergency Readiness Coalition) specific funct
 
 import logging
 from datetime import datetime
-from flask import Blueprint, render_template, send_file, redirect, url_for
+from flask import Blueprint, render_template, send_file, redirect, url_for, session
 from utils.herc_data import get_herc_statistics, get_all_herc_regions
 
 # Set up logger for this module
@@ -19,11 +19,25 @@ logger = logging.getLogger(__name__)
 herc_bp = Blueprint('herc', __name__)
 
 
+def _pin_ph_mode():
+    """HERC (Hospital Emergency Readiness Coalition) views are inherently
+    Public Health. The HERC aggregator computes PH-weighted scores; pin
+    the session so the nav toggle and EM banner reflect the true mode
+    even when the user arrives from an EM-mode jurisdiction page or with
+    a session pinned to 'em' from a prior WEM visit. Mirrors the
+    _pin_em_mode() pattern in routes/wem.py."""
+    try:
+        session['discipline'] = 'public_health'
+    except Exception:
+        pass
+
+
 @herc_bp.route('/herc-dashboard/<herc_id>')
 def herc_dashboard(herc_id):
     """Display HERC region dashboard with real aggregated risk calculations"""
     try:
-        logger.info(f"Loading HERC dashboard for region {herc_id}")
+        _pin_ph_mode()
+        logger.info(f"Loading HERC dashboard for region {herc_id} (discipline pinned to public_health)")
         
         # Get HERC region basic info
         region_info = get_herc_statistics(herc_id)
@@ -76,7 +90,11 @@ def herc_dashboard(herc_id):
                              current_herc_id=herc_id,
                              temporal_risk_data=temporal_risk_data,
                              current_season=current_season,
-                             now=datetime.now())
+                             now=datetime.now(),
+                             # Force PH chrome on the HERC surface so the
+                             # navbar toggle / EM banner are truthful.
+                             active_discipline='public_health',
+                             discipline_label='Public Health')
         
     except Exception as e:
         logger.error(f"Error loading HERC dashboard for region {herc_id}: {str(e)}")
@@ -157,6 +175,7 @@ def herc_kp_hva_export(herc_id):
 def herc_print_summary(herc_id):
     """Generate printable risk summary for HERC region with real risk calculations"""
     try:
+        _pin_ph_mode()
         logger.info(f"Generating print summary for HERC region {herc_id}")
         
         # Get HERC region basic info
@@ -190,7 +209,11 @@ def herc_print_summary(herc_id):
         
         return render_template('herc_print_summary.html', 
                              risk_data=risk_data,
-                             current_date=current_date)
+                             current_date=current_date,
+                             active_discipline='public_health',
+                             discipline_label='Public Health',
+                             region_kind='HERC',
+                             dashboard_url_prefix='/herc-dashboard')
         
     except Exception as e:
         logger.error(f"Error generating print summary for HERC region {herc_id}: {str(e)}")

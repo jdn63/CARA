@@ -1,0 +1,84 @@
+tornado:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 7: Mass Care"
+        - "Capability 10: Medical Surge"
+        - "Capability 5: Fatality Management"
+        - "Capability 2: Community Recovery"
+        - "Capability 4: Emergency Public Information and Warning"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): tornado climatology and exposure"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): safe-room and structural actions"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: schools, mobile-home parks, critical facilities"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Confirm mass-casualty triage and medical-surge coordination roles with the regional healthcare coalition and trauma centers before the spring severe-weather season"
+          source_id: hhs_aspr_tracie
+        - text: "Update mass-care health protocols for shelter inspections, chronic-disease screening, and medical-needs sheltering using the CMIST framework"
+          source_id: hhs_aspr_tracie
+        - text: "Refresh multilingual public-health messaging on tornado injury patterns, post-event tetanus and wound care, and behavioral-health support"
+          source_id: cdc_tornado_health
+        - text: "Verify Health Alert Network distribution lists for clinicians, EMS, and hospitals before severe-weather season"
+          source_id: cdc_han
+
+      this_year:
+        - text: "Integrate fatality-management coordination with the medical examiner, funeral homes, and family-assistance-center partners into the agency tornado annex"
+          source_id: cdc_phep
+        - text: "Train Medical Reserve Corps volunteers and partner agencies on psychological first aid for survivors, responders, and family-assistance centers"
+          source_id: nctsn_pfa
+        - text: "Establish data-sharing pathways with hospitals and EMS for rapid injury surveillance and disaster-related death classification after a tornado"
+          source_id: cdc_nssp
+        - text: "Coordinate with Wisconsin DHS preparedness staff on mutual-aid pathways for environmental-health, epidemiology, and behavioral-health surge"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a long-term behavioral-health recovery framework with community mental-health, faith, and aging-services partners for tornado-affected populations"
+          source_id: samhsa_dtac
+        - text: "Develop a community health worker program for ongoing wellness checks and chronic-disease continuity in historically tornado-impacted neighborhoods"
+          source_id: cdc_phep
+        - text: "Integrate tornado mass-casualty response objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Expand healthcare-coalition exercises that test patient tracking and surge across multi-jurisdiction tornado scenarios"
+          source_id: hhs_aspr_tracie
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan's tornado profile reflects the most recent NWS climatology and is current within the 5-year update cycle"
+          source_id: fema_hmp_guide
+        - text: "Verify community safe-room and best-available-refuge designations for schools, mobile-home parks, and large public assemblies using FEMA P-361 criteria"
+          source_id: fema_p_361
+        - text: "Pre-position public messaging templates aligned with NWS tornado watch, warning, and tornado-emergency tiers for PIO and partner use"
+          source_id: noaa_wrn
+        - text: "Confirm StormReady designation requirements and renew the formal hazardous-weather operations plan with the local NWS forecast office"
+          source_id: nws_stormready
+
+      this_year:
+        - text: "Update the county risk assessment to include exposure of manufactured-home parks, schools, congregate facilities, and outdoor venues to EF-2-and-above tornadoes"
+          source_id: fema_hmp_guide
+        - text: "Identify safe-room construction priorities (school storm shelters, mobile-home-park community shelters) for the HMA grant pipeline"
+          source_id: fema_p_361
+        - text: "Integrate school safety and natural-hazard guidance from FEMA P-1000 into school-district emergency-operations plan updates"
+          source_id: fema_p_1000
+        - text: "Confirm warning-dissemination redundancy (outdoor sirens, WEA, NOAA Weather Radio, IPAWS) and document gaps for the next mitigation action"
+          source_id: noaa_wrn
+
+      multi_year:
+        - text: "Develop a multi-year safe-room construction strategy targeting high-occupancy and high-vulnerability facilities, integrated with HMA grant cycles"
+          source_id: fema_p_361
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on debris management, mutual-aid, and shared safe-room siting"
+          source_id: wem_resources
+        - text: "Establish a long-term retrofit pathway for critical facilities (shelters, schools, EOCs) that bundles wind-resistance upgrades with continuity-of-operations improvements"
+          source_id: fema_hmp_guide
+        - text: "Build StormReady and Weather-Ready Nation Ambassador partnerships across schools, hospitals, large employers, and faith institutions"
+          source_id: noaa_wrn

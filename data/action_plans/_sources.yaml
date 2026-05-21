@@ -1,0 +1,588 @@
+# Canonical umbrella sources for CARA action plan recommendations.
+#
+# Editing rules:
+#  - Each entry must be a real, verified URL. Re-verify quarterly and
+#    bump the `verified` date when re-checked.
+#  - Prefer landing pages over deep PDFs when both substantively cover
+#    the cited content; landing pages survive reorganizations longer.
+#  - `title` is the document title as published; do not paraphrase.
+#  - `org` is the publishing organization, used in visible link text.
+#  - One source may be referenced by many activities. Avoid duplicating
+#    sources here.
+
+sources:
+
+  # ---- Extreme Heat pilot sources (v28.3) -----------------------------
+
+  cdc_brace:
+    title: "Building Resilience Against Climate Effects (BRACE) Framework"
+    org: "CDC Climate and Health Program"
+    url: "https://www.cdc.gov/climate-health/php/brace/index.html"
+    verified: "2026-05-20"
+    notes: "Five-step planning framework for public health departments to anticipate, prevent, prepare for, and manage health risks associated with climate change, including extreme heat."
+
+  cdc_phep:
+    title: "Public Health Emergency Preparedness (PHEP) Cooperative Agreement"
+    org: "CDC Office of Readiness and Response"
+    url: "https://www.cdc.gov/readiness/php/phep/index.html"
+    verified: "2026-05-20"
+    notes: "Funding and 15 PHEP capabilities national standards for state, local, tribal, and territorial public health departments."
+
+  heat_gov:
+    title: "Heat.gov: The Premier Source of Heat and Health Information"
+    org: "NIHHIS (NOAA + CDC)"
+    url: "https://www.heat.gov/"
+    verified: "2026-05-20"
+    notes: "Interagency information system for actionable heat-health science, mapping tools, and community heat action plan templates."
+
+  nws_heatrisk:
+    title: "NWS HeatRisk Experimental Forecast Product"
+    org: "NOAA National Weather Service Weather Prediction Center"
+    url: "https://www.wpc.ncep.noaa.gov/heatrisk/"
+    verified: "2026-05-20"
+    notes: "Seven-day color-coded heat risk forecasts integrating temperature, climatology, and CDC heat-health thresholds."
+
+  epa_ehe_guidebook:
+    title: "Excessive Heat Events Guidebook (EPA 430-B-06-005)"
+    org: "U.S. Environmental Protection Agency"
+    url: "https://www.epa.gov/heatislands/excessive-heat-events-guidebook"
+    verified: "2026-05-20"
+    notes: "Guidance for community officials, emergency managers, and meteorologists on planning for excessive heat events."
+
+  epa_heat_islands_guide:
+    title: "Reducing Urban Heat Islands: Compendium of Strategies"
+    org: "U.S. Environmental Protection Agency"
+    url: "https://www.epa.gov/heatislands/guide-reducing-heat-islands"
+    verified: "2026-05-20"
+    notes: "Strategies including trees and vegetation, green roofs, cool roofs, cool pavements, and smart growth for reducing urban heat island intensity."
+
+  fema_extreme_heat_factsheet:
+    title: "Mitigating the Risk of Extreme Temperatures with Hazard Mitigation Assistance Funds (October 2022)"
+    org: "FEMA"
+    url: "https://www.fema.gov/sites/default/files/documents/fema_extreme-heat-fact-sheet_102022.pdf"
+    verified: "2026-05-20"
+    notes: "Fact sheet on eligible HMA-funded heat mitigation measures. NOTE: HMA Program and Policy Guide v2.1 (effective Jan 20, 2025) removed standalone extreme-temperature project eligibility; heat measures must now be integrated into multi-hazard mitigation projects."
+
+  fema_extreme_temps_sltt:
+    title: "Guidance on Extreme Temperatures for State, Local, Tribal and Territorial Leaders"
+    org: "FEMA"
+    url: "https://www.fema.gov/sites/default/files/documents/fema_guidance-extreme-temperatures-state-local-tribal-territorial-leaders.pdf"
+    verified: "2026-05-20"
+    notes: "Cross-functional leadership guidance for SLTT officials on preparing for and reducing the impact of extreme heat and cold."
+
+  fema_hma_guide_v2_1:
+    title: "Hazard Mitigation Assistance Program and Policy Guide, Version 2.1 (effective 2025-01-20)"
+    org: "FEMA"
+    url: "https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide"
+    verified: "2026-05-20"
+    notes: "Primary policy document for FEMA's Hazard Mitigation Assistance programs (BRIC, FMA, HMGP). Version 2.1 removed standalone extreme-temperature project eligibility; heat mitigation activities must be integrated into multi-hazard projects to remain HMA-eligible."
+
+  fema_hmp_guide:
+    title: "Local Mitigation Planning Policy Guide and Hazard Mitigation Planning resources"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/risk-management/hazard-mitigation-planning"
+    verified: "2026-05-20"
+    notes: "Authoritative hub for FEMA hazard mitigation planning requirements (44 CFR Part 201), planning guides, and HMA program information."
+
+  wi_dhs_climate_heat:
+    title: "Climate and Health: Extreme Heat"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/climate/heat.htm"
+    verified: "2026-05-20"
+    notes: "Wisconsin-specific extreme heat data, advisory thresholds, vulnerable population guidance, and links to county heat resources."
+
+  naccho_heat_toolkit:
+    title: "Extreme Heat Toolkit and Training Module"
+    org: "NACCHO (National Association of County and City Health Officials)"
+    url: "https://www.naccho.org/resource-hub-articles/extreme-heat-toolkit-and-training-module"
+    verified: "2026-05-20"
+    notes: "Practical extreme-heat preparedness toolkit aimed at local health departments, including planning checklists and vulnerable-population outreach strategies."
+
+  # ---- Public Health framework-wide (Task #9 expansion) ---------------
+
+  naccho_pphr:
+    title: "Project Public Health Ready (PPHR)"
+    org: "NACCHO"
+    url: "https://www.naccho.org/programs/public-health-preparedness/pphr"
+    verified: "2026-05-20"
+    notes: "National recognition program for local health departments meeting all-hazards preparedness, workforce capacity, and quality improvement criteria aligned with CDC PHEP capabilities."
+
+  hhs_aspr_tracie:
+    title: "ASPR TRACIE Healthcare Emergency Preparedness Information Gateway"
+    org: "HHS Administration for Strategic Preparedness and Response"
+    url: "https://asprtracie.hhs.gov/"
+    verified: "2026-05-20"
+    notes: "National resource hub for healthcare coalitions on medical surge, mass care medical needs, behavioral health, and continuity of operations."
+
+  samhsa_dtac:
+    title: "Disaster Behavioral Health Information Series (Disaster Technical Assistance Center)"
+    org: "SAMHSA"
+    url: "https://www.samhsa.gov/dtac"
+    verified: "2026-05-20"
+    notes: "Federal hub for disaster behavioral health planning, crisis counseling, and psychological first aid resources for state and local jurisdictions."
+
+  nctsn_pfa:
+    title: "Psychological First Aid Field Operations Guide, 2nd Edition"
+    org: "NCTSN / National Center for PTSD"
+    url: "https://www.nctsn.org/resources/psychological-first-aid-pfa-field-operations-guide-2nd-edition"
+    verified: "2026-05-20"
+    notes: "Evidence-informed modular approach for assisting people in the immediate aftermath of disaster and terrorism; widely adopted for responder and volunteer training."
+
+  cdc_nssp:
+    title: "National Syndromic Surveillance Program (NSSP)"
+    org: "CDC"
+    url: "https://www.cdc.gov/nssp/index.html"
+    verified: "2026-05-20"
+    notes: "Near-real-time emergency department data platform used by state and local health departments for syndromic surveillance of heat illness, respiratory illness, injuries, and outbreaks."
+
+  cdc_nndss:
+    title: "National Notifiable Diseases Surveillance System (NNDSS)"
+    org: "CDC"
+    url: "https://www.cdc.gov/nndss/index.html"
+    verified: "2026-05-20"
+    notes: "National system for case-based reporting of notifiable conditions including vector-borne, vaccine-preventable, and emerging infectious diseases."
+
+  cdc_han:
+    title: "Health Alert Network (HAN)"
+    org: "CDC"
+    url: "https://emergency.cdc.gov/han/"
+    verified: "2026-05-20"
+    notes: "CDC's primary method for sharing cleared, time-sensitive public health information with clinicians, local and state health departments, and partners."
+
+  cdc_cerc:
+    title: "Crisis and Emergency Risk Communication (CERC)"
+    org: "CDC"
+    url: "https://emergency.cdc.gov/cerc/"
+    verified: "2026-05-20"
+    notes: "CDC's framework and training for risk communication during public health emergencies, including pre-scripted messaging and spokesperson preparation."
+
+  mrc_program:
+    title: "Medical Reserve Corps (MRC) Program"
+    org: "HHS Administration for Strategic Preparedness and Response"
+    url: "https://aspr.hhs.gov/MRC/Pages/default.aspx"
+    verified: "2026-05-20"
+    notes: "National network of community-based volunteer units supporting local public health and emergency response surge needs."
+
+  wi_dhs_preparedness:
+    title: "Wisconsin Public Health Preparedness Program"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/preparedness/index.htm"
+    verified: "2026-05-20"
+    notes: "State PHEP program hub including regional preparedness coordinators, healthcare coalition links, and Wisconsin-specific preparedness resources."
+
+  wi_dhs_communicable:
+    title: "Communicable Diseases"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/disease/communicable.htm"
+    verified: "2026-05-20"
+    notes: "Wisconsin communicable disease reporting requirements, surveillance program landing page, and clinical guidance for reportable conditions."
+
+  wi_dhs_tickborne:
+    title: "Tick-Borne Diseases"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/tick/index.htm"
+    verified: "2026-05-20"
+    notes: "Wisconsin epidemiology and prevention guidance for Lyme disease, anaplasmosis, ehrlichiosis, babesiosis, and Powassan virus."
+
+  wi_dhs_mosquito:
+    title: "Mosquito-Borne Diseases"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/mosquito/index.htm"
+    verified: "2026-05-20"
+    notes: "Wisconsin surveillance, prevention, and reporting guidance for West Nile virus, Eastern Equine Encephalitis, La Crosse encephalitis, and Jamestown Canyon virus."
+
+  cdc_lyme:
+    title: "Lyme Disease"
+    org: "CDC"
+    url: "https://www.cdc.gov/lyme/index.html"
+    verified: "2026-05-20"
+    notes: "National clinical guidance, surveillance data, and prevention messaging for Lyme disease, including diagnosis and treatment recommendations."
+
+  cdc_westnile:
+    title: "West Nile Virus"
+    org: "CDC"
+    url: "https://www.cdc.gov/west-nile-virus/index.html"
+    verified: "2026-05-20"
+    notes: "National surveillance, prevention, and clinical guidance for West Nile virus and related arboviral diseases."
+
+  cdc_vector_borne:
+    title: "Division of Vector-Borne Diseases (DVBD)"
+    org: "CDC National Center for Emerging and Zoonotic Infectious Diseases"
+    url: "https://www.cdc.gov/ncezid/dvbd/index.html"
+    verified: "2026-05-20"
+    notes: "CDC's principal program for surveillance, diagnostics, prevention, and research on bacterial and viral pathogens transmitted by mosquitoes, ticks, and fleas."
+
+  cdc_wildfire_smoke:
+    title: "Wildfire Smoke and Your Health"
+    org: "CDC"
+    url: "https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html"
+    verified: "2026-05-20"
+    notes: "CDC public-health guidance on wildfire-smoke exposure, sensitive groups, indoor air quality, and protective actions for community members."
+
+  epa_airnow:
+    title: "AirNow"
+    org: "U.S. EPA, NOAA, NPS, tribal, state, and local partners"
+    url: "https://www.airnow.gov/"
+    verified: "2026-05-20"
+    notes: "National Air Quality Index (AQI) forecasts and current conditions used by health departments and emergency managers to time advisories and protective actions."
+
+  epa_smoke_ready:
+    title: "Smoke-Ready Toolbox for Wildfires"
+    org: "U.S. Environmental Protection Agency"
+    url: "https://www.epa.gov/smoke-ready-toolbox-wildfires"
+    verified: "2026-05-20"
+    notes: "Federal toolbox for state, local, and tribal agencies on wildfire-smoke communication, cleaner-air-space planning, indoor filtration, and protecting sensitive groups."
+
+  cdc_carbon_monoxide:
+    title: "Carbon Monoxide Poisoning Prevention"
+    org: "CDC"
+    url: "https://www.cdc.gov/carbon-monoxide/index.html"
+    verified: "2026-05-20"
+    notes: "CDC clinical and public messaging on carbon monoxide poisoning risk during power outages, generator misuse, winter heating, and storm recovery."
+
+  cdc_winter_weather:
+    title: "Winter Weather"
+    org: "CDC"
+    url: "https://www.cdc.gov/disasters/winter/index.html"
+    verified: "2026-05-20"
+    notes: "CDC health guidance on hypothermia, frostbite, indoor heating safety, and protecting medically vulnerable populations during winter storms and extreme cold."
+
+  cdc_floods_health:
+    title: "Floods"
+    org: "CDC"
+    url: "https://www.cdc.gov/floods/about/index.html"
+    verified: "2026-05-20"
+    notes: "CDC health guidance on flood-related risks including waterborne illness, mold, wound infection, carbon monoxide, and behavioral health impacts."
+
+  cdc_tornado_health:
+    title: "Tornadoes"
+    org: "CDC"
+    url: "https://www.cdc.gov/disasters/tornadoes/index.html"
+    verified: "2026-05-20"
+    notes: "CDC public-health guidance on tornado injury patterns, recovery health risks, shelter sanitation, and mental-health considerations."
+
+  cdc_lightning:
+    title: "Lightning Strikes"
+    org: "CDC"
+    url: "https://www.cdc.gov/disasters/lightning/index.html"
+    verified: "2026-05-20"
+    notes: "CDC clinical and public guidance on lightning injury patterns, prevention messaging, and outdoor-worker risk."
+
+  cdc_violence_prevention:
+    title: "Violence Prevention"
+    org: "CDC National Center for Injury Prevention and Control"
+    url: "https://www.cdc.gov/violence-prevention/index.html"
+    verified: "2026-05-20"
+    notes: "CDC public-health framework for primary prevention of community violence, including youth, intimate partner, and firearm violence."
+
+  samhsa_mass_violence:
+    title: "Coping with Mass Violence and Community Trauma"
+    org: "SAMHSA"
+    url: "https://www.samhsa.gov/mental-health/mass-violence"
+    verified: "2026-05-20"
+    notes: "SAMHSA guidance and resources on community behavioral health response, trauma-informed care, and crisis counseling after mass violence events."
+
+  stop_the_bleed:
+    title: "Stop The Bleed"
+    org: "American College of Surgeons Committee on Trauma"
+    url: "https://www.stopthebleed.org/"
+    verified: "2026-05-20"
+    notes: "National public training program in bleeding control techniques used by health departments, schools, and emergency managers as a primary mass-casualty preparedness intervention."
+
+  hhs_405d:
+    title: "Health Industry Cybersecurity Practices (HICP), 2023 Edition"
+    org: "HHS 405(d) Program"
+    url: "https://405d.hhs.gov/"
+    verified: "2026-05-20"
+    notes: "HHS-led voluntary cybersecurity practices for the Healthcare and Public Health sector, organized by organization size and recognized under the HITECH Act safe-harbor provision."
+
+  hhs_ocr_hipaa_security:
+    title: "HIPAA Security Rule"
+    org: "HHS Office for Civil Rights"
+    url: "https://www.hhs.gov/hipaa/for-professionals/security/index.html"
+    verified: "2026-05-20"
+    notes: "Federal regulatory requirements for safeguarding electronic protected health information, including administrative, physical, and technical safeguards."
+
+  nist_csf_2:
+    title: "NIST Cybersecurity Framework 2.0"
+    org: "NIST"
+    url: "https://www.nist.gov/cyberframework"
+    verified: "2026-05-20"
+    notes: "Voluntary risk-based framework (Govern, Identify, Protect, Detect, Respond, Recover) used by public-sector and critical-infrastructure organizations including health departments."
+
+  cisa_phi_sector:
+    title: "Healthcare and Public Health Sector"
+    org: "CISA"
+    url: "https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/healthcare-and-public-health-sector"
+    verified: "2026-05-20"
+    notes: "CISA sector hub for healthcare and public health cybersecurity guidance, partnership resources, and threat advisories."
+
+  cisa_cpg:
+    title: "Cross-Sector Cybersecurity Performance Goals (CPGs)"
+    org: "CISA"
+    url: "https://www.cisa.gov/cross-sector-cybersecurity-performance-goals"
+    verified: "2026-05-20"
+    notes: "CISA's voluntary baseline of common cybersecurity practices for critical infrastructure owners and operators, mapped to NIST CSF."
+
+  cisa_shields_up:
+    title: "Shields Up"
+    org: "CISA"
+    url: "https://www.cisa.gov/shields-up"
+    verified: "2026-05-20"
+    notes: "CISA's standing guidance for organizations to maintain heightened cybersecurity posture, with leadership-level and technical actions."
+
+  cisa_active_shooter:
+    title: "Active Shooter Preparedness"
+    org: "CISA"
+    url: "https://www.cisa.gov/topics/physical-security/active-shooter-preparedness"
+    verified: "2026-05-20"
+    notes: "CISA preparedness resources for facility owners and community organizations including planning templates, training videos, and tabletop exercise materials."
+
+  fbi_active_shooter:
+    title: "Active Shooter Safety Resources"
+    org: "FBI"
+    url: "https://www.fbi.gov/how-we-can-help-you/active-shooter-safety-resources"
+    verified: "2026-05-20"
+    notes: "FBI public resources on active-shooter incidents including annual data reports, Run-Hide-Fight guidance, and training resources for community organizations."
+
+  alerrt:
+    title: "Active Attack Integrated Response (AAIR) Training"
+    org: "ALERRT Center, Texas State University"
+    url: "https://www.alerrt.org/"
+    verified: "2026-05-20"
+    notes: "FBI-endorsed national standard for integrated law enforcement, fire, and EMS active-attack response training widely adopted across U.S. jurisdictions."
+
+  fema_p_1000:
+    title: "FEMA P-1000: Safer, Stronger, Smarter - A Guide to Improving School Natural Hazard Safety"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000"
+    verified: "2026-05-20"
+    notes: "FEMA guide on integrating safety, security, and natural-hazard risk reduction into K-12 school facilities and emergency operations planning."
+
+  # ---- Emergency Management framework-wide ----------------------------
+
+  fema_cpg_101:
+    title: "Comprehensive Preparedness Guide (CPG) 101, v3: Developing and Maintaining Emergency Operations Plans"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/national-preparedness/plan"
+    verified: "2026-05-20"
+    notes: "Federal guidance on developing and maintaining all-hazards emergency operations plans for SLTT jurisdictions."
+
+  fema_cpg_201:
+    title: "Comprehensive Preparedness Guide (CPG) 201: THIRA / SPR Guide"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/national-preparedness/risk-capability-assessment"
+    verified: "2026-05-20"
+    notes: "Federal methodology for Threat and Hazard Identification and Risk Assessment (THIRA) and Stakeholder Preparedness Review (SPR)."
+
+  fema_ndrf:
+    title: "National Disaster Recovery Framework (NDRF)"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/national-preparedness/frameworks/recovery"
+    verified: "2026-05-20"
+    notes: "National framework defining recovery roles, six Recovery Support Functions (including Health and Social Services), and pre-disaster recovery planning expectations."
+
+  fema_npg:
+    title: "National Preparedness Goal and Core Capabilities"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/national-preparedness/goal"
+    verified: "2026-05-20"
+    notes: "National Preparedness Goal and the 32 Core Capabilities organized under the five Preparedness Mission Areas (Prevention, Protection, Mitigation, Response, Recovery)."
+
+  noaa_wrn:
+    title: "Weather-Ready Nation"
+    org: "NOAA National Weather Service"
+    url: "https://www.weather.gov/wrn/"
+    verified: "2026-05-20"
+    notes: "NOAA initiative for building community resilience to extreme weather including ambassador program, decision-support services, and impact-based warnings."
+
+  nws_stormready:
+    title: "StormReady Community Program"
+    org: "NOAA National Weather Service"
+    url: "https://www.weather.gov/stormready/"
+    verified: "2026-05-20"
+    notes: "National recognition program for jurisdictions that meet defined criteria for warning reception, hazard monitoring, public readiness, administration, and formal hazardous weather plans."
+
+  fema_p_361:
+    title: "FEMA P-361: Safe Rooms for Tornadoes and Hurricanes"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/risk-management/safe-rooms"
+    verified: "2026-05-20"
+    notes: "Federal design, construction, and operations criteria for residential and community safe rooms providing near-absolute protection from tornadoes and hurricanes."
+
+  fema_dam_safety:
+    title: "Dam Safety"
+    org: "FEMA"
+    url: "https://www.fema.gov/emergency-managers/risk-management/dam-safety"
+    verified: "2026-05-20"
+    notes: "FEMA dam-safety hub including the National Dam Safety Program, Emergency Action Planning resources for dam owners, and downstream community planning guidance."
+
+  asdso:
+    title: "Association of State Dam Safety Officials"
+    org: "ASDSO"
+    url: "https://damsafety.org/"
+    verified: "2026-05-20"
+    notes: "National professional association supporting state dam safety regulators with technical resources, training, and the Dam Failures and Incidents database."
+
+  wi_dnr_dams:
+    title: "Dams in Wisconsin"
+    org: "Wisconsin Department of Natural Resources"
+    url: "https://dnr.wisconsin.gov/topic/Dams"
+    verified: "2026-05-20"
+    notes: "Wisconsin state regulator hub for dam ownership, inspection cycles, hazard classification, Emergency Action Plan requirements, and the state dam inventory."
+
+  fema_nfip:
+    title: "National Flood Insurance Program"
+    org: "FEMA"
+    url: "https://www.fema.gov/flood-insurance"
+    verified: "2026-05-20"
+    notes: "Federal flood insurance program tied to floodplain management standards; participation supports community resilience and post-flood recovery financing."
+
+  fema_floodplain:
+    title: "Floodplain Management Requirements"
+    org: "FEMA"
+    url: "https://www.fema.gov/floodplain-management"
+    verified: "2026-05-20"
+    notes: "Federal floodplain management standards under 44 CFR Part 60 that NFIP-participating communities adopt and enforce to reduce future flood losses."
+
+  ready_winter:
+    title: "Winter Weather (Ready.gov)"
+    org: "FEMA Ready Campaign"
+    url: "https://www.ready.gov/winter-weather"
+    verified: "2026-05-20"
+    notes: "Federal public preparedness guidance for winter storms including warming centers, household preparedness, and protective actions during extreme cold."
+
+  wem_resources:
+    title: "Wisconsin Emergency Management"
+    org: "Wisconsin Department of Military Affairs"
+    url: "https://wem.wi.gov/"
+    verified: "2026-05-20"
+    notes: "State emergency management agency hub for hazard mitigation, regional preparedness coordinators, county coordination, and Wisconsin-specific exercise and training resources."
+
+  wem_preparedness:
+    title: "Preparedness and Mitigation"
+    org: "Wisconsin Emergency Management"
+    url: "https://wem.wi.gov/preparedness/"
+    verified: "2026-05-20"
+    notes: "WEM landing page for hazard mitigation grant programs, the State Hazard Mitigation Plan, and local mitigation plan support across Wisconsin's WEM regions."
+
+  # Hazardous Materials sources (v28.4): industrial and agricultural.
+
+  cdc_chempack:
+    title: "CHEMPACK Project"
+    org: "HHS Administration for Strategic Preparedness and Response, Strategic National Stockpile"
+    url: "https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx"
+    verified: "2026-05-20"
+    notes: "Federal program pre-positioning nerve agent antidotes and chemical exposure countermeasures in CHEMPACK containers within a one-hour response radius. Coordinated through state CHEMPACK coordinators and accessed by hospitals and EMS for chemical mass-casualty events. Transferred from CDC ORR to ASPR with the SNS program."
+
+  cdc_sns:
+    title: "Strategic National Stockpile"
+    org: "HHS Administration for Strategic Preparedness and Response"
+    url: "https://aspr.hhs.gov/SNS/Pages/default.aspx"
+    verified: "2026-05-20"
+    notes: "National repository of antibiotics, antivirals, antidotes, vaccines, and medical supplies for use during public health emergencies. State-level Receipt, Staging, and Storage (RSS) planning is a PHEP requirement. Transferred from CDC ORR to ASPR."
+
+  aspr_mcm:
+    title: "Medical Countermeasures Program"
+    org: "HHS Administration for Strategic Preparedness and Response"
+    url: "https://aspr.hhs.gov/MCM/Pages/default.aspx"
+    verified: "2026-05-20"
+    notes: "Federal coordination of medical countermeasure development, procurement, distribution, and operational readiness for chemical, biological, radiological, and nuclear threats including planning expectations for state and local responders."
+
+  chemm:
+    title: "Chemical Hazards Emergency Medical Management (CHEMM)"
+    org: "HHS Office of the Assistant Secretary for Preparedness and Response"
+    url: "https://chemm.hhs.gov/"
+    verified: "2026-05-20"
+    notes: "Clinical decision-support resource for first responders, first receivers, and other healthcare providers on identification, triage, decontamination, and medical management of chemical exposures including nerve agents, vesicants, pulmonary agents, and cyanides."
+
+  atsdr_mhmi:
+    title: "Managing Hazardous Materials Incidents (MHMI)"
+    org: "CDC Agency for Toxic Substances and Disease Registry"
+    url: "https://wwwn.cdc.gov/TSP/MHMI/MHMILanding.aspx"
+    verified: "2026-05-20"
+    notes: "Three-volume series for emergency medical services, emergency department, and hospital personnel covering pre-hospital management, hospital management, and chemical-specific medical management protocols for hazardous materials incidents."
+
+  dot_erg:
+    title: "Emergency Response Guidebook (ERG)"
+    org: "U.S. Department of Transportation, PHMSA"
+    url: "https://www.phmsa.dot.gov/hazmat/erg/emergency-response-guidebook-erg"
+    verified: "2026-05-20"
+    notes: "Operational reference for fire service, law enforcement, and emergency services first responders to quickly identify hazards of hazardous materials in transportation incidents and protect themselves and the public during the initial response phase."
+
+  epcra_tier2:
+    title: "EPCRA Sections 311 and 312: Tier I and Tier II Reporting"
+    org: "U.S. Environmental Protection Agency"
+    url: "https://www.epa.gov/epcra"
+    verified: "2026-05-20"
+    notes: "Federal requirement under the Emergency Planning and Community Right-to-Know Act (SARA Title III) for facilities to report hazardous chemical inventories to state, local, and tribal emergency response authorities including the LEPC and local fire department. Sections 311 and 312 cover Tier I and Tier II hazardous chemical inventory reporting."
+
+  cisa_chem:
+    title: "Chemical Sector"
+    org: "Cybersecurity and Infrastructure Security Agency"
+    url: "https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/critical-infrastructure-sectors/chemical-sector"
+    verified: "2026-05-20"
+    notes: "Federal sector lead for chemical facility security covering cybersecurity, physical security, and convergence risks. Provides Chemical Facility Anti-Terrorism Standards (CFATS) successor program guidance and Chemical Sector Coordinating Council resources."
+
+  nfpa_470:
+    title: "NFPA 470: Hazardous Materials/Weapons of Mass Destruction Standard for Responders"
+    org: "National Fire Protection Association"
+    url: "https://www.nfpa.org/codes-and-standards/nfpa-470-standard-development/470"
+    verified: "2026-05-20"
+    notes: "Consolidated competency standard (effective 2022, replacing legacy NFPA 472, 473, and 1072) for awareness, operations, technician, and incident commander levels of hazardous materials response capability."
+
+  wem_serb:
+    title: "Wisconsin Emergency Management (State Emergency Response Board host)"
+    org: "Wisconsin Department of Military Affairs"
+    url: "https://wem.wi.gov/"
+    verified: "2026-05-20"
+    notes: "Wisconsin Emergency Management hosts the State Emergency Response Board (Wisconsin's SERC-equivalent body administering EPCRA), supports Local Emergency Planning Committees, funds county hazmat planning, and coordinates Wisconsin's regional hazmat response teams. Direct SERB landing page is reorganized; WEM hub is the stable canonical entry point."
+
+  wi_dnr_spills:
+    title: "Spills (Hazardous Substance Discharge Response)"
+    org: "Wisconsin Department of Natural Resources"
+    url: "https://dnr.wisconsin.gov/topic/Spills"
+    verified: "2026-05-20"
+    notes: "Wisconsin state program receiving 24-hour spill reports, coordinating response, and overseeing site investigation and cleanup under Wis. Stat. 292.11 for hazardous substance discharges including fixed-facility and agricultural chemical releases."
+
+  epa_wps:
+    title: "Agricultural Worker Protection Standard (WPS)"
+    org: "U.S. Environmental Protection Agency"
+    url: "https://www.epa.gov/pesticide-worker-safety/agricultural-worker-protection-standard-wps"
+    verified: "2026-05-20"
+    notes: "Federal regulation under 40 CFR Part 170 protecting agricultural workers and pesticide handlers from occupational pesticide exposure through training, notification, decontamination supplies, and emergency assistance requirements."
+
+  niosh_ag:
+    title: "NIOSH Agricultural Safety and Health"
+    org: "CDC National Institute for Occupational Safety and Health"
+    url: "https://www.cdc.gov/niosh/agriculture/"
+    verified: "2026-05-20"
+    notes: "Federal occupational safety and health program for agriculture, forestry, and fishing including the SENSOR-Pesticides surveillance network, NIOSH Agricultural Centers, and Wisconsin-relevant rural occupational exposure research."
+
+  wi_datcp_agchem:
+    title: "Agricultural Chemical Cleanup Program (ACCP)"
+    org: "Wisconsin Department of Agriculture, Trade and Consumer Protection"
+    url: "https://datcp.wi.gov/Pages/Programs_Services/ACCP.aspx"
+    verified: "2026-05-20"
+    notes: "Wisconsin state program covering pesticide and fertilizer discharge cleanup, related to ATCP 33 agrichemical bulk storage rules and DATCP's broader pesticide and fertilizer licensing, registration, and container management oversight for agricultural chemical incidents in Wisconsin."
+
+  spc_derecho:
+    title: "About Derechos"
+    org: "NOAA Storm Prediction Center"
+    url: "https://www.spc.noaa.gov/misc/AbtDerechos/derechofacts.htm"
+    verified: "2026-05-20"
+    notes: "Authoritative reference page defining derechos, the warm-season Midwestern derecho corridor (which includes Wisconsin), event climatology, and the Particularly Dangerous Situation (PDS) warning context applied to derecho-scale events."
+
+  nws_skywarn:
+    title: "SKYWARN Storm Spotter Program"
+    org: "NOAA National Weather Service"
+    url: "https://www.weather.gov/skywarn/"
+    verified: "2026-05-20"
+    notes: "Volunteer storm-spotter program coordinated through local NWS Weather Forecast Offices; provides real-time ground-truth severe-weather reports used by warning forecasters during severe-thunderstorm and derecho events."
+
+  fema_debris_management:
+    title: "Public Assistance Debris Management Guide (FEMA P-325)"
+    org: "Federal Emergency Management Agency"
+    url: "https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf"
+    verified: "2026-05-20"
+    notes: "FEMA Public Assistance program guide for debris management planning, contracting, monitoring, and reimbursement after declared disasters; the foundational reference for pre-staged debris-removal contracts and mutual-aid debris agreements."

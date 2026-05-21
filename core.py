@@ -183,6 +183,17 @@ def create_app(config_overrides=None):
     
     # Register blueprints with routes (routes moved from app.py to blueprints)
     register_blueprints(app)
+
+    # Discipline context processor: injects active_discipline + discipline_label
+    # into every template. URL ?discipline=em pins the choice for the session.
+    @app.context_processor
+    def _inject_discipline():
+        try:
+            from utils.discipline import get_active_discipline, discipline_label
+            d = get_active_discipline()
+            return {'active_discipline': d, 'discipline_label': discipline_label(d)}
+        except Exception:
+            return {'active_discipline': 'public_health', 'discipline_label': 'Public Health'}
     
     # Only start background services (scheduler, export worker) on the first
     # gunicorn worker to avoid duplicate schedulers and excess DB connections.
@@ -240,10 +251,19 @@ def register_template_filters(app):
     def format_risk_type(value):
         """
         Transform risk types with underscores to properly formatted strings.
-        Example: winter_storm -> Winter Storm
+        Routes through utils.risk_alignment.format_risk_name so canonical
+        display labels (e.g. v28.6 'Hail & Lightning Risk' and
+        'Straight-Line Wind Risk') are honored everywhere this filter is
+        used. Falls back to title-case on unknown keys.
         """
         if value and isinstance(value, str):
-            # Replace underscores with spaces and apply title case
+            try:
+                from utils.risk_alignment import format_risk_name
+                label = format_risk_name(value)
+                if label and label != value:
+                    return label[:-5] if label.endswith(' Risk') else label
+            except Exception:
+                pass
             return value.replace('_', ' ').title()
         return value
     
@@ -291,6 +311,8 @@ def register_blueprints(app):
     from routes.dashboard import dashboard_bp
     from routes.api import api_bp
     from routes.herc import herc_bp
+    from routes.wem import wem_bp
+    from routes.em import em_bp
     from routes.gis_export import gis_export_bp
     
     # Register all blueprints with the app
@@ -298,6 +320,8 @@ def register_blueprints(app):
     app.register_blueprint(dashboard_bp)   # Routes: /dashboard/*, /print-summary/*, etc.
     app.register_blueprint(api_bp)         # Routes: /api/*
     app.register_blueprint(herc_bp)        # Routes: /herc-dashboard/*, /herc-kp-hva-export/*
+    app.register_blueprint(wem_bp)         # Routes: /wem-dashboard/*, /wem-print-summary/* (EM discipline)
+    app.register_blueprint(em_bp)          # Routes: /em-dashboard/<county_slug>, /em-print-summary/<county_slug>
     app.register_blueprint(gis_export_bp)  # Routes: /api/gis/*, GIS export functionality
 
     # Proxy /__mockup/ to the Vite mockup sandbox dev server (port 3001).
@@ -407,8 +431,17 @@ def initialize_background_services(app):
     # Start scheduler in a separate thread to avoid blocking app startup
     scheduler_thread = threading.Thread(target=init_scheduler, args=(app,), daemon=True)
     scheduler_thread.start()
-    
-    
+
+    # Pre-warm the per-jurisdiction dashboard cache so the first user
+    # click on /dashboard/<jid> or /em-dashboard/<slug> hits a warm
+    # v6 cache. Without this, Milwaukee County in EM mode is a 14-second
+    # cold compute on the user's first click after a deploy.
+    try:
+        from utils.dashboard_warmer import start_dashboard_warmer
+        start_dashboard_warmer(app, delay_seconds=25)
+    except Exception as e:
+        logger.error(f"Failed to start dashboard cache warmer: {e}")
+
     logger.info("Initialized background services")
 
 

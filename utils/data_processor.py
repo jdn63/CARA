@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 import json
 import logging
+import math
 import os
 import numpy as np
 import yaml
@@ -467,7 +468,8 @@ def calculate_jurisdiction_risk(county_name: str) -> dict:
         calculate_enhanced_flood_risk,
         calculate_enhanced_tornado_risk,
         calculate_enhanced_winter_storm_risk,
-        calculate_enhanced_thunderstorm_risk
+        calculate_enhanced_thunderstorm_risk,
+        calculate_enhanced_straight_line_wind_risk
     )
 
     flood_risk_data = calculate_enhanced_flood_risk(county_name)
@@ -482,11 +484,15 @@ def calculate_jurisdiction_risk(county_name: str) -> dict:
     thunderstorm_risk_data = calculate_enhanced_thunderstorm_risk(county_name)
     thunderstorm_risk = thunderstorm_risk_data['overall']
 
+    straight_line_wind_risk_data = calculate_enhanced_straight_line_wind_risk(county_name)
+    straight_line_wind_risk = straight_line_wind_risk_data['overall']
+
     natural_hazards = {
         'flood': float(flood_overall_risk),
         'tornado': float(adjusted_tornado_risk),
         'winter_storm': float(winter_storm_risk),
-        'thunderstorm': float(thunderstorm_risk)
+        'thunderstorm': float(thunderstorm_risk),
+        'straight_line_wind': float(straight_line_wind_risk)
     }
     
     logger.info(f"Calculated risk scores for {county_name} (facility multiplier={facility_multiplier:.2f}): {natural_hazards}")
@@ -802,6 +808,7 @@ def apply_percentile_ranking(risk_data, region_name: str = None) -> Dict:
         'flood_risk',
         'winter_storm_risk',
         'thunderstorm_risk',
+        'straight_line_wind_risk',
         'extreme_heat_risk',
         'active_shooter_risk',
         'cybersecurity_risk',
@@ -837,7 +844,8 @@ def apply_percentile_ranking(risk_data, region_name: str = None) -> Dict:
     risk_types = [
         'natural_hazards_risk', 'health_risk', 'active_shooter_risk',
         'cybersecurity_risk', 'extreme_heat_risk', 'flood_risk',
-        'tornado_risk', 'winter_storm_risk', 'thunderstorm_risk'
+        'tornado_risk', 'winter_storm_risk', 'thunderstorm_risk',
+        'straight_line_wind_risk'
     ]
     
     for risk_type in risk_types:
@@ -1026,9 +1034,11 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     health_metrics = calculate_infectious_disease_risk(jurisdiction_id)
 
     # Attach NNDSS communicable-disease payload to the request result so
-    # the biological category partial can surface its outbreak_flags,
-    # pertussis_alert_method (review finding H3 caveat), and granularity
-    # notes. The fetcher is cache-only-aware; on a cache miss inside
+    # the biological category partial can surface its outbreak_flags
+    # (measles granular + meningococcal) and granularity notes.
+    # Pertussis was removed entirely in v28.7 (CARA-specific heuristic
+    # threshold lacked epidemiological provenance; see CHANGELOG).
+    # The fetcher is cache-only-aware; on a cache miss inside
     # the request context it returns its fallback shape and records
     # "cdc_nndss_communicable" on blocked_fetches rather than making
     # an HTTP call. Wrapped in try/except so a fetcher regression
@@ -1093,6 +1103,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'data_sources': enhanced_heat_data.get('data_sources', []),
             'heat_advisories': _heat_wrapper_metrics.get('heat_advisories'),
             'annual_heat_days': _heat_wrapper_metrics.get('annual_heat_days'),
+            # v28.8: CDC EPHT provenance for the heat-days row. The
+            # template renders heat_days_source as a small caption
+            # under the value so the user can see whether the count
+            # comes from EPHT, the NCEI heuristic, or is unavailable.
+            'heat_days_source': _heat_wrapper_metrics.get('heat_days_source'),
+            'heat_days_year': _heat_wrapper_metrics.get('heat_days_year'),
             'ed_visits': _heat_wrapper_metrics.get('ed_visits'),
             'trajectory_2050': enhanced_heat_data.get('trajectory_2050'),
         }
@@ -1136,29 +1152,26 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     # post-adjustment is needed here to avoid double-counting.
     logger.info(f"Natural hazard scores (SVI/census/climate already integrated): {natural_hazards}")
     
-    # 2. Apply SVI adjustment to extreme heat risk
-    # Primary: Socioeconomic (already factored in with socioeconomic_svi_multiplier)
-    # Use weighted average approach to preserve variation (similar to active shooter)
+    # 2. Extreme heat risk: SVI is ALREADY applied inside the enhanced
+    # heat vulnerability calculation at utils/climate_adjusted_risk.py
+    # (_calculate_enhanced_vulnerability blends socioeconomic +
+    # housing_transportation + household_composition + minority_status
+    # themes plus census elderly%). The legacy second-stage weighted-
+    # average blend that lived here added socioeconomic a second time
+    # and biased heat risk systematically upward in high-SVI counties.
+    # Removed in v28.9. See ARCHITECTURE.md "Heat SVI single-pass
+    # invariant".
+    # `extreme_heat_risk_base` retained as an alias of the now-final
+    # heat score so the show-work breakdown (pre_svi_score field) still
+    # has a sensible value to display. With the second-pass SVI blend
+    # removed there is no longer a meaningful "pre-SVI" intermediate at
+    # this layer.
     extreme_heat_risk_base = extreme_heat_risk
-    
-    # Base score carries 70% weight, SVI impact carries 30% weight
-    heat_base_weight = 0.70
-    heat_svi_weight = 0.30
-    
-    # Calculate SVI impact with dampening to preserve county variation
-    heat_svi_impact = socioeconomic_svi_factor * 0.6  # Lower maximum SVI impact
-    
-    # Apply weighted average formula instead of pure multiplication
-    extreme_heat_risk = (extreme_heat_risk_base * heat_base_weight) + (heat_svi_impact * heat_svi_weight)
-
-    # Clamp to the natural [0, 1] EVR range. The legacy [0.1, 0.9] band was
-    # introduced to mask uncapped wet-bulb and trend amplifiers in the
-    # upstream heat formula; those amplifiers are now folded into the single
-    # EVR transform in utils/climate_adjusted_risk.py and bounded there,
-    # so the artificial 0.1/0.9 floor and ceiling are no longer needed.
     extreme_heat_risk = max(0.0, min(1.0, extreme_heat_risk))
-    
-    logger.info(f"Adjusted extreme heat risk with SVI socioeconomic factor (weighted avg): {extreme_heat_risk_base:.2f} → {extreme_heat_risk:.2f}")
+    logger.info(
+        "Extreme heat risk (SVI already integrated inside EVR vulnerability term): %.2f",
+        extreme_heat_risk,
+    )
     
     # 3. Apply SVI adjustment to active shooter risk — socioeconomic only.
     #
@@ -1212,16 +1225,62 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         ]:
             numeric_hazards[key] = value
     
-    # Calculate average of numeric hazards
+    # Calculate weighted RMS of numeric hazards (v28.7 review fix #1).
+    # The composite now uses the YAML natural_hazards_weights as actual
+    # weights rather than just documentation. Prior implementation was
+    # unweighted RMS, which silently disagreed with the YAML when one
+    # sub-hazard dropped out. The weighted form is sqrt(sum(w_i*v_i^2)
+    # / sum(w_i)); if any sub-hazard is missing, the remaining weights
+    # are renormalized so the composite still spans [0, 1].
+    #
+    # v28.6: thunderstorm (hail+lightning) and straight_line_wind were
+    # split from the prior single 'thunderstorm' domain. To preserve the
+    # pre-split natural_hazards composite weighting (combined wind+hail+
+    # lightning = 0.25 of the four-term RMS), collapse them into a single
+    # weighted sub-RMS term before feeding the outer RMS. The 40/60
+    # weights inside the sub-RMS mirror config/risk_weights.yaml
+    # (thunderstorm 0.10 / straight_line_wind 0.15) renormalized so the
+    # combined term carries 0.25 in the outer weighted RMS.
     if numeric_hazards:
-        # Filter out None values and convert to float
-        valid_values = [float(v) for v in numeric_hazards.values() if v is not None and isinstance(v, (int, float))]
-        if valid_values:
-            # Quadratic mean (RMS, p=2) is consistent with the outer PHRAT formula and
-            # ensures that a single high-risk sub-domain elevates the domain score
-            # more than an arithmetic mean would.
-            import math
-            natural_hazards_score = math.sqrt(sum(v ** 2 for v in valid_values) / len(valid_values))
+        working = {k: float(v) for k, v in numeric_hazards.items()
+                   if v is not None and isinstance(v, (int, float))}
+        ts = working.pop('thunderstorm', None)
+        slw = working.pop('straight_line_wind', None)
+        if ts is not None and slw is not None:
+            combined = math.sqrt(0.4 * ts * ts + 0.6 * slw * slw)
+            working['_thunderstorm_combined'] = combined
+        elif ts is not None:
+            # Only the hail/lightning sub-hazard is available; carry it as
+            # the combined convective-wind term so it inherits the full
+            # 0.25 weight rather than being downweighted to 0.10. The
+            # alternative (downweighting) would silently shrink the
+            # natural-hazards composite when straight-line wind data is
+            # temporarily unavailable, which is the opposite of what the
+            # weighted-RMS renormalization is meant to achieve.
+            working['_thunderstorm_combined'] = ts
+        elif slw is not None:
+            working['_thunderstorm_combined'] = slw
+
+        # YAML-mirrored weights. Must match config/risk_weights.yaml
+        # natural_hazards_weights; the YAML is the source of truth and
+        # this dict is a runtime mirror with the v28.6 thunderstorm+SLW
+        # pair collapsed into _thunderstorm_combined (0.25).
+        _NH_WEIGHTS = {
+            'flood': 0.25,
+            'tornado': 0.25,
+            'winter_storm': 0.25,
+            '_thunderstorm_combined': 0.25,
+        }
+        weighted_pairs = [(working[k], _NH_WEIGHTS[k])
+                          for k in working if k in _NH_WEIGHTS]
+        if weighted_pairs:
+            total_w = sum(w for _, w in weighted_pairs)
+            if total_w > 0:
+                natural_hazards_score = math.sqrt(
+                    sum(w * v * v for v, w in weighted_pairs) / total_w
+                )
+            else:
+                natural_hazards_score = _get_fallback('natural_hazards')
         else:
             natural_hazards_score = _get_fallback('natural_hazards')
     else:
@@ -1270,17 +1329,35 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         air_quality_risk = air_quality_data.get('risk_score', 0.5)
         air_quality_components = None
     
-    # Apply SVI adjustment to air quality risk
-    # Housing/transportation vulnerability affects air quality health impacts
-    # Socioeconomic status affects adaptive capacity to air quality issues
+    # Apply SVI adjustment to air quality risk (v28.7 review fix #8).
+    # Switched to the additive apply_svi_multiplier() helper so the
+    # housing-transportation and socioeconomic themes contribute
+    # additively to a capped multiplier rather than compounding
+    # multiplicatively. At neutral inputs (0.5 each) the additive form
+    # yields 1.25 vs the prior multiplicative 1.265; at full-spike
+    # inputs (1.0 each) it yields the 1.5 cap immediately rather than
+    # 1.56-capped-to-1.5, which makes the cap behavior intentional.
+    # See utils/svi_helpers.py.
+    from utils.svi_helpers import apply_svi_multiplier
+    air_quality_risk_before = air_quality_risk
+    # Component contributions exposed for the show-work / score-table
+    # output below. additive form: multiplier = clamp(1 + ht*0.3 + se*0.2, 1, 1.5).
     housing_transport_multiplier = 1.0 + (svi_themes.get('housing_transportation', 0.5) * 0.3)
     socioeconomic_multiplier = 1.0 + (svi_themes.get('socioeconomic', 0.5) * 0.2)
-    
-    # Combined multiplier for air quality (capped to prevent extreme values)
-    air_quality_svi_multiplier = min(1.5, housing_transport_multiplier * socioeconomic_multiplier)
-    air_quality_risk = min(1.0, air_quality_risk * air_quality_svi_multiplier)
-    
-    logger.info(f"Adjusted air quality risk with SVI factors: {air_quality_risk / air_quality_svi_multiplier:.2f} → {air_quality_risk:.2f}")
+    air_quality_risk = apply_svi_multiplier(
+        base=air_quality_risk,
+        themes=svi_themes,
+        weights={'housing_transportation': 0.3, 'socioeconomic': 0.2},
+        cap=1.5,
+    )
+    air_quality_svi_multiplier = (
+        air_quality_risk / air_quality_risk_before
+        if air_quality_risk_before > 0 else 1.0
+    )
+    logger.info(
+        f"Adjusted air quality risk with SVI factors: "
+        f"{air_quality_risk_before:.2f} → {air_quality_risk:.2f}"
+    )
     
     from utils.dam_failure_risk import calculate_dam_failure_risk
     dam_failure_data = calculate_dam_failure_risk(county_name, discipline=discipline)
@@ -1381,6 +1458,44 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         }
     }
     
+    # Hazmat (Industrial + Agricultural) sibling domains, wired in v28.5.
+    # Both calculators are cache-only safe (static JSON + cached SVI /
+    # Census helpers) so they run on the user request path without
+    # violating the cache-only invariant. Output is stored on the result
+    # dict so risk_alignment.compute_display_scores can pick them up
+    # without further plumbing, and the dropout/renormalization block
+    # below pulls the scalar overall values into raw_values.
+    try:
+        from utils.hazmat_industrial_risk import calculate_hazmat_industrial_risk
+        hazmat_ind_data = calculate_hazmat_industrial_risk(county_name, discipline=discipline)
+        hazmat_industrial_score = hazmat_ind_data.get('overall')
+    except Exception as _hi_exc:
+        logger.warning(f"hazmat_industrial calculator failed for {county_name}: {_hi_exc}")
+        hazmat_ind_data = {}
+        hazmat_industrial_score = None
+    try:
+        from utils.hazmat_agricultural_risk import calculate_hazmat_agricultural_risk
+        hazmat_ag_data = calculate_hazmat_agricultural_risk(county_name, discipline=discipline)
+        hazmat_agricultural_score = hazmat_ag_data.get('overall')
+    except Exception as _ha_exc:
+        logger.warning(f"hazmat_agricultural calculator failed for {county_name}: {_ha_exc}")
+        hazmat_ag_data = {}
+        hazmat_agricultural_score = None
+
+    if hazmat_industrial_score is not None:
+        result['hazmat_industrial_risk'] = float(hazmat_industrial_score)
+    result['hazmat_industrial_components'] = hazmat_ind_data.get('components', {})
+    result['hazmat_industrial_exposure_factors'] = hazmat_ind_data.get('exposure_factors', {})
+    result['hazmat_industrial_metrics'] = hazmat_ind_data.get('metrics', {})
+    result['hazmat_industrial_data_sources'] = hazmat_ind_data.get('data_sources', [])
+
+    if hazmat_agricultural_score is not None:
+        result['hazmat_agricultural_risk'] = float(hazmat_agricultural_score)
+    result['hazmat_agricultural_components'] = hazmat_ag_data.get('components', {})
+    result['hazmat_agricultural_exposure_factors'] = hazmat_ag_data.get('exposure_factors', {})
+    result['hazmat_agricultural_metrics'] = hazmat_ag_data.get('metrics', {})
+    result['hazmat_agricultural_data_sources'] = hazmat_ag_data.get('data_sources', [])
+
     # PHRAT composite with domain dropout + weight renormalization.
     #
     # Each domain risk above may legitimately be unavailable (None) when its
@@ -1395,10 +1510,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     _cfg = get_config_manager()
     if discipline == 'em':
         weights_full = _cfg.get_em_overall_weights(jurisdiction_id=jurisdiction_id) or {
-            'natural_hazards': 0.32, 'health_metrics': 0.10,
-            'active_shooter': 0.13, 'extreme_heat': 0.13,
-            'air_quality': 0.08, 'utilities': 0.10,
-            'dam_failure': 0.08, 'vector_borne_disease': 0.06,
+            'natural_hazards': 0.28, 'health_metrics': 0.09,
+            'active_shooter': 0.11, 'extreme_heat': 0.11,
+            'air_quality': 0.08, 'utilities': 0.09,
+            'dam_failure': 0.07, 'vector_borne_disease': 0.06,
+            'infectious_disease': 0.05,
+            'hazmat_industrial': 0.03, 'hazmat_agricultural': 0.03,
         }
         raw_values = {
             'natural_hazards': natural_hazards_score,
@@ -1409,14 +1526,17 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'utilities': utilities_category_score,
             'dam_failure': dam_failure_risk,
             'vector_borne_disease': vbd_risk,
+            'hazmat_industrial': hazmat_industrial_score,
+            'hazmat_agricultural': hazmat_agricultural_score,
         }
         discipline_label = 'Emergency Management'
     else:
         weights_full = _cfg.get_overall_weights(jurisdiction_id=jurisdiction_id) or {
-            'natural_hazards': 0.28, 'health_metrics': 0.17,
-            'active_shooter': 0.18, 'extreme_heat': 0.11,
-            'air_quality': 0.12, 'dam_failure': 0.07,
+            'natural_hazards': 0.26, 'health_metrics': 0.16,
+            'active_shooter': 0.17, 'extreme_heat': 0.10,
+            'air_quality': 0.11, 'dam_failure': 0.07,
             'vector_borne_disease': 0.07,
+            'hazmat_industrial': 0.03, 'hazmat_agricultural': 0.03,
         }
         raw_values = {
             'natural_hazards': natural_hazards_score,
@@ -1426,6 +1546,8 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'air_quality': air_quality_risk,
             'dam_failure': dam_failure_risk,
             'vector_borne_disease': vbd_risk,
+            'hazmat_industrial': hazmat_industrial_score,
+            'hazmat_agricultural': hazmat_agricultural_score,
         }
         discipline_label = 'Public Health'
 
@@ -1523,8 +1645,8 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'lower': composite_lower,
             'upper': composite_upper,
             'method': (
-                'Renormalized PHRAT (quadratic mean, p=2) over available '
-                'domains. Confidence band widens as data coverage decreases.'
+                f'Renormalized {discipline_label} (quadratic mean, p=2) over '
+                'available domains. Confidence band widens as data coverage decreases.'
             ),
         },
         'banner': banner,
@@ -1553,12 +1675,14 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         calculate_enhanced_flood_risk,
         calculate_enhanced_tornado_risk,
         calculate_enhanced_winter_storm_risk,
-        calculate_enhanced_thunderstorm_risk
+        calculate_enhanced_thunderstorm_risk,
+        calculate_enhanced_straight_line_wind_risk
     )
     flood_risk_data = calculate_enhanced_flood_risk(county_name, discipline=discipline)
     tornado_risk_data = calculate_enhanced_tornado_risk(county_name, discipline=discipline)
     winter_storm_risk_data = calculate_enhanced_winter_storm_risk(county_name, discipline=discipline)
     thunderstorm_risk_data = calculate_enhanced_thunderstorm_risk(county_name, discipline=discipline)
+    straight_line_wind_risk_data = calculate_enhanced_straight_line_wind_risk(county_name, discipline=discipline)
     
     result.update({
         'flood_risk': float(flood_risk_data['overall']),
@@ -1584,6 +1708,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         'thunderstorm_metrics': thunderstorm_risk_data['metrics'],
         'thunderstorm_data_sources': thunderstorm_risk_data.get('data_sources', []),
         'thunderstorm_vulnerability_breakdown': thunderstorm_risk_data.get('vulnerability_breakdown', {}),
+
+        'straight_line_wind_risk': float(straight_line_wind_risk_data['overall']),
+        'straight_line_wind_components': straight_line_wind_risk_data['components'],
+        'straight_line_wind_metrics': straight_line_wind_risk_data['metrics'],
+        'straight_line_wind_data_sources': straight_line_wind_risk_data.get('data_sources', []),
+        'straight_line_wind_vulnerability_breakdown': straight_line_wind_risk_data.get('vulnerability_breakdown', {}),
         
         # Extreme heat risk data
         'extreme_heat_risk': float(extreme_heat_risk),
@@ -1603,8 +1733,9 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         'utilities_in_phrat': discipline == 'em',
     })
     
+    _disc_label = 'Emergency Management' if discipline == 'em' else 'Public Health'
     result['score_provenance'] = {
-        'formula': 'PHRAT Quadratic Mean: √(Σ wᵢ × Riskᵢ²)',
+        'formula': f'{_disc_label} Quadratic Mean: √(Σ wᵢ × Riskᵢ²)',
         'p': p,
         'domains': [
             {
@@ -1642,7 +1773,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'pre_svi_score': round(float(extreme_heat_risk_base), 4),
                 'final_score': round(float(extreme_heat_risk), 4),
                 'weighted_contribution': round(weights['extreme_heat'] * (float(extreme_heat_risk) ** p), 4),
-                'svi_adjustment': f'Weighted avg: 70% base + 30% SVI impact (socioeconomic={round(socioeconomic_svi_factor, 3)} × 0.6)',
+                'svi_adjustment': 'SVI integrated inside EVR vulnerability term (single-pass; v28.9 removed the legacy second-stage blend)',
                 'data_sources': ['NOAA Climate Normals 1991-2020 (static)', 'NWS heat forecasts (cached)', 'Census ACS population 65+/poverty (annual)', 'CDC SVI (annual cache)'],
                 'aggregation': 'EVR framework (exposure × vulnerability × resilience)'
             },
@@ -1652,7 +1783,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'pre_svi_score': round(float(air_quality_risk / air_quality_svi_multiplier), 4) if air_quality_svi_multiplier > 0 else 0.0,
                 'final_score': round(float(air_quality_risk), 4),
                 'weighted_contribution': round(weights['air_quality'] * (float(air_quality_risk) ** p), 4),
-                'svi_adjustment': f'Multiplier: housing_transport={round(housing_transport_multiplier, 3)} × socioeconomic={round(socioeconomic_multiplier, 3)} (combined={round(air_quality_svi_multiplier, 3)})',
+                'svi_adjustment': f'Additive multiplier (v28.7): 1 + housing_transport*0.3 + socioeconomic*0.2, capped at 1.5; ht_term={round(housing_transport_multiplier, 3)}, se_term={round(socioeconomic_multiplier, 3)}, effective={round(air_quality_svi_multiplier, 3)}',
                 'data_sources': ['EPA AirNow API (daily scheduler cache)', 'Census ACS demographics', 'CDC SVI housing/socioeconomic themes'],
                 'aggregation': 'Strategic composite risk score from AQI + vulnerability factors'
             },

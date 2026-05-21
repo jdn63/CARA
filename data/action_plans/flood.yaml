@@ -1,0 +1,89 @@
+# Flood preparedness and mitigation activities.
+#
+# Scope discipline: preparedness and mitigation only; planning-tense verbs.
+
+flood:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 7: Mass Care"
+        - "Capability 10: Medical Surge"
+        - "Capability 2: Community Recovery"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): flood hazard profile and vulnerability"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): floodplain and structure-level actions"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: alignment with NFIP and CRS"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Map medically vulnerable populations in floodplain census blocks using chronic-condition prevalence, oxygen and dialysis dependency, and access-and-functional-needs (CMIST) registries"
+          source_id: cdc_phep
+        - text: "Confirm shelter health-inspection protocols and environmental-health staffing assignments for congregate-care sites and verify pre-event partner agreements"
+          source_id: hhs_aspr_tracie
+        - text: "Refresh multilingual flood-health messaging covering well water, mold, carbon monoxide, and wound infection and pre-position it with community-based organizations"
+          source_id: cdc_floods_health
+        - text: "Confirm syndromic-surveillance feeds and case-reporting workflows for waterborne illness, wound infection, and carbon monoxide poisoning are operational"
+          source_id: cdc_nssp
+
+      this_year:
+        - text: "Establish or renew memoranda of understanding with home-healthcare, dialysis, and oxygen-supply providers for patient tracking and continuity during displacement"
+          source_id: hhs_aspr_tracie
+        - text: "Train environmental-health staff on private-well sampling, sewage-exposure assessment, and post-flood food-safety inspection procedures"
+          source_id: cdc_floods_health
+        - text: "Integrate behavioral-health crisis counseling and psychological first aid into the agency's flood annex with named providers and Medical Reserve Corps roles"
+          source_id: samhsa_dtac
+        - text: "Coordinate with Wisconsin DHS regional preparedness staff to confirm mutual-aid pathways for environmental-health and epidemiology surge"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a standing community health worker program for flood-prone neighborhoods focused on chronic-disease continuity and wellness checks after events"
+          source_id: cdc_phep
+        - text: "Develop a longitudinal post-flood behavioral-health monitoring approach with community mental health and healthcare-coalition partners"
+          source_id: samhsa_dtac
+        - text: "Integrate flood-health objectives into the next PHEP work plan and into Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Expand bidirectional data-sharing agreements with healthcare coalition partners to support patient tracking across jurisdictions during regional flood events"
+          source_id: hhs_aspr_tracie
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan's flood profile reflects current FIRMs, recent flood events, and repetitive-loss properties and is within the 5-year update cycle"
+          source_id: fema_hmp_guide
+        - text: "Verify NFIP participation, floodplain-management ordinance currency, and Community Rating System (CRS) standing for the jurisdiction"
+          source_id: fema_nfip
+        - text: "Pre-position public messaging templates aligned with NWS flood watch/warning/flash-flood-emergency tiers for PIO and partner use"
+          source_id: noaa_wrn
+        - text: "Confirm coordination roles with the local health department, public works, school districts, and Wisconsin Emergency Management regional staff before the spring flood season"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to include flood-exposed critical facilities, repetitive-loss properties, and downstream populations of high-hazard dams"
+          source_id: fema_floodplain
+        - text: "Identify floodplain-management priorities (substantial-improvement triggers, freeboard adoption, higher regulatory standards) for the next ordinance update cycle"
+          source_id: fema_floodplain
+        - text: "Adopt or renew the StormReady designation including formal hazardous-weather plan, warning-reception redundancy, and public-readiness activities"
+          source_id: nws_stormready
+        - text: "Integrate flood-mitigation projects (acquisitions, elevations, drainage upgrades) into the HMA grant pipeline using the current HMA Program and Policy Guide"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Develop a multi-year acquisition and elevation strategy for repetitive-loss and severe-repetitive-loss properties in coordination with the floodplain administrator"
+          source_id: fema_floodplain
+        - text: "Pursue Community Rating System class improvements to lower NFIP premiums and document credited floodplain-management activities"
+          source_id: fema_nfip
+        - text: "Establish a cross-jurisdictional planning partnership with neighboring counties and the WEM region for watershed-scale flood mitigation"
+          source_id: fema_hmp_guide
+        - text: "Build a long-term mitigation pathway for critical facilities (shelters, water-and-wastewater, healthcare) that bundles flood-proofing with continuity-of-operations upgrades"
+          source_id: fema_hmp_guide

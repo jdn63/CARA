@@ -31,7 +31,7 @@ Cache-only invariant: request-path callers must never trigger live HTTP.
 Live fetches occur exclusively in scheduler job refresh_all_nndss_enteric.
 
 Endpoint: https://data.cdc.gov/resource/x9gk-5huc.json (same Socrata
-dataset used by utils/nndss_communicable.py for measles/pertussis).
+dataset used by utils/nndss_communicable.py for measles).
 """
 
 from __future__ import annotations
@@ -132,9 +132,15 @@ def _to_int(v: Any) -> int:
 
 
 def _fetch_disease(label: str) -> List[Dict[str, Any]]:
-    """Fetch most-recent NNDSS rows for one disease label (Wisconsin only)."""
+    """Fetch most-recent NNDSS rows for one disease label (Wisconsin only).
+
+    SoQL escape: v28.7 routes the label through utils/soql_safe.safe_eq()
+    so an embedded single quote cannot break the $where clause even if
+    the label flow changes in a future refactor.
+    """
+    from utils.soql_safe import safe_eq
     params = {
-        "$where": f"states='WI' AND label='{label}'",
+        "$where": safe_eq("states", "WI") + " AND " + safe_eq("label", label),
         "$order": "year DESC, week DESC",
         "$limit": 10,
     }

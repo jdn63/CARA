@@ -1,4 +1,5 @@
     {% import "dashboard/_freshness_badge.html" as fb %}
+    {% import "dashboard/_collapsible.html" as col %}
     <!-- Category: Disease and Biological -->
     <div class="category-section">
         <div class="category-header category-disease">Biological (24% combined weight)</div>
@@ -18,6 +19,9 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Infectious Disease Risk</h5>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                        Composite includes Wisconsin statewide CDC NSSP surveillance signals (ILI, COVID-19, RSV, ED visits, outbreak flags) applied uniformly to all 72 counties; only vaccination rates are county-specific.
+                    </small>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -47,44 +51,10 @@
                             <span class="badge bg-warning">Medium Risk</span>
                         {% endif %}
                     </div>
-                    {% if risk_data.health_metrics and risk_data.health_metrics.metrics is defined and risk_data.health_metrics.metrics.signal_granularity_note is defined %}
-                    <div class="alert alert-secondary py-2 px-3 mb-2 small mb-3" role="note">
-                        <strong>Signal scope:</strong> {{ risk_data.health_metrics.metrics.signal_granularity_note }}
-                        ILI, COVID-19, RSV activity, and ED-visit percentages below are the same statewide value for every Wisconsin county; only vaccination rates are county-specific.
-                    </div>
-                    {% endif %}
-                    {# Pertussis alert method caveat (review finding H3).
-                       The pertussis_elevated flag in outbreak_flags below
-                       fires on a CARA-specific operational heuristic, not
-                       a CDC- or CSTE-published outbreak threshold. Surface
-                       the method label, the actual alert floor that fired
-                       (or would fire), and the citation status so users
-                       can interpret the flag honestly. See
-                       config/risk_weights.yaml disease_alert_thresholds
-                       for full rationale. #}
-                    {% set pam = risk_data.nndss_data.pertussis_alert_method if risk_data.nndss_data is mapping and risk_data.nndss_data.pertussis_alert_method is mapping else None %}
-                    {% if pam and pam.method_label %}
-                    <div class="alert alert-secondary py-2 px-3 mb-3 small" role="note">
-                        <strong>Pertussis alert method:</strong> {{ pam.method_label }}.
-                        {% if pam.alert_floor_cases is not none
-                              and pam.five_year_median is not none
-                              and pam.median_multiplier is not none
-                              and pam.min_cases_floor is not none %}
-                        Current trigger: weekly cases at or above
-                        <strong>{{ pam.alert_floor_cases }}</strong>
-                        (5-year weekly median
-                        <strong>{{ "%.1f"|format(pam.five_year_median) }}</strong>,
-                        multiplier
-                        <strong>{{ "%.2f"|format(pam.median_multiplier) }}x</strong>,
-                        floor
-                        <strong>{{ pam.min_cases_floor }}</strong>
-                        cases).
-                        {% endif %}
-                        {% if pam.citation_status %}
-                        <span class="text-muted">{{ pam.citation_status }}.</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                    {# v28.7: per-tile statewide-scope caption replaces the
+                       prior alert-secondary block; see card-header subtitle
+                       above. Pertussis alert-method block removed entirely
+                       (pertussis tracking retired in v28.7). #}
                     {# Active surveillance flags (v1 Shape A: H5N1, mpox, enteric, legionella).
                        Lightweight statewide outbreak flags that contribute to the
                        infectious-disease Acute signal. See utils/disease_surveillance.py
@@ -93,8 +63,23 @@
                     {# Strategic Preparedness Baseline (Option 1, 2026-05-20).
                        P-times-C floor on the infectious-disease score driven by
                        per-disease severity profiles (with citations) and county
-                       vulnerability inputs. See utils/strategic_baseline.py. #}
+                       vulnerability inputs. PH-only: in EM mode the panel is
+                       hidden because the Strategic Baseline framing is a
+                       planning-floor concept specific to public health
+                       preparedness. The composite tile and the active
+                       surveillance flags above remain visible in EM mode so EM
+                       users still see outbreak awareness. See
+                       utils/strategic_baseline.py. #}
+                    {% if active_discipline != 'em' %}
                     {% include 'dashboard/_strategic_baseline_panel.html' ignore missing %}
+                    {% endif %}
+                    {# EM mode: hide the per-disease activity breakdown table.
+                       The composite tile + active surveillance flags above are
+                       enough for EM situational awareness; the dense per-metric
+                       table is PH-flavored detail. PH mode renders the full
+                       table as before. #}
+                    {% if active_discipline != 'em' %}
+                    {% call col.section('infectious-disease-activity', 'Disease Activity Breakdown', open=false) %}
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -173,6 +158,15 @@
                             Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, updated weekly); WI DHS WIR county immunization data; County Health Rankings 2025
                         </small>
                     </div>
+                    {% endcall %}
+                    {% endif %}{# end EM-hide of disease-activity table #}
+                    {% if active_discipline == 'em' %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Streamlined for Emergency Management. Composite score and active surveillance flags shown; per-disease activity breakdown and Strategic Preparedness Baseline are visible in Public Health mode.
+                        </small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -247,6 +241,7 @@
                     </div>
                     {% endif %}
 
+                    {% call col.section('vbd-metrics', 'Vector-Borne Disease Metrics') %}
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -361,6 +356,7 @@
                             </tbody>
                         </table>
                     </div>
+                    {% endcall %}
                     <div class="mt-3">
                         <small class="text-muted">
                             Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates

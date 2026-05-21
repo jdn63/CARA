@@ -31,3 +31,4 @@ pypdf
 scipy
 census
 alembic
+requests

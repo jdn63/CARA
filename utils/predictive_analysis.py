@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Map composite risk keys (returned to callers) to the trend signal names
 # exposed by utils.real_trend_calculator.get_all_trend_scores().
 _RISK_TO_TREND = {
-    'natural_hazards_risk': ['flood', 'tornado', 'winter_storm', 'thunderstorm'],
+    'natural_hazards_risk': ['flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind'],
     'health_risk': ['demographic'],
     'extreme_heat_risk': ['extreme_heat'],
     'air_quality_risk': ['air_quality'],

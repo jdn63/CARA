@@ -41,7 +41,7 @@
         <div class="col-12 d-flex justify-content-between align-items-center">
             <div>
                 <h2>Risk Analysis Dashboard</h2>
-                <p class="text-muted">Public Health analysis for {{ risk_data.location }}</p>
+                <p class="text-muted">{{ discipline_label|default('Public Health') }} analysis for {{ risk_data.location }}</p>
 
                 <a href="/methodology" class="btn btn-sm btn-outline-info" target="_blank" rel="noopener noreferrer">
                     View Risk Assessment Methodology

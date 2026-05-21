@@ -1,0 +1,84 @@
+vector_borne_disease:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 1: Community Preparedness"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 6: Information Sharing"
+        - "Capability 11: Nonpharmaceutical Interventions"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): vector range and climate-driven exposure"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): habitat and stormwater actions"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: parks, public works, WI DNR alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Confirm tick-borne and mosquito-borne disease surveillance feeds (NNDSS-reportable conditions, clinician case reports, arboviral lab testing) are operational before the active vector season"
+          source_id: cdc_nndss
+        - text: "Refresh seasonal public education on tick-bite prevention, repellent use, tick checks, and early symptom recognition for Lyme, anaplasmosis, and Powassan"
+          source_id: wi_dhs_tickborne
+        - text: "Distribute Wisconsin-specific mosquito-borne disease guidance to clinicians on West Nile, EEE, La Crosse, and Jamestown Canyon recognition and reporting"
+          source_id: wi_dhs_mosquito
+        - text: "Identify high-risk populations (outdoor workers, hunters, anglers, rural residents, children) for targeted prevention outreach"
+          source_id: cdc_vector_borne
+
+      this_year:
+        - text: "Coordinate with WI DHS on enhanced Lyme disease and West Nile virus case investigation, data-sharing, and epidemiological trend analysis"
+          source_id: wi_dhs_preparedness
+        - text: "Train clinicians on recognition and reporting of anaplasmosis, ehrlichiosis, babesiosis, and Powassan virus per current CDC and WI DHS guidance"
+          source_id: cdc_lyme
+        - text: "Develop school-based and youth-program education on personal protective measures, tick checks, and when to seek care"
+          source_id: cdc_vector_borne
+        - text: "Partner with parks, conservation groups, and outdoor-recreation organizations on community-based tick and mosquito awareness campaigns"
+          source_id: cdc_vector_borne
+
+      multi_year:
+        - text: "Build a climate-adaptation surveillance and planning approach for expanding vector ranges and extended transmission seasons, aligned with CDC BRACE"
+          source_id: cdc_brace
+        - text: "Develop a community health worker outreach program for vector-borne disease prevention in high-incidence rural and outdoor-recreation communities"
+          source_id: cdc_phep
+        - text: "Establish long-term epidemiology and trend-analysis partnerships with WI DHS and academic research institutions for emerging arboviruses"
+          source_id: wi_dhs_preparedness
+        - text: "Integrate vector-borne disease objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan addresses vector-borne disease as a climate-driven public-health hazard and references current CDC and WI DHS guidance"
+          source_id: fema_hmp_guide
+        - text: "Coordinate with public works and parks on pre-season standing-water inspections, catch-basin treatment, and tire and container clean-up campaigns"
+          source_id: cdc_vector_borne
+        - text: "Pre-position multilingual public messaging templates aligned with the start of tick season and peak mosquito season for PIO and partner use"
+          source_id: noaa_wrn
+        - text: "Confirm coordination roles with the local health department, parks, public works, WI DNR, and WEM regional staff before the active vector season"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to include outdoor-worker exposure, recreation and tourism populations, and county trends from WI DHS arboviral surveillance"
+          source_id: fema_hmp_guide
+        - text: "Integrate stormwater and habitat-management measures that reduce mosquito breeding into upcoming multi-hazard mitigation projects so they remain HMA-eligible"
+          source_id: fema_hma_guide_v2_1
+        - text: "Adopt or update park-and-recreation signage standards for high-tick areas and trailheads in coordination with WI DNR and county parks"
+          source_id: wi_dhs_tickborne
+        - text: "Coordinate with the local health department on cross-disciplinary messaging during HAN advisories for arboviral outbreaks or expanded tick risk"
+          source_id: cdc_han
+
+      multi_year:
+        - text: "Develop a multi-year green-infrastructure and stormwater strategy that reduces urban mosquito habitat in coordination with planning and public works"
+          source_id: fema_floodplain
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on shared vector-surveillance and habitat-management priorities"
+          source_id: wem_resources
+        - text: "Build standing partnerships with WI DNR, university entomology programs, and conservation districts on long-term vector ecology and climate-driven range shifts"
+          source_id: cdc_brace
+        - text: "Integrate vector-borne disease mitigation into long-term climate-adaptation planning documents alongside extreme heat and air quality"
+          source_id: fema_hmp_guide

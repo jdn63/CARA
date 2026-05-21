@@ -1,9 +1,16 @@
 <!DOCTYPE html>
+{# Shared regional print template (HERC = Public Health default, WEM = Emergency
+   Management). Routes pass region_kind / discipline_label to adapt the chrome
+   without forking. herc_id alias on risk_data preserves print URL shape. #}
+{% set region_kind = region_kind|default('HERC') %}
+{% set discipline_label = discipline_label|default('Public Health') %}
+{% set dashboard_url_prefix = dashboard_url_prefix|default('/herc-dashboard') %}
+{% set region_id = risk_data.wem_id if region_kind == 'WEM' else risk_data.herc_id %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HERC Region Risk Assessment Summary | CARA</title>
+    <title>{{ region_kind }} Region Risk Assessment Summary | CARA</title>
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <style>
         @media print {
@@ -92,24 +99,24 @@
         <!-- Header Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="mb-0">CARA - HERC Region Risk Assessment Summary</h1>
+                <h1 class="mb-0">CARA - {{ region_kind }} Region Risk Assessment Summary ({{ discipline_label }})</h1>
                 <h3>{{ risk_data.location }}</h3>
                 <p class="text-muted mb-1">Generated on: {{ current_date }}</p>
                 <p class="mb-4">This report provides a comprehensive risk assessment for the {{ risk_data.location }} region.</p>
                 
                 <div class="no-print">
                     <button class="btn btn-primary" onclick="window.print()">Print This Report</button>
-                    <a href="/herc-dashboard/{{ risk_data.herc_id }}" class="btn btn-outline-secondary ms-2">Return to Dashboard</a>
+                    <a href="{{ dashboard_url_prefix }}/{{ region_id }}" class="btn btn-outline-secondary ms-2">Return to Dashboard</a>
                 </div>
             </div>
         </div>
 
-        <!-- HERC Region Overview -->
+        <!-- Region Overview -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">HERC Region Overview</h4>
+                        <h4 class="mb-0">{{ region_kind }} Region Overview</h4>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -123,7 +130,7 @@
                             </div>
                             <div class="col-md-6">
                                 <h5>Region Information</h5>
-                                <p>This HERC region contains {{ risk_data.counties|length }} counties and coordinates healthcare emergency preparedness activities across the region.</p>
+                                <p>This {{ region_kind }} region contains {{ risk_data.counties|length }} counties and coordinates {{ 'healthcare emergency preparedness' if region_kind == 'HERC' else 'emergency management' }} activities across the region.</p>
                                 <p>Risk assessment data is aggregated using a county-balanced two-stage mean (within-county mean, then across counties) to provide a regional view of public health and emergency preparedness risks. This prevents counties with multiple local health departments from over-weighting the regional rollup.</p>
                             </div>
                         </div>
@@ -252,11 +259,11 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            {% for hazard_type in ['flood', 'tornado', 'winter_storm', 'thunderstorm'] %}
+                            {% for hazard_type in ['flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind'] %}
                             {% if hazard_type in risk_data.natural_hazards %}
                             {% set score = risk_data.natural_hazards[hazard_type] %}
                             <div class="col-md-3 mb-3">
-                                <h5>{{ hazard_type|replace('_', ' ')|title }}</h5>
+                                <h5>{{ hazard_type|format_risk_type }}</h5>
                                 <h4>{{ "%.2f"|format(score) }}</h4>
                                 <div class="progress mb-2">
                                     <div class="progress-bar {{ 'bg-danger' if score > 0.6 else 'bg-warning' if score > 0.3 else 'bg-success' }}"

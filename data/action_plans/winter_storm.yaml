@@ -1,0 +1,84 @@
+winter_storm:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 7: Mass Care"
+        - "Capability 10: Medical Surge"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 15: Volunteer Management"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): severe winter weather profile"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): utility, transportation, sheltering"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: utility and EMS alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Map medically vulnerable populations dependent on powered medical equipment, refrigerated medications, and home oxygen for prioritized outreach during outages"
+          source_id: cdc_phep
+        - text: "Confirm the warming-center inventory with operating hours, accessibility features, transportation access, and medical-needs accommodations and publish the list before the first advisory"
+          source_id: ready_winter
+        - text: "Refresh multilingual messaging on carbon-monoxide poisoning prevention, hypothermia recognition, and frostbite first aid and pre-position it with community-based organizations"
+          source_id: cdc_carbon_monoxide
+        - text: "Verify clinical Health Alert Network distribution lists and seasonal guidance on cold-related illness and CO poisoning are current"
+          source_id: cdc_han
+
+      this_year:
+        - text: "Establish or renew memoranda of understanding with home-healthcare, oxygen, and dialysis providers for wellness checks and patient continuity during multi-day storms"
+          source_id: hhs_aspr_tracie
+        - text: "Add cold-related illness and carbon-monoxide poisoning to the routine syndromic-surveillance cadence using emergency-department and poison-control data feeds"
+          source_id: cdc_nssp
+        - text: "Train Medical Reserve Corps volunteers and community partners on hypothermia and frostbite recognition, CO poisoning indicators, and warming-center support"
+          source_id: mrc_program
+        - text: "Coordinate with weatherization, energy-assistance, and aging-services programs to identify residents at high risk during prolonged cold or outage events"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a year-round community health worker program for high-risk neighborhoods with seasonal surge capacity for winter wellness checks"
+          source_id: cdc_phep
+        - text: "Develop integrated winter-preparedness planning with aging-and-disability services, behavioral health, and human-services partners on a multi-year cycle"
+          source_id: cdc_winter_weather
+        - text: "Integrate winter-storm health objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Partner with healthcare coalitions on longitudinal monitoring of cold-weather morbidity and mortality across the catchment area"
+          source_id: hhs_aspr_tracie
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan's severe-winter-weather profile reflects current climatology and is within the 5-year update cycle"
+          source_id: fema_hmp_guide
+        - text: "Verify warming-center designations with municipal facilities, schools, libraries, and faith partners and confirm backup-power and accessibility status for each site"
+          source_id: ready_winter
+        - text: "Pre-position multilingual public messaging templates aligned with NWS winter-storm warning tiers for PIO and partner agencies"
+          source_id: noaa_wrn
+        - text: "Confirm coordination roles with the local health department, utility companies, school districts, and WEM regional staff before winter onset"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to include populations dependent on home medical equipment, residents in older housing stock, and homelessness exposure during cold extremes"
+          source_id: fema_hmp_guide
+        - text: "Identify utility-resilience priorities (vegetation management, undergrounding, generator support for critical facilities) in coordination with the local utility and PSC"
+          source_id: fema_extreme_temps_sltt
+        - text: "Adopt or renew the StormReady designation and verify backup warning-dissemination paths for severe winter weather and ice storms"
+          source_id: nws_stormready
+        - text: "Integrate winter-resilience measures into upcoming multi-hazard mitigation projects so they remain HMA-eligible under the current Program and Policy Guide"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Develop a multi-year strategy for backup-power and weatherization upgrades at critical facilities (warming centers, congregate care, EOCs, water-and-wastewater)"
+          source_id: fema_extreme_temps_sltt
+        - text: "Build a county cold-weather action plan with activation thresholds, lead-coordinator designation, and partner responsibilities across health, public works, transit, and schools"
+          source_id: cdc_winter_weather
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on shared sheltering capacity and mutual-aid expectations"
+          source_id: wem_resources
+        - text: "Expand StormReady and Weather-Ready Nation Ambassador partnerships across hospitals, large employers, and faith institutions"
+          source_id: noaa_wrn

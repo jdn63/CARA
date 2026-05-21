@@ -1,0 +1,84 @@
+dam_failure:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 7: Mass Care"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 2: Community Recovery"
+        - "Capability 10: Medical Surge"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): dam hazard classification and downstream exposure"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): dam owner and downstream actions"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): EAP currency and inundation-mapping updates"
+        - "Coordination of Local Mitigation Planning: dam owner, county EM, WI DNR alignment"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Identify downstream populations with medical vulnerabilities, dialysis or oxygen dependency, and access-and-functional-needs using the CMIST framework and inundation maps"
+          source_id: cdc_phep
+        - text: "Confirm mass-care health protocols for shelter inspection, chronic-disease screening, and medical-needs sheltering for potential large-scale displacement"
+          source_id: hhs_aspr_tracie
+        - text: "Refresh multilingual messaging on dam-emergency evacuation, water safety, and post-flood health risks and pre-position it with community-based organizations"
+          source_id: cdc_floods_health
+        - text: "Verify syndromic-surveillance feeds and case-reporting workflows for waterborne illness, wound infection, and carbon monoxide are operational"
+          source_id: cdc_nssp
+
+      this_year:
+        - text: "Establish or renew memoranda of understanding with home-healthcare, dialysis, and oxygen-supply providers for patient tracking during downstream evacuation scenarios"
+          source_id: hhs_aspr_tracie
+        - text: "Train environmental-health staff on private-well sampling, sewage exposure, and post-inundation food and water safety procedures"
+          source_id: cdc_floods_health
+        - text: "Integrate behavioral-health crisis counseling and psychological first aid into the dam-emergency annex with named providers and Medical Reserve Corps roles"
+          source_id: samhsa_dtac
+        - text: "Coordinate with Wisconsin DHS preparedness staff on mutual-aid pathways for environmental-health and epidemiology surge during regional dam emergencies"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Develop a longitudinal post-displacement behavioral-health monitoring approach with community mental-health and healthcare-coalition partners"
+          source_id: samhsa_dtac
+        - text: "Build a standing community health worker program in downstream communities focused on chronic-disease continuity and wellness checks during planned drawdowns or alerts"
+          source_id: cdc_phep
+        - text: "Integrate dam-emergency health objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Expand bidirectional data-sharing agreements with healthcare-coalition partners to support patient tracking across jurisdictions during dam-related events"
+          source_id: hhs_aspr_tracie
+
+    em:
+
+      pre_season:
+        - text: "Confirm Emergency Action Plans (EAPs) are on file and exercised for all high-hazard and significant-hazard dams in the jurisdiction, in coordination with dam owners and WI DNR"
+          source_id: fema_dam_safety
+        - text: "Verify inundation maps are current, integrated into the local hazard mitigation plan, and reflected in evacuation routing"
+          source_id: fema_dam_safety
+        - text: "Pre-position public messaging templates for dam-emergency notifications and verify IPAWS, WEA, and outdoor-siren coverage downstream"
+          source_id: noaa_wrn
+        - text: "Confirm coordination roles with dam owners, WI DNR Dam Safety, the local health department, and WEM regional staff before the spring high-water season"
+          source_id: wi_dnr_dams
+
+      this_year:
+        - text: "Update the county risk assessment to include critical facilities, repetitive-loss properties, and populations of concern within mapped inundation zones"
+          source_id: fema_hmp_guide
+        - text: "Conduct or co-sponsor a tabletop or functional exercise of a high-hazard-dam EAP with the dam owner, WI DNR, county EM, and local responders"
+          source_id: fema_dam_safety
+        - text: "Identify dam-related mitigation priorities (acquisitions in inundation zones, upstream watershed actions, EAP improvements) for the next HMA cycle"
+          source_id: fema_hma_guide_v2_1
+        - text: "Review state dam-safety inspection cycles, hazard classifications, and outstanding deficiencies with WI DNR for any dams within or upstream of the jurisdiction"
+          source_id: wi_dnr_dams
+
+      multi_year:
+        - text: "Develop a multi-year strategy for acquisitions or relocations in the inundation footprint of high-hazard dams, integrated with HMA grant cycles"
+          source_id: fema_floodplain
+        - text: "Pursue cross-jurisdictional planning with upstream and downstream counties and the WEM region on watershed-scale dam-safety and notification protocols"
+          source_id: wem_resources
+        - text: "Maintain an ongoing dam-safety partnership with ASDSO resources and WI DNR for technical support, EAP templates, and case-study learning"
+          source_id: asdso
+        - text: "Establish a long-term mitigation pathway for critical downstream facilities (shelters, water-and-wastewater, healthcare) that bundles flood-proofing with continuity-of-operations upgrades"
+          source_id: fema_hmp_guide

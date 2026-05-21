@@ -1,0 +1,86 @@
+active_shooter:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 10: Medical Surge"
+        - "Capability 1: Community Preparedness"
+        - "Capability 2: Community Recovery"
+        - "Capability 14: Responder Safety and Health"
+        - "Capability 15: Volunteer Management"
+    em:
+      label: "FEMA Core Capabilities engaged"
+      items:
+        - "Planning (cross-mission area)"
+        - "Public Information and Warning (cross-mission area)"
+        - "Operational Coordination (cross-mission area)"
+        - "Public Health, Healthcare, and EMS (Response)"
+        - "Mass Care Services (Response)"
+        - "Operational Communications (Response)"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Confirm mass-casualty triage, blood-product surge, and trauma-coordination roles with the regional healthcare coalition and trauma centers"
+          source_id: hhs_aspr_tracie
+        - text: "Refresh trauma-informed care guidance and crisis-counseling referral networks for affected community members, families, and responders"
+          source_id: samhsa_mass_violence
+        - text: "Verify Health Alert Network distribution lists for clinicians, EMS, hospitals, and behavioral-health partners are current"
+          source_id: cdc_han
+        - text: "Confirm Stop The Bleed kit placements and training coverage at schools, large workplaces, and public assemblies in coordination with EMS"
+          source_id: stop_the_bleed
+
+      this_year:
+        - text: "Train public-health staff, Medical Reserve Corps volunteers, and community partners on psychological first aid for survivors, families, and responders"
+          source_id: nctsn_pfa
+        - text: "Train public-health and partner staff on Stop The Bleed bleeding-control techniques and coordinate with healthcare partners on mass-casualty triage support"
+          source_id: stop_the_bleed
+        - text: "Establish family-reunification health-support procedures including screening, crisis counseling, and behavioral-health referrals with the healthcare coalition and Red Cross partners"
+          source_id: samhsa_mass_violence
+        - text: "Coordinate with Wisconsin DHS preparedness staff on regional behavioral-health surge pathways for mass-casualty incidents"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Develop community-based violence-prevention programs using a public-health framework that addresses upstream social determinants and youth, intimate-partner, and firearm violence"
+          source_id: cdc_violence_prevention
+        - text: "Build long-term behavioral-health recovery services including trauma therapy access, substance-use prevention, and community resilience programs"
+          source_id: samhsa_mass_violence
+        - text: "Establish standing community-resilience partnerships with schools, faith-based organizations, and social-service agencies for sustained recovery support"
+          source_id: samhsa_dtac
+        - text: "Integrate mass-casualty preparedness and violence-prevention objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+
+    em:
+
+      pre_season:
+        - text: "Confirm active-shooter preparedness annexes are current for the EOC, schools, large employers, and public-assembly facilities using CISA planning templates"
+          source_id: cisa_active_shooter
+        - text: "Verify integrated law-enforcement, fire, and EMS active-attack response training (ALERRT or equivalent) is current for primary response agencies in the jurisdiction"
+          source_id: alerrt
+        - text: "Pre-position joint public-information templates for mass-violence events covering reunification, hotline numbers, and behavioral-health resources"
+          source_id: fbi_active_shooter
+        - text: "Confirm coordination roles with law enforcement, schools, the local health department, healthcare coalition, and WEM regional staff"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Conduct or co-sponsor a tabletop or functional exercise of an active-shooter scenario with law enforcement, EMS, hospitals, schools, and behavioral-health partners"
+          source_id: cisa_active_shooter
+        - text: "Integrate safer-schools natural-hazard and security guidance from FEMA P-1000 and CISA active-shooter resources into school-district emergency-operations plan updates"
+          source_id: fema_p_1000
+        - text: "Coordinate with hospitals and healthcare coalition partners on patient-tracking, family-reunification, and behavioral-health surge protocols for mass-casualty events"
+          source_id: hhs_aspr_tracie
+        - text: "Refresh public Run-Hide-Fight education and partner training for large employers and faith institutions"
+          source_id: fbi_active_shooter
+
+      multi_year:
+        - text: "Develop a multi-year facility-hardening strategy for schools, government buildings, and large public assemblies in coordination with CISA assessments"
+          source_id: cisa_active_shooter
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on mutual-aid, mass-casualty patient distribution, and joint exercise cycles"
+          source_id: wem_resources
+        - text: "Build a long-term community-safety partnership framework integrating CDC violence-prevention strategies with law-enforcement, schools, and behavioral-health agencies"
+          source_id: cdc_violence_prevention
+        - text: "Establish a standing recovery framework for mass-violence incidents covering victim services, behavioral-health continuity, memorialization, and after-action improvement"
+          source_id: samhsa_mass_violence

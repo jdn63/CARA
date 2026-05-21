@@ -1,0 +1,39 @@
+{# Collapsible "click to expand" wrapper for dashboard tile sub-sections.
+
+   Usage:
+     {% import "dashboard/_collapsible.html" as col %}
+     {% call col.section('uniq-id', 'Active Surveillance Flags',
+                         badge_html='<span class="badge bg-secondary">v1 prototype</span>',
+                         open=false) %}
+         ...body markup...
+     {% endcall %}
+
+   Notes:
+     - Renders a full-width toggle button styled like Bootstrap's
+       accordion-button so it visually matches the existing Active
+       Shooter accordion inside its tile.
+     - Defaults to collapsed (open=false) so users see more risk-type
+       scores on screen at once.
+     - The id must be unique per page; callers typically prefix with
+       the tile slug (e.g. 'infectious-surveillance').
+#}
+
+{% macro section(id, title, badge_html='', open=false) -%}
+<div class="tile-collapsible mb-3">
+    <button class="btn btn-sm w-100 text-start tile-collapsible-btn{% if not open %} collapsed{% endif %}"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#{{ id }}"
+            aria-expanded="{{ 'true' if open else 'false' }}"
+            aria-controls="{{ id }}">
+        <span class="tile-collapsible-chevron" aria-hidden="true">&#9656;</span>
+        <span class="tile-collapsible-title">{{ title }}</span>
+        {% if badge_html %}{{ badge_html|safe }}{% endif %}
+    </button>
+    <div id="{{ id }}" class="collapse{% if open %} show{% endif %}">
+        <div class="tile-collapsible-body pt-2">
+            {{ caller() }}
+        </div>
+    </div>
+</div>
+{%- endmacro %}

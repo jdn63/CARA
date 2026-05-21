@@ -1,0 +1,221 @@
+{% from 'components/info_popover.html' import show_work_btn %}
+{% import "dashboard/_collapsible.html" as col %}
+<!-- Category: Hazardous Materials (Industrial + Agricultural) -->
+<div class="category-section">
+    <div class="category-header category-environmental">Hazardous Materials (6% combined weight)</div>
+    <div class="row g-2">
+
+    <!-- Hazmat: Industrial -->
+    <div class="col-md-6 compact-tile">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    Hazardous Materials &mdash; Industrial
+                    <span class="badge bg-primary ms-2">Fixed-Site</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    {% if risk_data.hazmat_industrial_risk is defined and risk_data.hazmat_industrial_risk is number %}
+                        <h3>{{ "%.2f"|format(risk_data.hazmat_industrial_risk) }}
+                        {% if risk_data.hazmat_industrial_components %}
+                        {{ show_work_btn('hazmat-ind-info', 'Hazmat (Industrial) Risk Calculation',
+                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
+                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</div>'
+                          ~ '<ul class="component-list">'
+                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' (EPA TRI facility density; real counts for Milwaukee/Dodge, tiered proxy elsewhere)</li>'
+                          ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ' (CDC SVI housing/transport + socioeconomic + Census urbanization)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ' (WEM Regional Hazmat Team hosting + CHEMPACK positioning + inverse SVI)</li>'
+                          ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</li>'
+                          ~ '</ul>'
+                          ~ '<div class="data-source">Sources: EPA TRI; EPA EPCRA Tier II; Wisconsin SERB Regional Hazmat Teams; ASPR CHEMPACK; CDC SVI 2022; U.S. Census ACS</div>'
+                        ) }}
+                        {% endif %}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.hazmat_industrial_risk > 0.6 else 'warning' if risk_data.hazmat_industrial_risk > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.hazmat_industrial_risk > 0.6 else 'Medium Risk' if risk_data.hazmat_industrial_risk > 0.3 else 'Low Risk' }}
+                        </span>
+                    {% else %}
+                        <h3>&mdash;</h3>
+                        <span class="badge bg-secondary">Data unavailable</span>
+                    {% endif %}
+                </div>
+
+                {% call col.section('hazmat-ind-details', 'Risk Components & Metrics') %}
+                {% if risk_data.hazmat_industrial_components %}
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_industrial_components.exposure) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-danger" style="width: {{ risk_data.hazmat_industrial_components.exposure * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_industrial_components.vulnerability) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-warning" style="width: {{ risk_data.hazmat_industrial_components.vulnerability * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-success mb-1">Resilience</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_industrial_components.resilience) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-success" style="width: {{ risk_data.hazmat_industrial_components.resilience * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if risk_data.hazmat_industrial_metrics %}
+                <h6 class="text-muted mb-2">Key Metrics</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Industrial tier</td>
+                                <td>{{ risk_data.hazmat_industrial_metrics.industrial_tier|default('-')|title }}</td>
+                            </tr>
+                            <tr>
+                                <td>EPA TRI facilities</td>
+                                <td>{{ risk_data.hazmat_industrial_metrics.tri_facility_count if risk_data.hazmat_industrial_metrics.tri_facility_count is not none else 'proxy (Phase B fetch pending)' }}</td>
+                            </tr>
+                            <tr>
+                                <td>WEM Regional Hazmat Team host</td>
+                                <td>{{ 'Yes' if risk_data.hazmat_industrial_metrics.hazmat_team_host else 'No' }}</td>
+                            </tr>
+                            <tr>
+                                <td>CHEMPACK positioned</td>
+                                <td>{{ 'Yes' if risk_data.hazmat_industrial_metrics.chempack_positioned else 'No' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                {% endcall %}
+
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Sources: EPA TRI; EPA EPCRA Tier II; WI SERB Regional Hazmat Teams; ASPR CHEMPACK; CDC SVI 2022.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hazmat: Agricultural -->
+    <div class="col-md-6 compact-tile">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    Hazardous Materials &mdash; Agricultural
+                    <span class="badge bg-success ms-2">Rural / Farm</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    {% if risk_data.hazmat_agricultural_risk is defined and risk_data.hazmat_agricultural_risk is number %}
+                        <h3>{{ "%.2f"|format(risk_data.hazmat_agricultural_risk) }}
+                        {% if risk_data.hazmat_agricultural_components %}
+                        {{ show_work_btn('hazmat-ag-info', 'Hazmat (Agricultural) Risk Calculation',
+                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
+                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</div>'
+                          ~ '<ul class="component-list">'
+                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' (USDA NASS dairy + row-crop intensity tier)</li>'
+                          ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ' (rural isolation + SVI minority/socioeconomic for farmworker households)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ' (UW Extension ag-safety footprint + inverse SVI)</li>'
+                          ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</li>'
+                          ~ '</ul>'
+                          ~ '<div class="data-source">Sources: USDA NASS Census of Agriculture; WI DATCP Agricultural Chemical Cleanup Program; CDC NIOSH Agricultural Safety; EPA Worker Protection Standard; CDC SVI 2022</div>'
+                        ) }}
+                        {% endif %}
+                        </h3>
+                        <span class="badge bg-{{ 'danger' if risk_data.hazmat_agricultural_risk > 0.6 else 'warning' if risk_data.hazmat_agricultural_risk > 0.3 else 'success' }}">
+                            {{ 'High Risk' if risk_data.hazmat_agricultural_risk > 0.6 else 'Medium Risk' if risk_data.hazmat_agricultural_risk > 0.3 else 'Low Risk' }}
+                        </span>
+                    {% else %}
+                        <h3>&mdash;</h3>
+                        <span class="badge bg-secondary">Data unavailable</span>
+                    {% endif %}
+                </div>
+
+                {% call col.section('hazmat-ag-details', 'Risk Components & Metrics') %}
+                {% if risk_data.hazmat_agricultural_components %}
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Risk Component Breakdown</h6>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_agricultural_components.exposure) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-danger" style="width: {{ risk_data.hazmat_agricultural_components.exposure * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_agricultural_components.vulnerability) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-warning" style="width: {{ risk_data.hazmat_agricultural_components.vulnerability * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded text-center">
+                                <span class="d-block badge bg-success mb-1">Resilience</span>
+                                <span class="h5">{{ "%.2f"|format(risk_data.hazmat_agricultural_components.resilience) }}</span>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-success" style="width: {{ risk_data.hazmat_agricultural_components.resilience * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if risk_data.hazmat_agricultural_metrics %}
+                <h6 class="text-muted mb-2">Key Metrics</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Agricultural tier</td>
+                                <td>{{ risk_data.hazmat_agricultural_metrics.agricultural_tier|default('-')|title }}</td>
+                            </tr>
+                            <tr>
+                                <td>UW Extension ag-safety footprint</td>
+                                <td>{{ 'Yes' if risk_data.hazmat_agricultural_metrics.extension_ag_safety_heavy else 'No' }}</td>
+                            </tr>
+                            <tr>
+                                <td>Data vintage</td>
+                                <td><small class="text-muted">{{ risk_data.hazmat_agricultural_metrics.data_vintage|default('-') }}</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                {% endcall %}
+
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Sources: USDA NASS Census of Agriculture; WI DATCP ACCP; CDC NIOSH Agricultural Safety; EPA WPS; CDC SVI 2022.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</div>

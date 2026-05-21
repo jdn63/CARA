@@ -1174,3 +1174,177 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         'metrics': metrics,
         'data_sources': data_sources
     }
+
+
+def calculate_enhanced_straight_line_wind_risk(county_name: str,
+                                               discipline: str = 'public_health') -> Dict[str, Any]:
+    """Damaging non-tornadic convective wind (incl. derechos).
+
+    Split from the legacy thunderstorm domain in v28.6. Uses the same
+    NOAA Storm Events Database cache, but the percentile is computed
+    against the 'straight_line_wind' event bucket
+    (Thunderstorm Wind / Strong Wind / High Wind / Funnel Cloud)
+    instead of the combined hail+lightning+wind bucket.
+
+    Derechos are not a separate NOAA EVENT_TYPE; they are episodes
+    composed of many Thunderstorm Wind / High Wind events, so they
+    naturally feed this percentile. Derecho-specific guidance lives
+    in the action plan content layer.
+    """
+    original_name = county_name
+    if _is_tribal(county_name):
+        county_name = _resolve_tribal_county(county_name)
+
+    svi = get_all_svi_themes(county_name)
+    census = get_census_demographics(county_name)
+    climate_mult = get_climate_multiplier(county_name, 'straight_line_wind')
+    health_factor = get_health_impact_factor(county_name, 'thunderstorm')
+
+    # Wisconsin sits in the upper-Midwest derecho corridor; southern and
+    # central tiers see the densest damaging-wind climatology.
+    high_wind_counties = [
+        'Milwaukee', 'Waukesha', 'Washington', 'Ozaukee', 'Racine',
+        'Kenosha', 'Walworth', 'Rock', 'Green', 'Lafayette', 'Grant',
+        'Dane', 'Jefferson', 'Dodge', 'Columbia', 'Sauk'
+    ]
+    moderate_wind_counties = [
+        'Iowa', 'Richland', 'Crawford', 'Vernon', 'La Crosse', 'Monroe',
+        'Juneau', 'Adams', 'Marquette', 'Green Lake', 'Fond du Lac',
+        'Sheboygan', 'Manitowoc', 'Calumet', 'Winnebago', 'Outagamie',
+        'Brown', 'Kewaunee', 'Door'
+    ]
+
+    derecho_corridor_factor = 0.40
+    if county_name in high_wind_counties:
+        derecho_corridor_factor = 0.75
+    elif county_name in moderate_wind_counties:
+        derecho_corridor_factor = 0.55
+
+    storm_pct = _get_storm_rate_percentile(county_name, 'straight_line_wind')
+
+    exposure_factors = {
+        'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
+        'derecho_corridor': derecho_corridor_factor,
+        'climate_trend': min(0.20, (climate_mult - 1.0) * 1.0),
+    }
+
+    weights = {
+        'noaa_storm_events':  0.55,
+        'derecho_corridor':   0.25,
+        'climate_trend':      0.20,
+    }
+    components_for_weighting = {
+        'noaa_storm_events': storm_pct,
+        'derecho_corridor': exposure_factors['derecho_corridor'],
+        'climate_trend': exposure_factors['climate_trend'],
+    }
+    exposure_score = _weighted_exposure_with_optional(
+        components_for_weighting, weights
+    )
+
+    # Tree-fall exposure mirrors thunderstorm; mobile-home stock is the
+    # dominant non-tornadic wind vulnerability driver in WI.
+    high_tree_counties = ['Bayfield', 'Douglas', 'Ashland', 'Iron', 'Vilas', 'Forest',
+                          'Florence', 'Marinette', 'Oconto', 'Shawano', 'Menominee']
+    moderate_tree_counties = ['Oneida', 'Lincoln', 'Langlade', 'Marathon', 'Waupaca',
+                              'Outagamie', 'Sheboygan', 'Washington', 'Waukesha']
+
+    tree_coverage = 0.4
+    if county_name in high_tree_counties:
+        tree_coverage = 0.8
+    elif county_name in moderate_tree_counties:
+        tree_coverage = 0.6
+
+    power_grid_vuln = min(1.0, census['mobile_home_factor'] * 0.5 +
+                          (1.0 - census['pop_density_factor']) * 0.5)
+    rural_isolation = max(0.0, 1.0 - census['pop_density_factor'])
+
+    if discipline == 'em':
+        em_tree = 0.4 if county_name in NORTHERN_TREE_COUNTIES else 0.25
+        vulnerability_score = min(1.0, (
+            (svi['housing_transportation'] * 0.25) +
+            (svi['socioeconomic'] * 0.05) +
+            (svi['household_composition'] * 0.05) +
+            (svi['minority_status'] * 0.05) +
+            (census['pop_density_factor'] * 0.15) +
+            (em_tree * 0.15) +
+            (census['mobile_home_factor'] * 0.20) +
+            (rural_isolation * 0.10)
+        ))
+        resilience_raw = _calculate_em_resilience(svi, census, county_name)
+    else:
+        vulnerability_score = min(1.0, (
+            (svi['housing_transportation'] * 0.20) +
+            (svi['socioeconomic'] * 0.10) +
+            (svi['household_composition'] * 0.10) +
+            (svi['minority_status'] * 0.05) +
+            (census['mobile_home_factor'] * 0.25) +
+            (tree_coverage * 0.15) +
+            (power_grid_vuln * 0.10) +
+            (rural_isolation * 0.05)
+        ))
+
+        resilience_raw = 0.5
+        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
+        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
+        resilience_raw = max(0.1, min(0.9, resilience_raw))
+
+    residual_risk = calculate_residual_risk(
+        exposure=exposure_score,
+        vulnerability=vulnerability_score,
+        resilience=resilience_raw,
+        health_impact_factor=health_factor
+    )
+
+    storm_data = _get_real_storm_data(county_name)
+    slw_storm = storm_data.get('by_category', {}).get('straight_line_wind', {}) if storm_data else {}
+    slw_event_breakdown = slw_storm.get('event_types') or {}
+
+    metrics = {
+        'historical_wind_events': slw_storm.get('event_count') if slw_storm.get('event_count') else None,
+        'wind_property_damage': _format_damage(slw_storm.get('property_damage', 0)) if slw_storm.get('property_damage') else None,
+        'wind_injuries': slw_storm.get('injuries', 0) if slw_storm else None,
+        'wind_fatalities': slw_storm.get('fatalities', 0) if slw_storm else None,
+        'wind_event_breakdown': slw_event_breakdown if slw_event_breakdown else None,
+        'derecho_corridor_position': (
+            'High (southern/central WI derecho corridor)' if county_name in high_wind_counties
+            else 'Moderate' if county_name in moderate_wind_counties
+            else 'Lower (northern WI)'
+        ),
+        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}%",
+        'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
+        'has_real_data': bool(slw_storm.get('event_count'))
+    }
+
+    data_sources = [
+        'NOAA NCEI Storm Events Database (Thunderstorm Wind / Strong Wind / High Wind / Funnel Cloud)',
+        'NOAA Storm Prediction Center derecho climatology (qualitative reference)',
+        'CDC Social Vulnerability Index (SVI) - All 4 Themes',
+        'U.S. Census Bureau ACS - Housing & Demographics (mobile-home stock)',
+        'NOAA/WICCI Climate Projections (2030-2050)',
+        'FEMA NRI Health Impact Factor'
+    ]
+
+    return {
+        'overall': residual_risk,
+        'components': {
+            'exposure': exposure_score,
+            'vulnerability': vulnerability_score,
+            'resilience': resilience_raw,
+            'health_impact': health_factor,
+            'climate_multiplier': climate_mult
+        },
+        'exposure_factors': exposure_factors,
+        'vulnerability_breakdown': {
+            'housing_transportation_svi': svi['housing_transportation'],
+            'socioeconomic_svi': svi['socioeconomic'],
+            'household_composition_svi': svi['household_composition'],
+            'minority_status_svi': svi['minority_status'],
+            'mobile_home_factor': census['mobile_home_factor'],
+            'tree_coverage': tree_coverage,
+            'power_grid_vulnerability': power_grid_vuln,
+            'rural_isolation': rural_isolation
+        },
+        'metrics': metrics,
+        'data_sources': data_sources
+    }

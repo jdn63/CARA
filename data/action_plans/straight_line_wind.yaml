@@ -1,0 +1,90 @@
+straight_line_wind:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 7: Mass Care"
+        - "Capability 10: Medical Surge"
+        - "Capability 15: Volunteer Management"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): damaging-wind and derecho profile"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): wind retrofit, debris management, utility hardening"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): post-event documentation and update cycle"
+        - "Coordination of Local Mitigation Planning: utilities, manufactured-home parks, agricultural operators"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Map manufactured-home parks and other high-wind-vulnerability housing for prioritized wellness checks after damaging-wind events"
+          source_id: cdc_phep
+        - text: "Pre-position public-health messaging on debris-cleanup injuries, chainsaw safety, and post-event power-line and gas-leak hazards"
+          source_id: cdc_tornado_health
+        - text: "Confirm syndromic surveillance is tuned to capture storm-related lacerations, crush injuries, and post-outage carbon-monoxide exposures from generators"
+          source_id: cdc_nssp
+        - text: "Refresh Health Alert Network distribution for severe-wind advisories, generator-CO warnings, and post-event food-and-water safety guidance"
+          source_id: cdc_han
+
+      this_year:
+        - text: "Coordinate with home-healthcare, dialysis, and durable medical equipment providers on continuity plans for multi-day outages caused by derecho-scale wind events"
+          source_id: hhs_aspr_tracie
+        - text: "Train environmental-health staff on post-wind-event food-safety reinspections, private-well integrity checks, and damaged-structure assessments"
+          source_id: cdc_floods_health
+        - text: "Integrate damaging-wind morbidity (debris injuries, falls from roof repair, post-event CO) into routine epidemiology surveillance summaries"
+          source_id: cdc_tornado_health
+        - text: "Coordinate with Wisconsin DHS preparedness staff and the regional healthcare coalition on mutual-aid pathways for environmental-health and epidemiology surge after a regional wind event"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a sustained community health worker program with surge capacity for door-to-door wellness checks in manufactured-home parks and other high-vulnerability housing after derechos"
+          source_id: cdc_phep
+        - text: "Develop a longitudinal monitoring approach for cumulative wind-event morbidity (debris injuries, post-event CO, mental-health impacts) with healthcare-coalition partners"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate damaging-wind objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Expand pre-event behavioral-health and disaster-distress messaging partnerships for communities repeatedly exposed to convective wind episodes"
+          source_id: samhsa_dtac
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan profiles straight-line wind and derecho hazards separately from tornado and reflects the upper-Midwest derecho corridor climatology"
+          source_id: spc_derecho
+        - text: "Pre-position public messaging templates aligned with NWS severe-thunderstorm warning destructive-criteria thresholds and the Particularly Dangerous Situation (PDS) warning tier used for derecho events"
+          source_id: noaa_wrn
+        - text: "Verify warning-dissemination redundancy (outdoor sirens, WEA, NOAA Weather Radio, IPAWS) with explicit coverage for rural manufactured-home parks"
+          source_id: noaa_wrn
+        - text: "Refresh SKYWARN spotter coordination with the local NWS Weather Forecast Office and confirm spotter activation procedures for severe-wind episodes"
+          source_id: nws_skywarn
+        - text: "Confirm coordination roles with the local health department, electric utility, school districts, and WEM regional staff before convective-wind season"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to call out manufactured-home parks, large outdoor venues, agricultural operations with grain bins and pole barns, and critical facilities with backup-power gaps"
+          source_id: fema_hmp_guide
+        - text: "Identify utility-resilience priorities (vegetation management, distribution hardening, undergrounding of feeders to critical facilities) with the local utility for the next HMA cycle"
+          source_id: fema_extreme_temps_sltt
+        - text: "Adopt or renew the StormReady designation and document outdoor-venue evacuation thresholds tied to NWS severe-thunderstorm and destructive-wind criteria"
+          source_id: nws_stormready
+        - text: "Pre-stage debris-management contracts and mutual-aid debris-removal agreements so a derecho-scale event does not trigger an emergency procurement"
+          source_id: fema_debris_management
+        - text: "Integrate damaging-wind mitigation into multi-hazard projects (combined wind / flood / utility resilience) so measures remain HMA-eligible under the current Program and Policy Guide"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on debris management, mutual-aid expectations, and coordinated public information for derecho-scale events"
+          source_id: wem_resources
+        - text: "Establish a long-term wind-retrofit pathway for critical facilities (EOCs, shelters, water-and-wastewater) and reference FEMA P-361 safe-room and FEMA P-499 wind-retrofit guidance for component-level upgrades"
+          source_id: fema_p_361
+        - text: "Develop a multi-year vegetation-management partnership with the local utility targeting transmission corridors and distribution feeders most often interrupted in derecho events"
+          source_id: fema_hmp_guide
+        - text: "Expand Weather-Ready Nation Ambassador partnerships across schools, hospitals, employers, manufactured-home park operators, and outdoor-venue operators"
+          source_id: noaa_wrn
+        - text: "Track Wisconsin convective-wind climatology trends (frequency and intensity of derecho episodes) against the NOAA SPC reference and update the HMP wind-hazard profile each 5-year cycle"
+          source_id: spc_derecho

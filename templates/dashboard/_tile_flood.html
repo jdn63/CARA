@@ -1,3 +1,4 @@
+{% import "dashboard/_collapsible.html" as col %}
         <!-- Flood -->
         <div class="col-md-3 compact-tile">
             <div class="card">
@@ -40,6 +41,7 @@
                         </div>
                     </div>
                     
+                    {% call col.section('flood-details', 'Risk Components & Metrics') %}
                     <!-- Risk Components -->
                     <div class="mb-4">
                         <h6 class="text-muted mb-3">Risk Components</h6>
@@ -165,6 +167,7 @@
                                 </tbody>
                             </table>
                         </div>
+                    {% endcall %}
 
                 </div>
             </div>

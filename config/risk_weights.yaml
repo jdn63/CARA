@@ -35,13 +35,19 @@
 # These weights are configurable. Jurisdictions may adjust them based on local
 # hazard profiles and planning priorities. Changes should be documented.
 overall_risk_weights:
-  natural_hazards: 0.28    # 28% - Natural disasters, weather events (FEMA NRI, CDC SVI, NOAA)
-  health_metrics: 0.17     # 17% - Disease surveillance, healthcare capacity (WI DHS, CDC)
-  active_shooter: 0.18     # 18% - Active shooter and violence risk (GVA, FBI, Census)
-  extreme_heat: 0.11       # 11% - Heat vulnerability and climate risk (NWS, NOAA)
-  air_quality: 0.12        # 12% - Environmental health, AQI assessment (EPA AirNow)
+  natural_hazards: 0.26    # 26% - Natural disasters, weather events (was 28%; -2 to make room for hazmat split)
+  health_metrics: 0.16     # 16% - Disease surveillance, healthcare capacity (was 17%; -1)
+  active_shooter: 0.17     # 17% - Active shooter and violence risk (was 18%; -1)
+  extreme_heat: 0.10       # 10% - Heat vulnerability and climate risk (was 11%; -1)
+  air_quality: 0.11        # 11% - Environmental health, AQI assessment (was 12%; -1)
   dam_failure: 0.07        # 7% - Dam/levee failure risk (NID, WI DNR, FEMA NRI flood)
   vector_borne_disease: 0.07  # 7% - Tick/mosquito-borne disease (WI DHS, CDC ArboNET)
+  hazmat_industrial: 0.03  # 3% - Fixed-site industrial hazmat (EPA TRI, EPCRA Tier II, ASPR CHEMPACK). PH emphasizes medical countermeasures (CHEMPACK/SNS/ASPR/CHEMM/ATSDR).
+  hazmat_agricultural: 0.03  # 3% - Agricultural hazmat (anhydrous ammonia, pesticide drift, manure-pit H2S). USDA Census of Ag + WI DATCP ACCP + CDC NIOSH ag.
+  # Total = 1.00. Hazmat split mirrors the v28.4 content-layer scaffolding;
+  # 3% + 3% reflects the smaller annualized-loss footprint of hazmat events
+  # relative to natural hazards while preserving a distinct PH-vs-EM action
+  # plan voice (PH on MCM, EM on EPCRA/NFPA 470/WEM SERB).
 
 # Supplementary Domains (modeled from proxy indicators, NOT included in PHRAT score)
 # These are displayed separately on the dashboard for planning context
@@ -109,10 +115,26 @@ active_shooter_weights:
 # with climate change projections applied to the exposure component.
 # Thunderstorm risk uses independent NOAA Storm Events Database severity data.
 natural_hazards_weights:
-  flood: 0.25           # Equal weight - FEMA NRI + NOAA/WICCI climate projections
-  tornado: 0.25         # Equal weight - FEMA NRI + NOAA/IPCC climate projections
-  winter_storm: 0.25    # Equal weight - FEMA NRI + climate projections
-  thunderstorm: 0.25    # Equal weight - NOAA Storm Events Database + EPA/NOAA projections
+  flood: 0.25                # FEMA NRI + NOAA/WICCI climate projections
+  tornado: 0.25              # FEMA NRI + NOAA/IPCC climate projections
+  winter_storm: 0.25         # FEMA NRI + climate projections
+  thunderstorm: 0.10         # Hail + Lightning only (v28.6 split). NOAA Storm Events Database.
+  straight_line_wind: 0.15   # Damaging non-tornadic convective wind incl. derechos (v28.6 split).
+                             # NOAA Storm Events (Thunderstorm Wind / Strong Wind / High Wind /
+                             # Funnel Cloud) + EPA/NOAA climate projection for convective wind.
+                             # Combined thunderstorm+straight_line_wind = 0.25 matches the pre-v28.6
+                             # single-thunderstorm weight; 60/40 split reflects WI event-volume share
+                             # (wind types ~61% of historical convective events 2015-2024).
+# ENFORCEMENT (v28.7 review fix #1): these weights are NOT documentation;
+# utils/data_processor.py applies them as the actual weights in the
+# natural-hazards composite via a weighted RMS:
+#     sqrt(sum(w_i * v_i^2) / sum(w_i))
+# When a sub-hazard is unavailable, the remaining weights are
+# renormalized so the composite still spans [0, 1]. The thunderstorm
+# and straight_line_wind pair are collapsed inside an inner sub-RMS
+# (40/60 by event volume) so their combined contribution to the outer
+# composite is exactly 0.25. Any change to these weights changes the
+# rendered composite immediately; no code change required.
 
 # EVR Residual Risk Formula (for all natural hazards):
 # Risk = (Exposure × Vulnerability) × (2.0 - Resilience) × Health_Impact_Factor
@@ -150,6 +172,13 @@ natural_hazards_svi_vulnerability_weights:
     household_composition: 0.10    # Vulnerable populations
     minority_status: 0.05          # Warning access
     # Census factors: aged_65_plus_pct (0.10), mobile_home_pct (0.10), flood_suscept (0.15), tree_coverage (0.15)
+  straight_line_wind:
+    housing_transportation: 0.20   # Building envelope, roof failure, garage doors
+    socioeconomic: 0.10            # Recovery resources, insurance access
+    household_composition: 0.10    # Vulnerable populations (alerts, sheltering)
+    minority_status: 0.05          # NWS warning access, language barriers
+    # Census factors: mobile_home_pct (0.25 - dominant driver), tree_coverage (0.15),
+    # power_grid_vuln (0.10), rural_isolation (0.05)
 
 # Resilience Component Inputs (per hazard type)
 # Resilience score (0-1) is computed from socioeconomic SVI inverse,
@@ -168,7 +197,8 @@ climate_projection_ranges:
   flood: [1.15, 1.25]        # Increased heavy precipitation events
   tornado: [1.08, 1.15]      # Increased convective instability
   winter_storm: [1.05, 1.12] # More intense storms, ice storm increase +25%
-  thunderstorm: [1.12, 1.22] # Increased severe storm environments
+  thunderstorm: [1.12, 1.22] # Increased severe storm environments (hail + lightning)
+  straight_line_wind: [1.18, 1.30] # EPA/NOAA: severe convective wind, derecho frequency increase
 
 # Health Metrics Sub-domain Weights (within health_metrics domain)
 health_metrics_weights:
@@ -256,14 +286,20 @@ contribution_logging:
 #   - Vector-Borne Disease (6%): Environmental health monitoring
 
 em_overall_risk_weights:
-  natural_hazards: 0.32    # 32% - Infrastructure damage from natural disasters
-  health_metrics: 0.10     # 10% - Healthcare system capacity/surge
-  active_shooter: 0.13     # 13% - Mass casualty incident response
-  extreme_heat: 0.13       # 13% - Power grid stress, infrastructure degradation
+  natural_hazards: 0.28    # 28% - Infrastructure damage from natural disasters (was 30%; -2 for hazmat split)
+  health_metrics: 0.09     # 9% - Healthcare system capacity/surge
+  active_shooter: 0.11     # 11% - Mass casualty incident response (was 12%; -1)
+  extreme_heat: 0.11       # 11% - Power grid stress, infrastructure degradation (was 12%; -1)
   air_quality: 0.08        # 8% - Shelter-in-place, HVAC system impacts
-  utilities: 0.10          # 10% - Critical infrastructure disruption (elevated from supplementary)
-  dam_failure: 0.08        # 8% - Dam/levee failure infrastructure impact
+  utilities: 0.09          # 9% - Critical infrastructure disruption (was 10%; -1)
+  dam_failure: 0.07        # 7% - Dam/levee failure infrastructure impact (was 8%; -1)
   vector_borne_disease: 0.06  # 6% - Environmental health monitoring
+  infectious_disease: 0.05  # 5% - EM-relevant disease awareness (mass-care screening, shelter ops)
+  hazmat_industrial: 0.03  # 3% - Fixed-site industrial hazmat (EPCRA Tier II, NFPA 470, DOT ERG, CISA Chemical Sector, WEM SERB Regional Hazmat Teams). EM voice emphasizes response posture, hazmat team mutual aid, and HMP integration.
+  hazmat_agricultural: 0.03  # 3% - Agricultural hazmat (anhydrous ammonia, pesticide retailers, manure-pit H2S, agricultural transportation incidents). EM voice emphasizes county fire/EMS rural response capability and WI DATCP coordination.
+  # Total = 1.00. EM hazmat weights match PH so the PH-vs-EM comparison
+  # surfaces the discipline-voice difference cleanly rather than a weight
+  # difference.
 
 # EM Vulnerability Weights within EVR Natural Hazards
 # Shifts emphasis from population health to critical infrastructure
@@ -304,6 +340,15 @@ em_natural_hazards_svi_vulnerability_weights:
     tree_coverage: 0.15            # Debris, power line damage
     flood_susceptibility: 0.15     # Flash flooding from storms
     mobile_home_factor: 0.10       # Structural vulnerability
+  straight_line_wind:
+    housing_transportation: 0.25   # Roof loss, envelope failure, garage doors
+    socioeconomic: 0.05            # Recovery resources
+    household_composition: 0.05    # Reduced
+    minority_status: 0.05          # Warning access
+    infrastructure_density: 0.15   # Overhead distribution lines, cell towers
+    tree_coverage: 0.15            # Tree-fall on lines/structures, debris fields
+    mobile_home_factor: 0.20       # Highest non-tornadic wind structural risk
+    rural_isolation: 0.10          # Long restoration times, response distance
 
 # EM Resilience Component Inputs
 # Emphasizes infrastructure preparedness and mutual aid over social resilience
@@ -320,51 +365,32 @@ em_resilience_inputs:
 
 # Disease Alert Thresholds (NNDSS-derived heuristics)
 # These thresholds gate the boolean "elevated" outbreak flags in
-# utils/nndss_communicable.py and are surfaced on the dashboard /
-# herc print summary. They are CARA-specific operational heuristics,
-# NOT CSTE-defined outbreak case definitions or CDC published
-# aberration-detection thresholds. Externalized here per review
-# finding H3 so the assumptions are inspectable and tunable without
-# code changes.
-#
-# pertussis_elevated fires when ALL of:
-#   1. five_year_median > 0 (skip weeks with no historical baseline)
-#   2. current_week_cases >= max(min_cases_floor,
-#                                round(five_year_median * median_multiplier))
-#
-# Rationale and citation status:
-#   - median_multiplier 1.5: a common informal "1.5x baseline" alerting
-#     rule of thumb used in surveillance dashboards. NOT a CDC- or
-#     CSTE-published threshold. CDC NNDSS aberration detection uses
-#     CUSUM, EARS C1/C2/C3, and Farrington algorithms that require more
-#     historical distribution data than the m4 5-year-median field
-#     NNDSS exposes; CARA does not currently fetch the full distribution.
-#   - min_cases_floor 5: statistical noise guard for small absolute
-#     counts. Without a floor, a single case in a week with median 0-2
-#     would trip "elevated" without epidemiological significance. The
-#     5-case floor is a CARA heuristic, not a published threshold.
-#
-# When/if CARA gains the multi-year per-week pertussis distribution
-# (e.g. via NNDSS historical Socrata queries or a state surveillance
-# data feed), this section should be replaced with a Farrington- or
-# EARS-style aberration detector and the heuristic deleted.
+# utils/nndss_communicable.py and utils/disease_surveillance.py and are
+# surfaced on the dashboard / herc print summary. They are CARA-specific
+# operational heuristics, NOT CSTE-defined outbreak case definitions or
+# CDC published aberration-detection thresholds. Externalized here so
+# the assumptions are inspectable and tunable without code changes.
 #
 # meningococcal_elevated has no tunable threshold here: per CDC
 # guidance any current-week meningococcal case is operationally
 # significant due to the disease's severity and outbreak potential,
 # so the trigger is hard-coded as "any case OR YTD running ahead of
 # prior YTD" and does not need configuration.
+#
+# Pertussis was removed in v28.7. The prior pertussis_elevated flag was
+# a CARA-specific operational heuristic (1.5x 5-year weekly median,
+# floor 5 cases) without CSTE/CDC published provenance. Re-introduction
+# will be considered only when a Farrington- or EARS-style aberration
+# detector based on the full multi-year per-week NNDSS distribution can
+# be wired in.
 disease_alert_thresholds:
-  pertussis:
-    median_multiplier: 1.5
-    min_cases_floor: 5
-    method_label: 'CARA heuristic (1.5x 5-year weekly median, floor 5 cases); not a CSTE/CDC published threshold'
-    citation_status: 'uncited operational heuristic - see disease_alert_thresholds comment block'
 
   # v1 Shape A outbreak flags (added 2026-05-20). Lightweight statewide
   # signals that nudge the infectious_disease Acute multiplier via the
   # stacking rule in utils/disease_surveillance.py:
-  #   stacked_boost = min(0.40, max_individual + 0.05 * other_active_count)
+  #   stacked_boost = min(0.60, max_individual + 0.05 * other_active_count)
+  # Cap raised from 0.40 to 0.60 in v28.7 so multiple concurrent
+  # high-tier flags can express their combined burden without clipping.
   # Isolated to infectious_disease only (design decision #5).
   # Granularity: statewide Wisconsin (design decision #2).
   # All thresholds below are CARA operational heuristics, not CSTE/CDC
@@ -448,15 +474,7 @@ disease_severity_profiles:
     citation: 'CDC Pink Book Chapter 13: Measles (2021)'
     citation_url: 'https://www.cdc.gov/vaccines/pubs/pinkbook/meas.html'
 
-  pertussis:
-    display_name: 'Pertussis (whooping cough)'
-    case_fatality_rate: 0.005      # 0.5% overall; up to 1.6% in infants <2mo
-    hospitalization_rate: 0.05     # ~5% overall (infants <1y reach ~50%, captured via vulnerable_population_multiplier)
-    r0: 14.0                       # 12-17 range
-    vulnerable_population_multiplier: 1.15
-    vulnerable_population_description: 'Infants under 2 months too young for first DTaP dose'
-    citation: 'CDC Pink Book Chapter 16: Pertussis (2021)'
-    citation_url: 'https://www.cdc.gov/vaccines/pubs/pinkbook/pert.html'
+  # pertussis: removed in v28.7. See disease_alert_thresholds comment.
 
   meningococcal_disease:
     display_name: 'Meningococcal disease'

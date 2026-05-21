@@ -1,3 +1,4 @@
+{% import "dashboard/_collapsible.html" as col %}
         <!-- Cybersecurity Risk -->
         <div class="col-md-6 compact-tile">
             <div class="card mb-4">
@@ -35,6 +36,7 @@
                         {% endif %}
                     </div>
                     
+                    {% call col.section('cyber-details', 'Risk Components & Metrics') %}
                     <!-- Risk Component Breakdown -->
                     {% if risk_data.cyber_components is defined %}
                         <div class="mb-3">
@@ -123,6 +125,7 @@
                             Ransomware, phishing, and supply chain attacks continue to be primary threats to healthcare system infrastructure. Data shows healthcare is increasingly targeted.
                         </small>
                     </div>
+                    {% endcall %}
                     <div class="mt-3">
                         <small class="text-muted">
                             Sources: Census ACS, CDC SVI, WI DOR county budget data (proxy indicators)

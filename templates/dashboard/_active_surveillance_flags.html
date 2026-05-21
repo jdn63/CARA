@@ -9,15 +9,16 @@
    Granularity: all flags are statewide Wisconsin signals per design
    decision (#2). Each row shows a "WI statewide" badge so users do not
    mistake the value for county-specific surveillance.
+
+   v28.9: wrapped in a click-to-expand collapsible (collapsed by default)
+   so more risk-type scores fit on screen.
 #}
+{% import "dashboard/_collapsible.html" as col %}
 {% set vra = risk_data.health_metrics.vaccination_risk_assessment if risk_data.health_metrics is mapping else None %}
 {% set oc = vra.outbreak_conditions if vra is mapping and vra.outbreak_conditions is mapping else None %}
 {% if oc and (oc.h5n1 is mapping or oc.mpox is mapping or oc.enteric is mapping or oc.legionella is mapping) %}
-<div class="mb-3">
-    <h6 class="text-muted mb-2">Active Surveillance Flags
-        <span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;"
-              title="Lightweight statewide outbreak flags that contribute to the infectious-disease Acute signal. Isolated to infectious-disease only.">v1 prototype</span>
-    </h6>
+{% set surveillance_badge %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Lightweight statewide outbreak flags that contribute to the infectious-disease Acute signal. Isolated to infectious-disease only.">v1 prototype</span>{% endset %}
+{% call col.section('infectious-surveillance-flags', 'Active Surveillance Flags', badge_html=surveillance_badge, open=false) %}
     <div class="table-responsive">
         <table class="table table-sm align-middle">
             <thead>
@@ -120,5 +121,5 @@
         Isolated to infectious disease; no cross-domain effect.
     </div>
     {% endif %}
-</div>
+{% endcall %}
 {% endif %}

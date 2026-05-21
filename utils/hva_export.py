@@ -113,13 +113,22 @@ def generate_kaiser_hva_export(risk_data: dict) -> str:
                 'preparedness': _score_to_preparedness(_nh('winter_storm'))
             },
             {
-                'name': 'Thunderstorm',
+                'name': 'Hail & Lightning',
                 'cara_score': _nh('thunderstorm'),
                 'probability': _score_to_hva_scale(_nh('thunderstorm')),
                 'human_impact': 2,
                 'property_impact': 2,
                 'business_impact': 2,
                 'preparedness': _score_to_preparedness(_nh('thunderstorm'))
+            },
+            {
+                'name': 'Straight-Line Wind (incl. Derecho)',
+                'cara_score': _nh('straight_line_wind'),
+                'probability': _score_to_hva_scale(_nh('straight_line_wind')),
+                'human_impact': 3,
+                'property_impact': 4,
+                'business_impact': 3,
+                'preparedness': _score_to_preparedness(_nh('straight_line_wind'))
             },
             {
                 'name': 'Infectious Disease Outbreak',

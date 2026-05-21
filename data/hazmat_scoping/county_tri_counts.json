@@ -1,0 +1,14 @@
+{
+  "Milwaukee": {
+    "tri_facilities": 336,
+    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Milwaukee/COUNT"
+  },
+  "Crawford": {
+    "tri_facilities": null,
+    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Crawford/COUNT"
+  },
+  "Dodge": {
+    "tri_facilities": 49,
+    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Dodge/COUNT"
+  }
+}

@@ -1,0 +1,83 @@
+thunderstorm:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 1: Community Preparedness"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 10: Medical Surge"
+        - "Capability 7: Mass Care"
+    em:
+      label: "FEMA Hazard Mitigation Plan elements engaged"
+      items:
+        - "Risk Assessment (44 CFR 201.6(c)(2)): severe thunderstorm and lightning profile"
+        - "Mitigation Strategy (44 CFR 201.6(c)(3)): utility, drainage, warning systems"
+        - "Plan Maintenance (44 CFR 201.6(c)(4)): monitoring, evaluation, update cycle"
+        - "Coordination of Local Mitigation Planning: schools, outdoor venues, utilities"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Refresh public-health messaging on lightning safety, power-outage carbon-monoxide risk, food-safety after outages, and post-flood well-water sampling"
+          source_id: cdc_lightning
+        - text: "Map medically vulnerable populations dependent on powered medical equipment for prioritized outreach during multi-day outage scenarios"
+          source_id: cdc_phep
+        - text: "Verify syndromic-surveillance signals for storm-related injuries, carbon-monoxide exposures, and waterborne illness are operational"
+          source_id: cdc_nssp
+        - text: "Confirm clinical Health Alert Network distribution for severe-weather guidance, generator-CO advisories, and food/water safety messaging"
+          source_id: cdc_han
+
+      this_year:
+        - text: "Train environmental-health staff on post-storm food-safety inspections, private-well sampling, and vector-control assessment after standing-water events"
+          source_id: cdc_floods_health
+        - text: "Establish memoranda of understanding with home-healthcare and oxygen providers for wellness checks during prolonged outages"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate lightning-injury and storm-injury reporting into the routine epidemiology cadence and clinician outreach"
+          source_id: cdc_lightning
+        - text: "Coordinate with Wisconsin DHS preparedness staff on regional mutual-aid pathways for environmental-health and epidemiology surge"
+          source_id: wi_dhs_preparedness
+
+      multi_year:
+        - text: "Build a year-round community health worker program with seasonal surge for outage-related wellness checks in high-risk neighborhoods"
+          source_id: cdc_phep
+        - text: "Develop a longitudinal monitoring approach for cumulative severe-weather morbidity (lightning, CO, heat-during-outage) with healthcare-coalition partners"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate severe-weather objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+        - text: "Expand multilingual storm-season communications and partner with community-based organizations on year-round preparedness education"
+          source_id: cdc_phep
+
+    em:
+
+      pre_season:
+        - text: "Confirm the local hazard mitigation plan's severe-thunderstorm profile reflects current climatology and is within the 5-year update cycle"
+          source_id: fema_hmp_guide
+        - text: "Pre-position public messaging templates aligned with NWS severe-thunderstorm warning, destructive-criteria, and flash-flood warning tiers"
+          source_id: noaa_wrn
+        - text: "Verify warning-dissemination redundancy (outdoor sirens, WEA, NOAA Weather Radio, IPAWS) and document any coverage gaps"
+          source_id: noaa_wrn
+        - text: "Confirm coordination roles with the local health department, utility, school districts, and WEM regional staff before severe-weather season"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Update the county risk assessment to include outdoor-event exposure, manufactured-home parks, and critical facilities with outage vulnerability"
+          source_id: fema_hmp_guide
+        - text: "Identify utility-resilience priorities (vegetation management, undergrounding, distribution hardening) with the local utility for the next HMA cycle"
+          source_id: fema_extreme_temps_sltt
+        - text: "Adopt or renew the StormReady designation and document outdoor-venue lightning-safety protocols for parks, athletic facilities, and large gatherings"
+          source_id: nws_stormready
+        - text: "Integrate severe-weather mitigation measures into upcoming multi-hazard projects so they remain HMA-eligible under the current Program and Policy Guide"
+          source_id: fema_hma_guide_v2_1
+
+      multi_year:
+        - text: "Develop a multi-year drainage and stormwater-management strategy targeting localized flash-flood hotspots identified in repetitive-loss data"
+          source_id: fema_floodplain
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on debris management and shared mutual-aid expectations"
+          source_id: wem_resources
+        - text: "Establish a long-term retrofit pathway for critical facilities (EOCs, shelters, water-and-wastewater) bundling backup-power and surge-protection upgrades"
+          source_id: fema_hmp_guide
+        - text: "Expand Weather-Ready Nation Ambassador partnerships across schools, hospitals, employers, and outdoor-venue operators"
+          source_id: noaa_wrn

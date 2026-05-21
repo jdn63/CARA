@@ -12,6 +12,8 @@ from datetime import datetime
 from flask import Blueprint, render_template, send_from_directory, request, redirect, url_for, flash
 from utils.data_processor import get_wi_jurisdictions
 from utils.herc_data import get_all_herc_regions
+from utils.wem_data import get_all_wem_regions
+from utils.em_counties import get_wi_counties_for_em
 from utils.api_responses import api_not_found
 from core import db
 
@@ -52,15 +54,35 @@ def index():
         logger.info("Fetching HERC regions for index page")
         herc_regions = get_all_herc_regions()
         logger.info(f"Loaded {len(herc_regions)} HERC regions")
-        
-        return render_template('index.html', 
+
+        logger.info("Fetching WEM regions for index page")
+        try:
+            wem_regions = get_all_wem_regions()
+            logger.info(f"Loaded {len(wem_regions)} WEM regions")
+        except Exception as wem_err:
+            logger.warning(f"Failed to load WEM regions: {wem_err}")
+            wem_regions = []
+
+        # EM county list (72 counties). Always provided; template only
+        # uses it when active_discipline == 'em'.
+        try:
+            em_counties = get_wi_counties_for_em()
+            logger.info(f"Loaded {len(em_counties)} Wisconsin counties for EM picker")
+        except Exception as em_err:
+            logger.warning(f"Failed to load EM counties: {em_err}")
+            em_counties = []
+
+        return render_template('index.html',
                               jurisdictions=sorted_jurisdictions,
-                              herc_regions=herc_regions)
+                              herc_regions=herc_regions,
+                              wem_regions=wem_regions,
+                              em_counties=em_counties)
     except Exception as e:
         logger.error(f"Error fetching jurisdictions: {str(e)}")
         return render_template('index.html', 
                               jurisdictions=[],
                               herc_regions=[], 
+                              em_counties=[],
                               error="Failed to load jurisdictions. Please try again later.")
 
 

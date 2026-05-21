@@ -59,19 +59,19 @@
                                             {% set max_v = curve|max %}
                                             {% set _maxv = max_v if max_v > 0 else 1 %}
                                             <svg viewBox="0 0 132 32" width="132" height="32" role="img"
-                                                 aria-label="12-month seasonal curve for {{ hazard_type.replace('_', ' ') }}, currently month {{ cur_m }}.">
+                                                 aria-label="12-month seasonal curve for {{ hazard_type.replace('_', ' ') }}: baseline {{ '%.2f'|format(baseline_val) }}, current month {{ viz.get('current_month_label', cur_m) }} value {{ '%.2f'|format(curve[cur_m - 1]) }}, composite {{ '%.2f'|format(composite) }}.">
                                                 {# baseline reference line #}
                                                 {% set base_y = 28 - (baseline_val / 1.0) * 24 %}
                                                 <line x1="6" x2="126" y1="{{ '%.1f'|format(base_y) }}" y2="{{ '%.1f'|format(base_y) }}"
-                                                      stroke="#6c757d" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+                                                      stroke="#6c757d" stroke-width="1" stroke-dasharray="2,2" opacity="0.6" aria-hidden="true"/>
                                                 {# polyline #}
-                                                <polyline fill="none" stroke="#0d7377" stroke-width="1.8"
+                                                <polyline fill="none" stroke="#0d7377" stroke-width="1.8" aria-hidden="true"
                                                           points="{% for v in curve %}{{ '%.1f'|format(6 + loop.index0 * (120/11)) }},{{ '%.1f'|format(28 - (v / _maxv) * 24) }}{% if not loop.last %} {% endif %}{% endfor %}"/>
                                                 {# month tick marks #}
                                                 {% for v in curve %}
                                                 <circle cx="{{ '%.1f'|format(6 + loop.index0 * (120/11)) }}"
                                                         cy="{{ '%.1f'|format(28 - (v / _maxv) * 24) }}"
-                                                        r="1.2" fill="#0d7377" opacity="0.5"/>
+                                                        r="1.2" fill="#0d7377" opacity="0.5" aria-hidden="true"/>
                                                 {% endfor %}
                                                 {# current-month dot, sized by composite score #}
                                                 {% set dot_v = curve[cur_m - 1] %}
@@ -79,7 +79,7 @@
                                                 {% set dot_y = 28 - (dot_v / _maxv) * 24 %}
                                                 {% set dot_r = 2.8 + composite * 3.0 %}
                                                 <circle cx="{{ '%.1f'|format(dot_x) }}" cy="{{ '%.1f'|format(dot_y) }}"
-                                                        r="{{ '%.1f'|format(dot_r) }}" fill="#1f4788" stroke="#ffffff" stroke-width="1.2"/>
+                                                        r="{{ '%.1f'|format(dot_r) }}" fill="#1f4788" stroke="#ffffff" stroke-width="1.2" aria-hidden="true"/>
                                             </svg>
                                             <div class="small text-muted" style="font-size: 0.72rem;">
                                                 Now: {{ viz.get('current_month_label', '') }}

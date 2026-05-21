@@ -3,9 +3,10 @@
     <div class="container-fluid">
         <!-- Brand -->
         <a class="navbar-brand d-flex align-items-center" href="/">
-            <img src="{{ url_for('static', filename='images/CARAacronymonly.png') }}" 
-                 alt="CARA Logo" 
-                 height="40" 
+            <img src="{{ url_for('static', filename='images/CARAacronymonly.png') }}"
+                 alt=""
+                 aria-hidden="true"
+                 height="40"
                  class="me-2">
             <span class="fw-bold">CARA</span>
         </a>
@@ -55,6 +56,28 @@
                 </a>
             </div>
             -->
+
+            <!-- Discipline toggle: Public Health (default) vs Emergency Management.
+                 Persists in session via utils/discipline.get_active_discipline().
+                 Shared URLs carry ?discipline=em to pin the choice. -->
+            <div class="navbar-nav me-3" role="group" aria-label="Assessment discipline toggle">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ request.path }}?discipline=public_health"
+                       class="btn btn-{{ 'light' if active_discipline == 'public_health' else 'outline-light' }}"
+                       aria-current="{{ 'page' if active_discipline == 'public_health' else 'false' }}"
+                       aria-pressed="{{ 'true' if active_discipline == 'public_health' else 'false' }}"
+                       title="Public Health weights (default)">
+                        Public Health
+                    </a>
+                    <a href="{{ request.path }}?discipline=em"
+                       class="btn btn-{{ 'warning' if active_discipline == 'em' else 'outline-light' }}"
+                       aria-current="{{ 'page' if active_discipline == 'em' else 'false' }}"
+                       aria-pressed="{{ 'true' if active_discipline == 'em' else 'false' }}"
+                       title="Emergency Management weights (infrastructure-focused)">
+                        Emergency Management
+                    </a>
+                </div>
+            </div>
 
             <!-- Current jurisdiction display -->
             <div class="navbar-nav">

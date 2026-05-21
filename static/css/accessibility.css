@@ -280,7 +280,7 @@ a:hover {
 }
 
 .text-on-warning {
-    color: var(--text-primary) !important; /* Dark text on warning background */
+    color: #000000 !important; /* v28.9 WCAG: pure black on #ffc107 = 11.7:1 AAA (var(--text-primary) = #2c3e50 was 4.1:1, fails 4.5:1) */
 }
 
 .text-on-danger {
@@ -508,12 +508,27 @@ a:hover {
     color: var(--text-color) !important;
 }
 
+/* v28.9 WCAG 1.4.3 fix: Bootstrap's default `.text-muted` (#6c757d on
+   white = 4.47:1) fails the 4.5:1 normal-text minimum by a rounding
+   hair. Override to #595f66 (5.0:1) so freshness ages, source
+   captions, and small annotations across the dashboard pass. The
+   high-contrast mode already overrides this in the
+   [data-high-contrast="true"] block above. */
+.text-muted,
+.text-secondary {
+    color: #595f66 !important;
+}
+
 /* Comprehensive Focus-Visible Styles for Keyboard Navigation */
 
-/* Remove default focus outline */
-*:focus {
-    outline: none;
-}
+/* v28.9 WCAG 2.4.7 fix: the previous global `*:focus { outline: none }`
+   defeated keyboard navigation in browsers that don't support
+   :focus-visible (older Safari/iOS versions, some embedded WebViews
+   used in county GIS workstations). The :focus-visible rule below
+   still scopes the visible ring to keyboard users; mouse users keep
+   the browser default suppression via Bootstrap's :focus-visible
+   button styles. Do not re-add the global `*:focus { outline: none }`
+   rule. */
 
 /* Modern focus-visible for keyboard users only */
 *:focus-visible {

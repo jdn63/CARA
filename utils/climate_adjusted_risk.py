@@ -194,9 +194,48 @@ class ClimateAdjustedHeatRisk:
         continuous per-county imperviousness or population-density signal
         becomes available it should be folded in here as a smooth term.
         """
-        from utils.wisconsin_climate_data import get_wisconsin_heat_days
+        # v28.9: consume CDC EPHT (measure 421, days >=90F per county
+        # per year) as the canonical observed source for annual heat
+        # days, with a cascading fallback hierarchy. Prior to v28.9 this
+        # site silently used the statewide constant 12 from
+        # wisconsin_climate_data even after v28.8 wired EPHT into the
+        # dashboard provenance caption; the score therefore did not
+        # reflect EPHT. This block fixes that.
+        #
+        # Source hierarchy:
+        #   1. CDC EPHT measure 421 cached per-county (annual cadence).
+        #   2. NCEI Climate-at-a-Glance cached heuristic (cache-only on
+        #      the request path per the cache-only invariant).
+        #   3. Legacy statewide constant (wisconsin_climate_data) as a
+        #      deeply-buried last resort so a cold cache never crashes
+        #      the dashboard.
+        #
+        # Threshold note: EPHT 421 counts days at or above 90F; the
+        # NCEI heuristic targeted 100F. Both feed the same [0, 20]
+        # normalization band because the [0, 0.95] range was calibrated
+        # against typical EPHT 90F observed counts in Wisconsin
+        # (roughly 5 northern to 20 southern). The 100F heuristic
+        # values fall inside the same band by construction. This is
+        # documented in templates/methodology.html and ARCHITECTURE.md.
+        heat_days_info = None
+        try:
+            from utils.extreme_heat_metrics import heat_metrics as _heat_metrics
+            heat_days_info = _heat_metrics._get_annual_heat_days_with_provenance(county_name)
+        except Exception as exc:
+            logger.warning(
+                "EPHT-aware heat-days resolution failed for %s: %s: %s; "
+                "falling back to statewide constant",
+                county_name, type(exc).__name__, exc,
+            )
 
-        annual_heat_days = get_wisconsin_heat_days(county_name) or 12
+        if heat_days_info and heat_days_info.get('value') is not None:
+            annual_heat_days = heat_days_info['value']
+            heat_days_source = heat_days_info.get('source', 'unknown')
+        else:
+            from utils.wisconsin_climate_data import get_wisconsin_heat_days
+            annual_heat_days = get_wisconsin_heat_days(county_name) or 12
+            heat_days_source = 'statewide constant (last-resort fallback)'
+
         # Wisconsin observed annual heat-day range: roughly 5 (far north)
         # to 20 (southern urban). Normalize to [0, 0.95].
         base_exposure = max(0.0, min(0.95, annual_heat_days / 20.0))
@@ -219,6 +258,7 @@ class ClimateAdjustedHeatRisk:
             'horizon': horizon,
             'base_exposure': base_exposure,
             'annual_heat_days': annual_heat_days,
+            'heat_days_source': heat_days_source,
             'frequency_multiplier_applied': frequency_multiplier,
             'climate_adjusted': climate_adjusted_exposure,
             'heat_island_factor': 1.0,
@@ -558,6 +598,12 @@ def calculate_enhanced_extreme_heat_risk(county_name: str, jurisdiction_id: str 
             'heat_advisories': real_time_metrics.get('heat_advisories'),
             'elderly_percentage': real_time_metrics.get('elderly_percentage'),
             'ed_visits': real_time_metrics.get('ed_visits'),
+            # v28.8: thread CDC EPHT provenance through the metrics
+            # dict so the dashboard heat tile can label the heat-days
+            # row with the actual observed source year instead of a
+            # generic "NOAA" caption.
+            'heat_days_source': real_time_metrics.get('heat_days_source'),
+            'heat_days_year': real_time_metrics.get('heat_days_year'),
             'real_time_data_sources': real_time_metrics.get('data_sources', {}),
             'last_updated': real_time_metrics.get('last_updated')
         })

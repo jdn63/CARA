@@ -1,0 +1,85 @@
+cybersecurity:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 6: Information Sharing"
+        - "Capability 3: Emergency Operations Coordination"
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 14: Responder Safety and Health"
+        - "Capability 1: Community Preparedness"
+    em:
+      label: "CISA Cross-Sector Cybersecurity Performance Goals engaged"
+      items:
+        - "Identify: Asset Inventory and Organizational Cybersecurity Leadership"
+        - "Protect: Multifactor Authentication, Credential Hygiene, Network Segmentation"
+        - "Detect: Log Collection, Detect and Respond to Relevant Threats"
+        - "Respond: Incident Response Planning and Reporting"
+        - "Recover: Recovery Plan and System Back Ups"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Complete and maintain a current asset inventory of systems, devices, and applications with access to protected health information or public-health surveillance data"
+          source_id: hhs_405d
+        - text: "Confirm offline backup procedures for surveillance and reporting systems (NNDSS feeds, NSSP submitters, electronic lab reporting, electronic death records) are tested and current"
+          source_id: cdc_nssp
+        - text: "Verify the agency incident-response plan names the cybersecurity lead, CISA reporting path, HHS notification, and law-enforcement coordination contacts"
+          source_id: cisa_phi_sector
+        - text: "Confirm staff are briefed on cybersecurity incident-reporting procedures and that role-based training is current"
+          source_id: hhs_405d
+
+      this_year:
+        - text: "Implement and enforce multifactor authentication on all email, remote-access, and privileged accounts in line with HHS 405(d) HICP and CISA CPGs"
+          source_id: cisa_cpg
+        - text: "Adopt the NIST Cybersecurity Framework 2.0 as the agency reference framework and document current-state and target profiles"
+          source_id: nist_csf_2
+        - text: "Develop manual reporting and case-investigation continuity procedures for critical surveillance functions during electronic-system outages"
+          source_id: cdc_phep
+        - text: "Establish quarterly cybersecurity-awareness training including phishing simulation, social-engineering awareness, and reporting procedures"
+          source_id: hhs_405d
+
+      multi_year:
+        - text: "Build a multi-year HIPAA Security Rule compliance program incorporating current regulatory updates, business-associate inventory, and risk-analysis cadence"
+          source_id: hhs_ocr_hipaa_security
+        - text: "Develop secure data-exchange infrastructure with healthcare coalition partners, laboratories, and state and tribal health agencies"
+          source_id: cisa_phi_sector
+        - text: "Establish formal cybersecurity mutual-aid relationships with regional health departments, state agencies, and CISA regional staff"
+          source_id: cisa_phi_sector
+        - text: "Integrate cybersecurity preparedness objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation, with explicit alignment to PHEP Capability 6 (Information Sharing)"
+          source_id: naccho_pphr
+
+    em:
+
+      pre_season:
+        - text: "Adopt and document the CISA Cross-Sector Cybersecurity Performance Goals as the baseline for county systems and confirm current standing against each goal"
+          source_id: cisa_cpg
+        - text: "Maintain a current asset inventory for county emergency-management, dispatch, and EOC systems and confirm shared visibility with IT and the cybersecurity lead"
+          source_id: cisa_cpg
+        - text: "Verify that the cyber annex of the county emergency-operations plan reflects CISA's standing Shields Up posture and current threat-environment guidance"
+          source_id: cisa_shields_up
+        - text: "Confirm coordination roles with the county IT lead, CISA regional staff, the Wisconsin Statewide Information Center (Fusion Center), and WEM regional staff"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Implement multifactor authentication and credential-hygiene practices for all county email, remote-access, and privileged accounts"
+          source_id: cisa_cpg
+        - text: "Adopt the NIST Cybersecurity Framework 2.0 as the county reference framework and complete a Govern/Identify/Protect/Detect/Respond/Recover gap analysis"
+          source_id: nist_csf_2
+        - text: "Conduct or co-sponsor a county tabletop exercise of a cyber-incident scenario disrupting dispatch, EOC, or public-health surveillance with IT, EM, public health, and CISA partners"
+          source_id: cisa_phi_sector
+        - text: "Establish vulnerability-management cadence including monthly scanning, prioritized patching, and reporting to county leadership against CISA CPG metrics"
+          source_id: cisa_cpg
+
+      multi_year:
+        - text: "Develop a multi-year network-segmentation and zero-trust architecture strategy for county public-safety and public-health informatics systems"
+          source_id: nist_csf_2
+        - text: "Pursue cross-jurisdictional cyber mutual-aid agreements with neighboring counties and the WEM region for incident-response surge"
+          source_id: wem_resources
+        - text: "Establish managed-detection-and-response or shared SOC services for continuous monitoring, log retention, and threat-hunting capability"
+          source_id: cisa_cpg
+        - text: "Build standing participation in CISA, MS-ISAC, and Health-ISAC information-sharing channels and integrate threat intelligence into county planning cycles"
+          source_id: cisa_phi_sector

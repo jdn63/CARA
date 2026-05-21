@@ -1,0 +1,125 @@
+{% import "dashboard/_collapsible.html" as col %}
+        <!-- Straight-Line Wind (incl. Derecho) -->
+        <div class="col-md-3 compact-tile">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Straight-Line Wind Risk Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Risk Score -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between">
+                            <h6>Overall Risk Score:
+{% if risk_data.straight_line_wind_components is defined %}
+{{ show_work_btn('slw-info', 'Straight-Line Wind Risk Calculation',
+'<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
+~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ '</div>'
+~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.straight_line_wind_risk) ~ '</div>'
+~ '<ul class="component-list">'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' (NOAA Storm Events wind bucket &times; ' ~ "%.2f"|format(risk_data.straight_line_wind_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ' (mobile-home stock dominant + tree-fall + SVI)</li>'
+~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ' (inverse SVI socioeconomic + housing-transportation)</li>'
+~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
+~ '</ul>'
+~ '<div class="data-source">Sources: NOAA Storm Events (Thunderstorm Wind / Strong Wind / High Wind / Funnel Cloud), NOAA SPC derecho climatology, FEMA NRI, NOAA/WICCI projections, CDC SVI, U.S. Census (mobile-home stock)</div>'
+) }}
+{% endif %}
+</h6>
+                            <h6 class="fw-bold text-{{ 'danger' if risk_data.straight_line_wind_risk > 0.6 else 'warning' if risk_data.straight_line_wind_risk > 0.3 else 'success' }}">
+                                {{ "%.2f"|format(risk_data.straight_line_wind_risk) }}
+                            </h6>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-{{ 'danger' if risk_data.straight_line_wind_risk > 0.6 else 'warning' if risk_data.straight_line_wind_risk > 0.3 else 'success' }}"
+                                 role="progressbar"
+                                 style="width: {{ risk_data.straight_line_wind_risk * 100 }}%"
+                                 aria-valuenow="{{ risk_data.straight_line_wind_risk * 100 }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    {% call col.section('slw-details', 'Risk Components & Metrics') %}
+                    <!-- Risk Components -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Risk Components</h6>
+                        <div class="row g-2">
+                            {% if risk_data.straight_line_wind_components is defined %}
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.straight_line_wind_components.exposure) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ risk_data.straight_line_wind_components.exposure * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.straight_line_wind_components.vulnerability) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ risk_data.straight_line_wind_components.vulnerability * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <span class="d-block badge bg-success mb-1">Resilience</span>
+                                        <span class="h5">{{ "%.2f"|format(risk_data.straight_line_wind_components.resilience) }}</span>
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-success" style="width: {{ risk_data.straight_line_wind_components.resilience * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics Table -->
+                    <h6 class="text-muted mb-2">Key Metrics</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_data.straight_line_wind_metrics is defined %}
+                                {% set slwm = risk_data.straight_line_wind_metrics %}
+                                <tr>
+                                    <td>Wind Events (NOAA)</td>
+                                    <td>{% if slwm.historical_wind_events is not none %}{{ slwm.historical_wind_events }}{% else %}Pending{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td>Property Damage</td>
+                                    <td>{% if slwm.wind_property_damage is not none %}{{ slwm.wind_property_damage }}{% else %}Pending{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td>Injuries / Fatalities</td>
+                                    <td>{{ slwm.wind_injuries|default(0, true) }} / {{ slwm.wind_fatalities|default(0, true) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Derecho Corridor Position</td>
+                                    <td><small>{{ slwm.derecho_corridor_position|default('N/A', true) }}</small></td>
+                                </tr>
+                                {% if slwm.data_period is not none %}
+                                <tr>
+                                    <td colspan="2"><small class="text-muted">Data period: {{ slwm.data_period }}</small></td>
+                                </tr>
+                                {% endif %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-muted">Data loading...</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endcall %}
+
+                </div>
+            </div>
+        </div>

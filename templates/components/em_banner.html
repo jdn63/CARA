@@ -1,0 +1,24 @@
+{% if active_discipline == 'em' %}
+{# Per-session dismissable banner for Emergency Management mode.
+   Surfaces EM-weighted risk scores. Dismissal is per-tab via
+   sessionStorage so a fresh browser session sees the banner again. #}
+<div class="alert alert-warning alert-dismissible fade show" role="alert" id="em-mode-banner" style="display:none;">
+    <strong>Emergency Management mode active.</strong>
+    Risk scores reflect EM weights (infrastructure-focused vulnerability and resilience).
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+            onclick="try{sessionStorage.setItem('em_banner_dismissed','1');}catch(e){}"></button>
+</div>
+<script>
+(function(){
+    try {
+        if (!sessionStorage.getItem('em_banner_dismissed')) {
+            var el = document.getElementById('em-mode-banner');
+            if (el) el.style.display = '';
+        }
+    } catch (e) { /* sessionStorage unavailable -- just show the banner */
+        var el2 = document.getElementById('em-mode-banner');
+        if (el2) el2.style.display = '';
+    }
+})();
+</script>
+{% endif %}

@@ -65,6 +65,9 @@
 
     <!-- Main Content Area -->
     <main class="container my-4 flex-grow-1" id="main-content" role="main" aria-label="Main content">
+        <!-- EM mode banner (only renders when active_discipline == 'em') -->
+        {% include 'components/em_banner.html' %}
+
         <!-- Flash messages display -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

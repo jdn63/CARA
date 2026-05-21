@@ -24,6 +24,12 @@
       "module": "utils.data_source_refresher",
       "function": "refresh_all_nws_forecasts"
     },
+    "cdc_epht_heat": {
+      "description": "Annual days >=90F + heat-related ED visit rate per county (annual)",
+      "refresh_interval_hours": 8760,
+      "module": "utils.data_source_refresher",
+      "function": "refresh_all_cdc_epht_heat"
+    },
     "airnow": {
       "description": "Daily AQI per county (daily refresh)",
       "refresh_interval_hours": 24,
@@ -143,6 +149,12 @@
       "refresh_interval_hours": 168,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_nndss_enteric"
+    },
+    "action_plan_source_verifier": {
+      "description": "Quarterly re-verification of action-plan citation URLs",
+      "refresh_interval_hours": 2160,
+      "module": "utils.data_source_refresher",
+      "function": "refresh_action_plan_source_verifier"
     }
   }
 }

@@ -1,8 +1,9 @@
+{% import "dashboard/_collapsible.html" as col %}
         <!-- Thunderstorm -->
         <div class="col-md-3 compact-tile">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Thunderstorm Risk Analysis</h5>
+                    <h5 class="card-title mb-0">Hail &amp; Lightning Risk Analysis</h5>
                 </div>
                 <div class="card-body">
                     <!-- Risk Score -->
@@ -40,6 +41,7 @@
                         </div>
                     </div>
                     
+                    {% call col.section('thunderstorm-details', 'Risk Components & Metrics') %}
                     <!-- Risk Components -->
                     <div class="mb-4">
                         <h6 class="text-muted mb-3">Risk Components</h6>
@@ -123,7 +125,7 @@
                                     {% if risk_data.thunderstorm_metrics is defined %}
                                     {% set tsm = risk_data.thunderstorm_metrics %}
                                     <tr>
-                                        <td>Thunderstorm Events (NOAA)</td>
+                                        <td>Hail / Lightning Events (NOAA)</td>
                                         <td>{% if tsm.historical_thunderstorm_events is not none %}{{ tsm.historical_thunderstorm_events }}{% else %}Pending{% endif %}</td>
                                     </tr>
                                     <tr>
@@ -151,6 +153,7 @@
                                 </tbody>
                             </table>
                         </div>
+                    {% endcall %}
 
                 </div>
             </div>

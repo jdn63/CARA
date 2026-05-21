@@ -38,9 +38,13 @@ def _build_default_scheduler_config() -> Dict[str, Any]:
     install or a manual delete of scheduler_config.json) cause the
     scheduler to pick it up automatically.
 
-    A small set of non-source jobs (currently only the herc_risk_cache
-    pre-computation) live outside the registry because they are not
-    external feeds; they are added explicitly here.
+    A small set of non-source jobs live outside the registry because
+    they are not external feeds; they are added explicitly here:
+    - herc_risk_cache: pre-computes aggregated HERC region risk.
+    - action_plan_source_verifier: quarterly re-verification of every
+      URL cited in data/action_plans/_sources.yaml. The cadence is
+      2160 hours (~90 days) which is the interval-based scheduler's
+      closest approximation to "first Monday of Jan/Apr/Jul/Oct".
     """
     from utils.source_registry import CANONICAL_SOURCES
 
@@ -59,6 +63,21 @@ def _build_default_scheduler_config() -> Dict[str, Any]:
         "refresh_interval_hours": 4,
         "module": "utils.herc_risk_aggregator",
         "function": "precompute_all_herc_regions",
+    }
+
+    # Non-source background job: quarterly action-plan citation
+    # re-verification. Runs scripts/verify_action_plan_sources.py logic
+    # out-of-band and writes _verifier_status.json plus a research-log
+    # entry. Failures surface through the scheduler status (error_count,
+    # last_error) so a broken citation is detected within at most a
+    # quarter instead of waiting for an SME spot-check.
+    data_sources["action_plan_source_verifier"] = {
+        "description": (
+            "Quarterly re-verification of action-plan citation URLs"
+        ),
+        "refresh_interval_hours": 2160,
+        "module": "utils.data_source_refresher",
+        "function": "refresh_action_plan_source_verifier",
     }
 
     return {"data_sources": data_sources}
@@ -94,8 +113,10 @@ def _migrate_legacy_source_ids(config: Dict[str, Any]) -> Tuple[Dict[str, Any], 
             continue
 
         canonical = canonicalize(legacy_key)
-        if canonical is None and legacy_key == "herc_risk_cache":
-            # Non-source job, kept as-is.
+        if canonical is None and legacy_key in (
+            "herc_risk_cache", "action_plan_source_verifier",
+        ):
+            # Non-source background job, kept as-is.
             migrated[legacy_key] = spec
             continue
         if canonical is None and legacy_key == "disease_surveillance":

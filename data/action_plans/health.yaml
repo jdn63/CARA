@@ -1,0 +1,91 @@
+# 'health' is CARA's infectious-disease domain.
+health:
+
+  framework_capabilities:
+    public_health:
+      label: "CDC PHEP Capabilities engaged"
+      items:
+        - "Capability 13: Public Health Surveillance and Epidemiological Investigation"
+        - "Capability 8: Medical Countermeasure Dispensing and Administration"
+        - "Capability 11: Nonpharmaceutical Interventions"
+        - "Capability 4: Emergency Public Information and Warning"
+        - "Capability 1: Community Preparedness"
+        - "Capability 10: Medical Surge"
+        - "Capability 12: Public Health Laboratory Testing"
+        - "Capability 15: Volunteer Management"
+    em:
+      label: "FEMA Core Capabilities engaged (Biological Incident)"
+      items:
+        - "Planning (cross-mission area)"
+        - "Public Information and Warning (cross-mission area)"
+        - "Operational Coordination (cross-mission area)"
+        - "Public Health, Healthcare, and EMS (Response)"
+        - "Mass Care Services (Response)"
+        - "Logistics and Supply Chain Management (Response)"
+        - "Health and Social Services (Recovery)"
+
+  activities:
+
+    public_health:
+
+      pre_season:
+        - text: "Confirm syndromic-surveillance feeds (NSSP), electronic laboratory reporting, and NNDSS case-reporting workflows are operational and that submitter coverage is documented"
+          source_id: cdc_nssp
+        - text: "Verify medical-countermeasure dispensing plans including point-of-dispensing site readiness, closed-POD partner agreements, and staffing rosters"
+          source_id: cdc_phep
+        - text: "Refresh pre-scripted CERC messaging for common outbreak scenarios (respiratory virus, enteric, vaccine-preventable, novel pathogen) in the agency's communications inventory"
+          source_id: cdc_cerc
+        - text: "Confirm Health Alert Network distribution lists for clinicians, hospitals, long-term care, and tribal partners are current"
+          source_id: cdc_han
+
+      this_year:
+        - text: "Establish or renew bidirectional data-sharing agreements with healthcare providers, laboratories, long-term care, and Wisconsin DHS for case investigation and contact tracing"
+          source_id: wi_dhs_communicable
+        - text: "Train staff on laboratory specimen collection, packaging, and shipping procedures and coordinate with the Wisconsin State Laboratory of Hygiene on surge testing pathways"
+          source_id: cdc_phep
+        - text: "Develop culturally and linguistically appropriate vaccination and medical-countermeasure outreach strategies for underserved and hard-to-reach populations"
+          source_id: cdc_cerc
+        - text: "Update contact-tracing, case-investigation, and isolation/quarantine surge capacity plans with named partner agencies and Medical Reserve Corps roles"
+          source_id: mrc_program
+
+      multi_year:
+        - text: "Build a scalable surveillance and public-health laboratory testing approach for novel and emerging infectious diseases in partnership with WI DHS and the State Lab"
+          source_id: cdc_nndss
+        - text: "Develop a long-term community partnership strategy with community health workers, social services, and faith-based organizations in underserved areas for trusted outreach"
+          source_id: cdc_phep
+        - text: "Establish a comprehensive risk-communication program with pre-scripted messages, spokesperson training, and ongoing community-engagement infrastructure"
+          source_id: cdc_cerc
+        - text: "Integrate infectious-disease preparedness objectives into the next PHEP work plan and Project Public Health Ready re-recognition documentation"
+          source_id: naccho_pphr
+
+    em:
+
+      pre_season:
+        - text: "Confirm the cross-mission Planning Core Capability includes a current biological-incident annex aligned with the local health department's infectious-disease plans"
+          source_id: fema_npg
+        - text: "Verify Public Information and Warning templates and Joint Information System procedures are current for biological incidents"
+          source_id: fema_npg
+        - text: "Pre-position logistics and supply-chain plans for medical-countermeasure receipt, staging, storage, and onward distribution in coordination with the local health department"
+          source_id: fema_npg
+        - text: "Confirm coordination roles with the local health department, healthcare coalition, school districts, long-term care, tribal partners, and WEM regional staff"
+          source_id: wem_resources
+
+      this_year:
+        - text: "Conduct or co-sponsor a tabletop or functional exercise of a biological-incident scenario with public health, healthcare coalition, EMS, and county leadership"
+          source_id: fema_cpg_101
+        - text: "Update the THIRA / Stakeholder Preparedness Review to reflect lessons learned from recent biological incidents and current public-health capability gaps"
+          source_id: fema_cpg_201
+        - text: "Coordinate with the local health department and healthcare coalition on Mass Care Services scenarios involving isolation, quarantine, and surge-sheltering for medically fragile populations"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate the National Disaster Recovery Framework's Health and Social Services Recovery Support Function into county recovery planning for prolonged biological events"
+          source_id: fema_ndrf
+
+      multi_year:
+        - text: "Develop a multi-year all-hazards EOP refresh schedule that keeps the biological-incident annex current with CPG 101 guidance"
+          source_id: fema_cpg_101
+        - text: "Pursue cross-jurisdictional planning with neighboring counties and the WEM region on regional medical-countermeasure logistics and mutual-aid"
+          source_id: wem_resources
+        - text: "Build standing participation with healthcare coalition partners, ASPR TRACIE resources, and WI DHS preparedness staff for ongoing readiness improvement"
+          source_id: hhs_aspr_tracie
+        - text: "Integrate biological-incident objectives into the THIRA and SPR cycle and document multi-year capability targets and gap-closing investments"
+          source_id: fema_cpg_201
