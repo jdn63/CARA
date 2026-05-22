@@ -1399,11 +1399,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         'cyber_metrics': cybersecurity_data['metrics'],
         'cyber_incidents': cybersecurity_data.get('recent_incidents', []),
         'air_quality_risk': float(air_quality_risk),
+        # Strategic assessment is the sole source for air quality
+        # display. The prior 'air_quality_data', 'air_quality_aqi',
+        # and 'air_quality_category' fields were retired with the v28.7
+        # AirNow-snapshot deprecation; they had no remaining consumers
+        # and resolved to empty values on the strategic path.
         'air_quality_components': air_quality_components,
-        # Legacy fields for backward compatibility
-        'air_quality_data': locals().get('air_quality_data', {}),
-        'air_quality_aqi': locals().get('air_quality_data', {}).get('aqi'),
-        'air_quality_category': locals().get('air_quality_data', {}).get('category', 'unknown'),
         'dam_failure_risk': float(dam_failure_risk),
         'dam_failure_components': dam_failure_data.get('components', {}),
         'dam_failure_metrics': dam_failure_data.get('metrics', {}),

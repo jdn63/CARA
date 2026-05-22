@@ -296,6 +296,18 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         refresh_interval_hours=2160,
         freshness_max_age_days=180,
     ),
+
+    # Internal audit jobs (not upstream feeds, but produce dated
+    # artifacts CARA depends on and surface through the same freshness
+    # plumbing as external sources).
+    'action_plan_source_verifier': SourceSpec(
+        display_name='Action Plan Citation Verifier',
+        description='Quarterly re-verification that action-plan citation URLs still resolve',
+        module='utils.data_source_refresher',
+        function='refresh_action_plan_source_verifier',
+        refresh_interval_hours=2160,
+        freshness_max_age_days=100,
+    ),
 }
 
 

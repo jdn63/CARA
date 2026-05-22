@@ -227,6 +227,16 @@ def invalidate_herc_cache_api():
         return api_server_error(str(e))
 
 
+def _external_scheduler_mode() -> bool:
+    """B1: in external mode the dedicated cara-scheduler Render worker
+    owns the scheduler. The web service must not start its own copy --
+    doing so would reintroduce the same race the worker was created to
+    fix. Admin endpoints below short-circuit when this is true.
+    """
+    import os as _os
+    return _os.environ.get("SCHEDULER_MODE", "embedded").lower() == "external"
+
+
 @api_bp.route('/scheduler-start', methods=['POST'])
 @require_api_key('admin')
 def scheduler_start_api():
@@ -237,6 +247,20 @@ def scheduler_start_api():
     or never spawned). Safe to call repeatedly: start_scheduler() returns
     False if it is already running.
     """
+    if _external_scheduler_mode():
+        # Refuse cleanly: the scheduler is owned by the dedicated
+        # cara-scheduler worker service. Spawning one here would
+        # re-create the duplicate-refresh race we just eliminated.
+        logger.warning(
+            "scheduler-start refused: SCHEDULER_MODE=external "
+            "(managed by cara-scheduler worker service)"
+        )
+        return api_success({
+            'started_now': False,
+            'managed_by': 'cara-scheduler worker service',
+            'hint': 'Inspect or restart the worker on the Render dashboard.',
+        }, "Scheduler is managed by the cara-scheduler worker; web cannot start it."), 409
+
     try:
         try:
             initialize_scheduler()
@@ -265,6 +289,17 @@ def scheduler_start_api():
 @require_api_key('admin')
 def scheduler_stop_api():
     """Manually stop the data refresh scheduler (admin only)."""
+    if _external_scheduler_mode():
+        logger.warning(
+            "scheduler-stop refused: SCHEDULER_MODE=external "
+            "(managed by cara-scheduler worker service)"
+        )
+        return api_success({
+            'stopped_now': False,
+            'managed_by': 'cara-scheduler worker service',
+            'hint': 'Stop the worker on the Render dashboard if needed.',
+        }, "Scheduler is managed by the cara-scheduler worker; web cannot stop it."), 409
+
     try:
         stopped = stop_scheduler()
         status = get_scheduler_status()

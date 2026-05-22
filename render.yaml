@@ -24,6 +24,11 @@ services:
         value: "3.11.4"
       - key: FLASK_ENV
         value: production
+      # B1: tells the web service NOT to start an in-process scheduler.
+      # The cara-scheduler worker service (below) owns the refresh loop.
+      # Web reads status from Postgres via utils/scheduler_state_store.
+      - key: SCHEDULER_MODE
+        value: external
       - key: CENSUS_API_KEY
         sync: false
       - key: AIRNOW_API_KEY
@@ -37,4 +42,41 @@ services:
       - key: SENTRY_DSN
         sync: false
     healthCheckPath: /health
+    autoDeploy: true
+
+  # B1: dedicated background worker that runs the data-refresh scheduler.
+  # Exactly one process across the deployment owns the refresh loop;
+  # election is enforced inside utils/run_scheduler.py via a Postgres
+  # advisory lock as belt-and-suspenders for deploy-overlap windows.
+  # Starter instance (512MB / 0.5 CPU / $7/mo) is sufficient -- the loop
+  # is mostly idle and HTTP-bound; bump to Standard if metrics show
+  # sustained CPU/memory pressure from the HERC pre-compute job.
+  - type: worker
+    name: cara-scheduler
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m utils.run_scheduler
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cara-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.11.4"
+      - key: FLASK_ENV
+        value: production
+      - key: CENSUS_API_KEY
+        sync: false
+      - key: AIRNOW_API_KEY
+        sync: false
+      - key: OPENWEATHERMAP_API_KEY
+        sync: false
+      - key: FEMA_RAPT_API_KEY
+        sync: false
+      - key: ENABLE_SCRAPERS
+        value: "1"
+      - key: SENTRY_DSN
+        sync: false
     autoDeploy: true

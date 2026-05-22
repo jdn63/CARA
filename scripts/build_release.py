@@ -27,11 +27,14 @@ EXCLUDE_DIRS = {
     '.local',
     '.pytest_cache',
     '__pycache__',
+    'agents',          # Replit internal metadata
     'artifacts',
     'attached_assets',
+    'cache',           # data/cache — generated cache files, never shipped
     'cara_template',
     'exports',
     'logs',
+    'screenshots',     # development screenshots
 }
 
 EXCLUDE_FILES = {

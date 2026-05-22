@@ -114,13 +114,19 @@ def _measure_url(measure_id: int) -> str:
       measureId / geographicTypeId (1=state-county) / parentGeographicId
       (state FIPS) / childGeographicId (ALL=every county) / temporalId
       and 3 stratification fields (we want the unstratified series, so
-      all zero) / response format.
+      all zero) / smoothingFlag (0=raw values, 1=smoothed).
 
     A single call returns every available year for every county in the
     state. We pick the latest non-null value per county at parse time.
+
+    Note: the final segment was previously the string 'JSON' (the
+    response format). The EPHT getFullCoreHolder endpoint now rejects
+    that with HTTP 400 ("expects a '0' or '1' but found 'json'") and
+    instead expects the smoothing-flag binary. JSON remains the default
+    response format, so no replacement format hint is needed.
     """
     return (
-        f"{EPHT_BASE_URL}/{measure_id}/1/{WI_STATE_FIPS}/ALL/0/0/0/JSON"
+        f"{EPHT_BASE_URL}/{measure_id}/1/{WI_STATE_FIPS}/ALL/0/0/0/0"
     )
 
 
@@ -176,11 +182,24 @@ def _parse_epht_payload(payload: Any) -> Dict[str, Tuple[float, int]]:
                 rows.extend(r for r in container if isinstance(r, dict))
 
     if not rows:
-        logger.warning(
-            "EPHT parse: no recognizable rows in payload "
-            "(top-level keys=%s)",
-            list(payload.keys()) if isinstance(payload, dict) else 'non-dict',
-        )
+        # When EPHT rejects a request it returns an error envelope with
+        # 'code' (HTTP-style), 'errorTypeId', and a human 'message' --
+        # surface those rather than a blind "no rows" warning so we can
+        # distinguish a schema/URL bug (400) from rate limiting (429)
+        # from a transient outage (5xx) at a glance in production logs.
+        if isinstance(payload, dict) and 'code' in payload and 'message' in payload:
+            logger.warning(
+                "EPHT API error: code=%s errorTypeId=%s message=%s",
+                payload.get('code'),
+                payload.get('errorTypeId'),
+                payload.get('message'),
+            )
+        else:
+            logger.warning(
+                "EPHT parse: no recognizable rows in payload "
+                "(top-level keys=%s)",
+                list(payload.keys()) if isinstance(payload, dict) else 'non-dict',
+            )
         return {}
 
     best: Dict[str, Tuple[float, int]] = {}

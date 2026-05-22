@@ -20,11 +20,22 @@ from typing import Dict, Any, List, Tuple, Optional, Callable
 # Get module logger (centralized config in core.py)
 logger = logging.getLogger(__name__)
 
+# B1: persist per-source state and runner heartbeat to Postgres so the
+# web service (which no longer runs the scheduler) can read what the
+# Render background worker is doing. Store calls are best-effort -- they
+# log and continue on DB error so a transient Postgres hiccup never
+# crashes the runner.
+from utils import scheduler_state_store as _store
+
 # Path to scheduler configuration
 SCHEDULER_CONFIG_PATH = "./data/config/scheduler_config.json"
 
 # Global scheduler state
 _scheduler_running = False
+# Event used by stop_scheduler() / SIGTERM to wake the scheduler_loop
+# out of its inter-tick sleep so shutdown completes within Render's
+# ~30-second SIGTERM grace window instead of waiting up to 5 minutes.
+_scheduler_wakeup = threading.Event()
 _scheduler_thread = None
 _scheduler_status = {}
 _scheduler_jobs = {}
@@ -270,29 +281,63 @@ def get_scheduler_status() -> Dict[str, Any]:
     # Load configuration
     config = load_scheduler_config()
     
+    # B1: read persisted state from Postgres first (authoritative).
+    # Fall back to the in-memory globals for any source the DB doesn't
+    # yet have a row for, so behavior degrades gracefully on a fresh
+    # deploy before the runner has populated the table.
+    db_status = _store.read_all_status()
+
     # Build status response. Snapshot via list() to avoid
     # "dictionary changed size during iteration" when a refresh worker
     # thread mutates _scheduler_status concurrently with this request.
     sources_status = []
     for source_id, source_config in list(config.get("data_sources", {}).items()):
-        status = _scheduler_status.get(source_id, {})
-        
+        db_row = db_status.get(source_id)
+        if db_row is not None:
+            status = db_row
+            in_prog = db_row.get("in_progress", False)
+        else:
+            status = _scheduler_status.get(source_id, {})
+            in_prog = _refresh_in_progress.get(source_id, False)
+
         sources_status.append({
             "id": source_id,
             "description": source_config.get("description", "Unknown data source"),
             "refresh_interval_hours": source_config.get("refresh_interval_hours", 24),
             "last_refresh": status.get("last_refresh"),
             "next_refresh": status.get("next_refresh"),
+            "last_attempt": status.get("last_attempt"),
             "status": status.get("status", "pending"),
             "last_error": status.get("last_error"),
             "refresh_count": status.get("refresh_count", 0),
             "error_count": status.get("error_count", 0),
-            "in_progress": _refresh_in_progress.get(source_id, False)
+            "in_progress": in_prog,
         })
-    
+
+    # Liveness signal for the dedicated runner process. None if the
+    # heartbeat row doesn't exist yet (fresh deploy) or DB error.
+    heartbeat = _store.read_heartbeat()
+
+    # B1 external mode: "running" should reflect whether the dedicated
+    # worker process is alive, not the in-process flag (which is always
+    # False on the web service). Derive it from the heartbeat staleness:
+    # a beat written within the last 10 minutes means the worker is up.
+    # If heartbeat is absent (first deploy, DB error) treat as unknown
+    # and set False so operators are not misled into thinking all is well.
+    import os as _os
+    if _os.environ.get("SCHEDULER_MODE", "embedded").lower() == "external":
+        if heartbeat and isinstance(heartbeat.get("seconds_since_last_beat"), (int, float)):
+            running = heartbeat["seconds_since_last_beat"] < 600
+        else:
+            running = False
+    else:
+        running = _scheduler_running
+
     return {
-        "running": _scheduler_running,
-        "sources": sources_status
+        "running": running,
+        "mode": _os.environ.get("SCHEDULER_MODE", "embedded").lower(),
+        "sources": sources_status,
+        "runner_heartbeat": heartbeat,
     }
 
 def start_scheduler(run_in_background: bool = True) -> bool:
@@ -342,10 +387,14 @@ def stop_scheduler() -> bool:
         logger.info("Scheduler is not running")
         return False
     
-    # Stop the scheduler
+    # Stop the scheduler. Setting the wakeup event makes the loop's
+    # Event.wait(timeout=300) return immediately so shutdown completes
+    # within Render's SIGTERM grace window instead of waiting up to
+    # five minutes for the next tick.
     _scheduler_running = False
+    _scheduler_wakeup.set()
     logger.info("Stopping data refresh scheduler")
-    
+
     return True
 
 def refresh_now(source: str) -> bool:
@@ -402,9 +451,10 @@ def refresh_data_source(source: str) -> Tuple[bool, str]:
     # Get source configuration
     source_config = config["data_sources"][source]
     
-    # Mark refresh as in progress
+    # Mark refresh as in progress (both in-memory and persisted)
     _refresh_in_progress[source] = True
-    
+    _store.record_attempt_started(source)
+
     try:
         # Update status
         if source not in _scheduler_status:
@@ -486,35 +536,49 @@ def refresh_data_source(source: str) -> Tuple[bool, str]:
                 _scheduler_status[source]["last_error"] = None
                 _scheduler_status[source]["refresh_count"] += 1
                 _refresh_timestamps[source] = now
-                
+
                 _refresh_in_progress[source] = False
+                _store.record_attempt_success(
+                    source, source_config.get("refresh_interval_hours", 24)
+                )
                 return True, "Refresh completed successfully"
             else:
-                # Update status on failure
+                # Update status on failure. Also stamp _refresh_timestamps so
+                # the loop's "needs refresh?" check waits a full interval
+                # before retrying a known-failing source -- previously failures
+                # never set this timestamp, causing tight-retry every loop
+                # tick and triggering rate limits on upstream APIs (notably
+                # CDC EPHT in v28.x).
                 _scheduler_status[source]["status"] = "error"
                 _scheduler_status[source]["last_error"] = failure_reason or "Refresh failed"
                 _scheduler_status[source]["error_count"] += 1
+                _refresh_timestamps[source] = datetime.now()
 
                 _refresh_in_progress[source] = False
+                _store.record_attempt_failure(source, failure_reason or "Refresh failed")
                 return False, failure_reason or "Refresh failed"
-                
+
         except Exception as e:
-            # Update status on exception
+            # Update status on exception (same back-off rationale as above)
             _scheduler_status[source]["status"] = "error"
             _scheduler_status[source]["last_error"] = str(e)
             _scheduler_status[source]["error_count"] += 1
-            
+            _refresh_timestamps[source] = datetime.now()
+
             _refresh_in_progress[source] = False
+            _store.record_attempt_failure(source, str(e))
             return False, str(e)
-            
+
     except Exception as e:
         # Update status on outer exception
         if source in _scheduler_status:
             _scheduler_status[source]["status"] = "error"
             _scheduler_status[source]["last_error"] = str(e)
             _scheduler_status[source]["error_count"] += 1
-        
+        _refresh_timestamps[source] = datetime.now()
+
         _refresh_in_progress[source] = False
+        _store.record_attempt_failure(source, str(e))
         return False, str(e)
 
 def scheduler_loop():
@@ -532,7 +596,13 @@ def scheduler_loop():
         try:
             # Load configuration
             config = load_scheduler_config()
-            
+
+            # Write liveness heartbeat once per tick so the web service
+            # can show "scheduler runner alive N seconds ago" without
+            # tailing Render logs. Best-effort -- failure is logged
+            # inside the store and never raises.
+            _store.write_heartbeat()
+
             # Get current time
             now = datetime.now()
             logger.info(f"Checking all data sources for refresh at {now.isoformat()}")
@@ -567,17 +637,23 @@ def scheduler_loop():
                     thread.daemon = True
                     thread.start()
                     
-            # Sleep for a while
-            time.sleep(300)  # Check every 5 minutes
-            
+            # Sleep until the next tick OR until stop_scheduler() /
+            # SIGTERM fires _scheduler_wakeup. Event.wait() returns
+            # True early on signal, False on timeout -- both fine,
+            # the while condition is the source of truth.
+            _scheduler_wakeup.wait(timeout=300)
+            _scheduler_wakeup.clear()
+
         except (ValueError, KeyError, TypeError, OSError, RuntimeError) as e:
             error_type = type(e).__name__
             logger.error(f"Error in scheduler loop ({error_type}): {str(e)}")
-            time.sleep(60)  # Wait a bit longer on error
+            _scheduler_wakeup.wait(timeout=60)
+            _scheduler_wakeup.clear()
         except Exception as e:
             # Catch-all for unexpected errors to prevent scheduler crash
             logger.critical(f"Unexpected error in scheduler loop: {type(e).__name__}: {str(e)}")
-            time.sleep(300)  # Wait longer for unexpected errors
+            _scheduler_wakeup.wait(timeout=300)
+            _scheduler_wakeup.clear()
     
     logger.info("Scheduler loop stopped")
 

@@ -4,7 +4,7 @@ from datetime import datetime
 import uuid
 
 # Import SQLAlchemy components for database models
-from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, Float, Index
+from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, Float, Index, func
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from core import Base
 
@@ -364,3 +364,79 @@ class DataQualityEvent(Base):
     
     def __repr__(self):
         return f'<DataQualityEvent {self.event_type} - {self.source_type}>'
+
+
+class SchedulerSourceStatus(Base):
+    """
+    Per-source scheduler state, persisted to Postgres so a separate
+    process (web service) can read what the scheduler-runner process
+    (Render background worker, see render.yaml) has written.
+
+    Source of truth for /api/scheduler-status. Module-level globals in
+    utils.data_refresh_scheduler remain as a fast in-process cache for
+    the runner itself but are no longer authoritative once B1 lands.
+
+    last_attempt captures every attempt regardless of outcome, while
+    last_refresh only advances on success. The pair makes
+    "stuck in tight-retry on a failing source" visible without grepping
+    logs (last_attempt advances while last_refresh stays old).
+    """
+    __tablename__ = 'scheduler_source_status'
+
+    # server_default is critical here, not just `default`. Raw-SQL
+    # INSERTs from utils/scheduler_state_store.py rely on the database
+    # to fill these when columns are omitted from the column list; a
+    # Python-side default only fires through the ORM session, not
+    # through psycopg2-issued INSERTs.
+    source_id = Column(String(64), primary_key=True)
+    last_refresh = Column(DateTime, nullable=True)
+    next_refresh = Column(DateTime, nullable=True)
+    last_attempt = Column(DateTime, nullable=True)
+    status = Column(String(16), nullable=False, default='pending', server_default='pending')
+    last_error = Column(Text, nullable=True)
+    refresh_count = Column(Integer, nullable=False, default=0, server_default='0')
+    error_count = Column(Integer, nullable=False, default=0, server_default='0')
+    in_progress = Column(Boolean, nullable=False, default=False, server_default='false')
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        server_default=func.now(),
+        onupdate=datetime.utcnow,
+    )
+
+    def __repr__(self):
+        return f'<SchedulerSourceStatus {self.source_id}={self.status}>'
+
+
+class SchedulerHeartbeat(Base):
+    """
+    Single-row table (id=1) updated by the scheduler-runner on every
+    loop tick. The web service reads this to surface "scheduler last
+    heartbeat N seconds ago" on the status endpoint, so an outage of
+    the Render worker service is visible without checking Render logs.
+
+    runner_id is hostname+pid, purely diagnostic — when a deploy
+    rotates the worker it changes and you can correlate to the new
+    container in Render logs.
+    """
+    __tablename__ = 'scheduler_heartbeat'
+
+    id = Column(Integer, primary_key=True)
+    runner_id = Column(String(128), nullable=True)
+    last_beat_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        server_default=func.now(),
+        onupdate=datetime.utcnow,
+    )
+    started_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        server_default=func.now(),
+    )
+
+    def __repr__(self):
+        return f'<SchedulerHeartbeat runner={self.runner_id} at {self.last_beat_at}>'

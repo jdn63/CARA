@@ -206,17 +206,35 @@ def create_app(config_overrides=None):
     else:
         logger.info(f"Skipping background services on worker {worker_id}")
 
+    # B1: the scheduler now runs as a dedicated Render background worker
+    # service (see render.yaml: cara-scheduler, and utils/run_scheduler.py).
+    # Set SCHEDULER_MODE=external on the web service to tell it not to
+    # start an in-process scheduler. Default 'embedded' preserves the
+    # legacy behavior for local development on Replit, where there is
+    # no separate worker process.
+    scheduler_mode = os.environ.get("SCHEDULER_MODE", "embedded").lower()
+    if scheduler_mode == "external":
+        logger.info(
+            "SCHEDULER_MODE=external: scheduler runs in a dedicated "
+            "worker process; web service will not start it in-process. "
+            "Status is read from Postgres via scheduler_state_store."
+        )
+
     # Request-triggered fallback: if the boot-time init above did not actually
     # start the scheduler (observed on Render: silent failures with no traceback
     # in the retained log window), make the first request after worker startup
     # bring the scheduler up. Idempotent: start_scheduler() guards against
     # double-start via its own _scheduler_running flag, and the lock here
     # prevents concurrent first requests from racing the initialize() call.
+    # Skipped entirely when SCHEDULER_MODE=external (the worker owns it).
     import threading as _t
     _first_req_state = {"done": False, "lock": _t.Lock()}
 
     @app.before_request
     def _ensure_scheduler_running():
+        # B1: web service in external mode never starts its own scheduler.
+        if scheduler_mode == "external":
+            return
         # Fast path: already confirmed running, do nothing.
         if _first_req_state["done"]:
             return
@@ -479,13 +497,23 @@ def initialize_background_services(app):
             except Exception as e:
                 logger.error(f"Failed to initialize data refresh scheduler: {str(e)}", exc_info=True)
 
-    # Start scheduler in a separate thread to avoid blocking app startup
-    try:
-        scheduler_thread = threading.Thread(target=init_scheduler, args=(app,), daemon=True)
-        scheduler_thread.start()
-        logger.info(f"scheduler init thread spawned (alive={scheduler_thread.is_alive()})")
-    except Exception as e:
-        logger.error(f"Failed to spawn scheduler init thread: {str(e)}", exc_info=True)
+    # B1: skip the in-process scheduler entirely when SCHEDULER_MODE=external
+    # (Render web service). The dedicated cara-scheduler worker owns the
+    # refresh loop. Default 'embedded' preserves legacy in-process behavior
+    # for Replit local development.
+    if os.environ.get("SCHEDULER_MODE", "embedded").lower() == "external":
+        logger.info(
+            "Skipping in-process scheduler init (SCHEDULER_MODE=external). "
+            "Refresh loop runs in the dedicated cara-scheduler service."
+        )
+    else:
+        # Start scheduler in a separate thread to avoid blocking app startup
+        try:
+            scheduler_thread = threading.Thread(target=init_scheduler, args=(app,), daemon=True)
+            scheduler_thread.start()
+            logger.info(f"scheduler init thread spawned (alive={scheduler_thread.is_alive()})")
+        except Exception as e:
+            logger.error(f"Failed to spawn scheduler init thread: {str(e)}", exc_info=True)
 
     # Pre-warm the per-jurisdiction dashboard cache so the first user
     # click on /dashboard/<jid> or /em-dashboard/<slug> hits a warm
