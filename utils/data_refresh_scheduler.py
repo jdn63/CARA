@@ -235,8 +235,11 @@ def load_scheduler_status():
     # Load configuration
     config = load_scheduler_config()
     
-    # Initialize status for each data source
-    for source_id, source_config in config.get("data_sources", {}).items():
+    # Initialize status for each data source.
+    # Snapshot via list() so a concurrent migration/backfill that mutates
+    # the dict mid-iteration cannot raise "dictionary changed size during
+    # iteration" (seen in Render logs 2026-05-21 23:01).
+    for source_id, source_config in list(config.get("data_sources", {}).items()):
         if source_id not in _scheduler_status:
             _scheduler_status[source_id] = {
                 "last_refresh": None,
@@ -267,9 +270,11 @@ def get_scheduler_status() -> Dict[str, Any]:
     # Load configuration
     config = load_scheduler_config()
     
-    # Build status response
+    # Build status response. Snapshot via list() to avoid
+    # "dictionary changed size during iteration" when a refresh worker
+    # thread mutates _scheduler_status concurrently with this request.
     sources_status = []
-    for source_id, source_config in config.get("data_sources", {}).items():
+    for source_id, source_config in list(config.get("data_sources", {}).items()):
         status = _scheduler_status.get(source_id, {})
         
         sources_status.append({
@@ -532,8 +537,9 @@ def scheduler_loop():
             now = datetime.now()
             logger.info(f"Checking all data sources for refresh at {now.isoformat()}")
             
-            # Check each data source
-            for source_id, source_config in config.get("data_sources", {}).items():
+            # Check each data source. Snapshot via list() so a concurrent
+            # config reload from another path cannot mutate the dict mid-loop.
+            for source_id, source_config in list(config.get("data_sources", {}).items()):
                 # Skip if refresh is already in progress
                 if _refresh_in_progress.get(source_id, False):
                     continue

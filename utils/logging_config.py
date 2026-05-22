@@ -174,8 +174,17 @@ def setup_production_logging(app):
     root_logger.addHandler(app_handler)
     root_logger.addHandler(error_handler)
     
-    # Add console handler only in development
-    if app.debug or os.environ.get('FLASK_ENV') == 'development':
+    # Add console handler in development, OR in production when the
+    # operator explicitly opts in via CARA_LOG_TO_STDOUT. This is the
+    # escape hatch for hosted platforms like Render where the log stream
+    # only shows stdout: without it, every INFO/WARNING after this point
+    # goes to logs/cara_app.log on ephemeral disk and is invisible.
+    # When opting in, lower the console threshold to INFO so the stream
+    # is actually useful (the WARNING-only default loses too much signal).
+    stdout_opt_in = os.environ.get('CARA_LOG_TO_STDOUT', '').lower() in ('1', 'true', 'yes')
+    if app.debug or os.environ.get('FLASK_ENV') == 'development' or stdout_opt_in:
+        if stdout_opt_in:
+            console_handler.setLevel(logging.INFO)
         root_logger.addHandler(console_handler)
     
     # Configure specific loggers
