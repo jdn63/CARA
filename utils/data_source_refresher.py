@@ -286,11 +286,11 @@ def refresh_all_nws_forecasts() -> Dict[str, Any]:
     
     with app.app_context():
         from utils.data_cache_manager import save_cached_data
-        from utils.weather_alerts import get_weather_alerts
+        from utils.weather_alerts import get_active_alerts as get_weather_alerts
         from utils.svi_data import WI_COUNTY_FIPS
         
         results = {
-            'source_type': 'nws_forecast',
+            'source_type': 'nws_heat',
             'started_at': datetime.utcnow().isoformat(),
             'success': 0,
             'failed': 0,
@@ -303,14 +303,30 @@ def refresh_all_nws_forecasts() -> Dict[str, Any]:
         for county_name in WI_COUNTY_FIPS.keys():
             try:
                 start_time = time.time()
-                data = get_weather_alerts(county_name)
+                raw = get_weather_alerts(county_name)
                 duration = time.time() - start_time
-                
-                used_fallback = data.get('data_source') == 'fallback' or data.get('_fallback', False)
+
+                # get_active_alerts returns a List[Dict] of active alerts; wrap
+                # in a dict envelope so the cache row carries provenance and the
+                # freshness reporter can use .get() on the payload.
+                if isinstance(raw, list):
+                    data = {
+                        'active_alerts': raw,
+                        'alert_count': len(raw),
+                        'data_source': 'nws_api',
+                        'fetched_at': datetime.utcnow().isoformat(),
+                    }
+                    used_fallback = False
+                elif isinstance(raw, dict):
+                    data = raw
+                    used_fallback = data.get('data_source') == 'fallback' or data.get('_fallback', False)
+                else:
+                    data = {'data_source': 'unknown', 'raw_type': type(raw).__name__}
+                    used_fallback = True
                 fallback_reason = 'Using fallback data' if used_fallback else None
-                
+
                 success = save_cached_data(
-                    source_type='nws_forecast',
+                    source_type='nws_heat',
                     data=data,
                     county_name=county_name,
                     fetch_duration=duration,
@@ -536,7 +552,7 @@ def refresh_all_openfema_nfip() -> Dict[str, Any]:
                         source_type='openfema_nfip_claims',
                         data=county_info,
                         county_name=county_name,
-                        api_source='OpenFEMA FimaNfipClaims v2',
+                        api_source='OpenFEMA FimaNfipClaims v2 (ratedFloodZone)',
                         fetch_duration=data.get("fetch_duration")
                     )
                     if success:
@@ -744,6 +760,7 @@ def refresh_all_wi_dhs_hvi() -> Dict[str, Any]:
 
     with app.app_context():
         from utils.wi_dhs_hvi import fetch_bulk_hvi_data, populate_cache_from_bulk
+        from utils.data_cache_manager import set_cached_data
 
         results = {
             'source_type': 'wi_dhs_hvi',
@@ -766,6 +783,18 @@ def refresh_all_wi_dhs_hvi() -> Dict[str, Any]:
                 written = populate_cache_from_bulk(table)
                 results['success'] = written
                 results['failed'] = max(0, len(table) - written)
+                set_cached_data(
+                    source_type='hvi',
+                    data={
+                        'county_count': written,
+                        'block_group_count': sum(
+                            int(r.get('block_group_count') or 0) for r in table.values()
+                        ),
+                        'refreshed_at': datetime.utcnow().isoformat(),
+                    },
+                    fetch_duration=duration,
+                    api_source='wi_dhs_hvi_arcgis_mapserver',
+                )
                 logger.info(
                     f"WI DHS HVI refresh: {written} counties cached in {duration:.1f}s"
                 )
@@ -797,6 +826,7 @@ def refresh_all_nssp_respiratory() -> Dict[str, Any]:
 
     with app.app_context():
         from utils.wisconsin_dhs_scraper import refresh_dhs_surveillance_data
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'nssp_respiratory',
@@ -814,11 +844,25 @@ def refresh_all_nssp_respiratory() -> Dict[str, Any]:
 
             if ok:
                 results['success'] = 1
+                set_cached_data(
+                    source_type='nssp',
+                    data={'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=duration,
+                    api_source='cdc_nssp_essence',
+                )
                 logger.info(
                     f"NSSP respiratory refresh: cache warmed in {duration:.1f}s"
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='nssp',
+                    data={'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=duration,
+                    api_source='cdc_nssp_essence',
+                    used_fallback=True,
+                    fallback_reason="NSSP refresh used fallback path",
+                )
                 logger.warning(
                     "NSSP respiratory refresh: completed but data_source != 'nssp_ed_visits' "
                     "(fallback path used). Cache was still updated."
@@ -851,6 +895,7 @@ def refresh_all_cdc_nndss_communicable() -> Dict[str, Any]:
     with app.app_context():
         from utils.nndss_communicable import fetch_nndss_wi_communicable
         from utils.persistent_cache import clear_cache_by_prefix
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'cdc_nndss_communicable',
@@ -871,12 +916,26 @@ def refresh_all_cdc_nndss_communicable() -> Dict[str, Any]:
             if data.get('data_source') == 'cdc_nndss':
                 results['success'] = 1
                 flags = data.get('outbreak_flags', {})
+                set_cached_data(
+                    source_type='nndss',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nndss',
+                )
                 logger.info(
                     f"NNDSS communicable refresh: cache warmed in {duration:.1f}s, "
                     f"report={data.get('report_date')}, flags={flags}"
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='nndss',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nndss',
+                    used_fallback=True,
+                    fallback_reason="NNDSS communicable fetch returned non-canonical source",
+                )
                 logger.warning(
                     "NNDSS communicable refresh: completed but data_source != "
                     "'cdc_nndss' (fallback path used)."
@@ -910,6 +969,7 @@ def refresh_all_cdc_nhsn_hospital() -> Dict[str, Any]:
     with app.app_context():
         from utils.nhsn_hospital import fetch_nhsn_wi_hospital
         from utils.persistent_cache import clear_cache_by_prefix
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'cdc_nhsn_hospital',
@@ -929,6 +989,12 @@ def refresh_all_cdc_nhsn_hospital() -> Dict[str, Any]:
             if data.get('data_source') == 'cdc_nhsn_hrd':
                 results['success'] = 1
                 cw = data.get('current_week', {})
+                set_cached_data(
+                    source_type='nhsn',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nhsn_hrd',
+                )
                 logger.info(
                     f"NHSN hospital refresh: cache warmed in {duration:.1f}s, "
                     f"week={data.get('report_date')}, "
@@ -937,6 +1003,14 @@ def refresh_all_cdc_nhsn_hospital() -> Dict[str, Any]:
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='nhsn',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nhsn_hrd',
+                    used_fallback=True,
+                    fallback_reason="NHSN hospital fetch returned non-canonical source",
+                )
                 logger.warning(
                     "NHSN hospital refresh: completed but data_source != "
                     "'cdc_nhsn_hrd' (fallback path used)."
@@ -966,6 +1040,7 @@ def refresh_all_h5n1() -> Dict[str, Any]:
     with app.app_context():
         from utils.h5n1_surveillance import fetch_h5n1_surveillance
         from utils.persistent_cache import clear_cache_by_prefix
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'h5n1',
@@ -979,6 +1054,12 @@ def refresh_all_h5n1() -> Dict[str, Any]:
             duration = time.time() - start
             if data.get('source') == 'usda_aphis':
                 results['success'] = 1
+                set_cached_data(
+                    source_type='h5n1',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='usda_aphis',
+                )
                 logger.info(
                     f"H5N1 refresh: cache warmed in {duration:.1f}s, "
                     f"tier={data.get('tier')}, "
@@ -987,6 +1068,14 @@ def refresh_all_h5n1() -> Dict[str, Any]:
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='h5n1',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='usda_aphis',
+                    used_fallback=True,
+                    fallback_reason="H5N1 fetch returned non-canonical source",
+                )
                 logger.warning("H5N1 refresh: completed but source != 'usda_aphis' (fallback path)")
         except Exception as exc:
             results['failed'] = 1
@@ -1011,6 +1100,7 @@ def refresh_all_mpox() -> Dict[str, Any]:
     with app.app_context():
         from utils.mpox_surveillance import fetch_mpox_surveillance
         from utils.persistent_cache import clear_cache_by_prefix
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'mpox',
@@ -1024,6 +1114,12 @@ def refresh_all_mpox() -> Dict[str, Any]:
             duration = time.time() - start
             if data.get('source') == 'cdc_mpox':
                 results['success'] = 1
+                set_cached_data(
+                    source_type='mpox',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_mpox',
+                )
                 logger.info(
                     f"Mpox refresh: cache warmed in {duration:.1f}s, "
                     f"tier={data.get('tier')}, "
@@ -1031,6 +1127,14 @@ def refresh_all_mpox() -> Dict[str, Any]:
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='mpox',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_mpox',
+                    used_fallback=True,
+                    fallback_reason="Mpox fetch returned non-canonical source",
+                )
                 logger.warning("Mpox refresh: completed but source != 'cdc_mpox' (fallback path)")
         except Exception as exc:
             results['failed'] = 1
@@ -1058,6 +1162,7 @@ def refresh_all_nndss_enteric() -> Dict[str, Any]:
     with app.app_context():
         from utils.nndss_enteric import fetch_nndss_enteric_wi
         from utils.persistent_cache import clear_cache_by_prefix
+        from utils.data_cache_manager import set_cached_data
 
         results: Dict[str, Any] = {
             'source_type': 'nndss_enteric',
@@ -1073,6 +1178,12 @@ def refresh_all_nndss_enteric() -> Dict[str, Any]:
                 results['success'] = 1
                 agents = data.get('enteric_agents', {})
                 leg = data.get('legionella', {})
+                set_cached_data(
+                    source_type='nndss_enteric',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nndss_enteric',
+                )
                 logger.info(
                     f"NNDSS enteric refresh: cache warmed in {duration:.1f}s, "
                     f"report={data.get('report_date')}, "
@@ -1081,6 +1192,14 @@ def refresh_all_nndss_enteric() -> Dict[str, Any]:
                 )
             else:
                 results['fallback'] = 1
+                set_cached_data(
+                    source_type='nndss_enteric',
+                    data=data,
+                    fetch_duration=duration,
+                    api_source='cdc_nndss_enteric',
+                    used_fallback=True,
+                    fallback_reason="NNDSS enteric fetch returned non-canonical source",
+                )
                 logger.warning(
                     "NNDSS enteric refresh: completed but data_source != 'cdc_nndss_enteric'"
                 )
@@ -1121,51 +1240,11 @@ def run_all_refreshes() -> Dict[str, Any]:
     results['sources']['h5n1'] = refresh_all_h5n1()
     results['sources']['mpox'] = refresh_all_mpox()
     results['sources']['nndss_enteric'] = refresh_all_nndss_enteric()
-    results['sources']['cdc_epht_heat'] = refresh_all_cdc_epht_heat()
 
     results['finished_at'] = datetime.utcnow().isoformat()
     
     logger.info("Full data cache refresh complete")
     return results
-
-
-def refresh_all_cdc_epht_heat() -> Dict[str, Any]:
-    """
-    Refresh CDC Environmental Public Health Tracking (EPHT) heat
-    exposure metrics for all 72 Wisconsin counties (annual cadence).
-
-    This is the v28.8 NIHHIS Phase A integration. It warms the
-    persistent per-county cache for two EPHT measures (annual days
-    >=90F and heat-related ED visit rate) so the Extreme Heat domain
-    exposure sub-formula in utils/climate_adjusted_risk.py reads
-    observed county-resolved values instead of the prior synthetic
-    statewide constant or the NCEI monthly-max heuristic.
-
-    Schedules on the annual track (8760h) because EPHT publishes once
-    per year and lags real time by 12-24 months. The dashboard
-    freshness window is widened correspondingly (500 days) so the
-    badge does not flag an inherently lagged source as stale.
-
-    Cache-only request-path invariant: this function is never invoked
-    from a user request. The underlying fetcher uses the shared
-    http_client circuit breaker; on any EPHT outage the prior cached
-    values remain valid until their persistent-cache expiry elapses.
-    """
-    app = _get_app()
-    if not app:
-        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
-    with app.app_context():
-        from utils.cdc_epht_heat import warm_all_wi_counties
-        try:
-            return warm_all_wi_counties()
-        except Exception as exc:
-            logger.exception("EPHT refresh raised unexpectedly: %s", exc)
-            return {
-                'source_type': 'cdc_epht_heat',
-                'error': f"{type(exc).__name__}: {exc}",
-                'success': 0,
-                'failed': 1,
-            }
 
 
 def refresh_action_plan_source_verifier() -> Dict[str, Any]:
@@ -1357,3 +1436,213 @@ def refresh_action_plan_source_verifier() -> Dict[str, Any]:
         results['failed'] = max(results.get('failed', 0), 1)
         results['finished_at'] = datetime.utcnow().isoformat()
         return results
+
+
+def refresh_all_county_health_rankings() -> Dict[str, Any]:
+    """
+    Pre-warm the County Health Rankings persistent cache.
+
+    Clears the current CHR cache entry and re-fetches the County Health
+    Rankings CSV for all Wisconsin counties via countyhealthrankings.org.
+    Called by the scheduler on the annual track. The underlying
+    _fetch_chr_wi_data() function writes the result back to the persistent
+    cache so subsequent dashboard requests read from cache only.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+    with app.app_context():
+        try:
+            from utils.health_metrics_data import (
+                _fetch_chr_wi_data,
+                CHR_CACHE_KEY,
+            )
+            from utils.persistent_cache import clear_cache_by_prefix
+            from utils.data_cache_manager import set_cached_data
+
+            clear_cache_by_prefix(CHR_CACHE_KEY)
+            import time as _time
+            _t0 = _time.time()
+            data = _fetch_chr_wi_data()
+            _dur = _time.time() - _t0
+            county_count = len(data)
+            if county_count > 0:
+                set_cached_data(
+                    source_type='chr',
+                    data={'county_count': county_count, 'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=_dur,
+                    api_source='countyhealthrankings.org',
+                )
+                logger.info("CHR refresh: %d WI counties loaded", county_count)
+                return {'success': county_count, 'failed': 0, 'fallback': 0, 'errors': []}
+            return {
+                'success': 0, 'failed': 1, 'fallback': 0,
+                'errors': [{'county': 'bulk', 'error': 'CHR fetch returned no county data'}],
+            }
+        except Exception as exc:
+            logger.exception("CHR refresh raised unexpectedly: %s", exc)
+            return {
+                'source_type': 'county_health_rankings',
+                'error': f"{type(exc).__name__}: {exc}",
+                'success': 0,
+                'failed': 1,
+            }
+
+
+def refresh_all_cdc_places_copd() -> Dict[str, Any]:
+    """
+    Pre-warm the CDC PLACES COPD persistent cache.
+
+    Clears the current COPD cache entry and re-fetches crude COPD prevalence
+    for all Wisconsin counties via the CDC PLACES Socrata API. Called by the
+    scheduler on the annual track. The underlying _fetch_places_copd_wi()
+    function writes the result back to the persistent cache.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+    with app.app_context():
+        try:
+            from utils.health_metrics_data import (
+                _fetch_places_copd_wi,
+                PLACES_COPD_CACHE_KEY,
+            )
+            from utils.persistent_cache import clear_cache_by_prefix
+            from utils.data_cache_manager import set_cached_data
+
+            clear_cache_by_prefix(PLACES_COPD_CACHE_KEY)
+            import time as _time
+            _t0 = _time.time()
+            data = _fetch_places_copd_wi()
+            _dur = _time.time() - _t0
+            county_count = len(data)
+            if county_count > 0:
+                set_cached_data(
+                    source_type='places_copd',
+                    data={'county_count': county_count, 'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=_dur,
+                    api_source='cdc_places_socrata',
+                )
+                logger.info(
+                    "CDC PLACES COPD refresh: %d WI counties loaded", county_count
+                )
+                return {'success': county_count, 'failed': 0, 'fallback': 0, 'errors': []}
+            return {
+                'success': 0, 'failed': 1, 'fallback': 0,
+                'errors': [
+                    {'county': 'bulk', 'error': 'PLACES COPD fetch returned no county data'}
+                ],
+            }
+        except Exception as exc:
+            logger.exception("PLACES COPD refresh raised unexpectedly: %s", exc)
+            return {
+                'source_type': 'cdc_places_copd',
+                'error': f"{type(exc).__name__}: {exc}",
+                'success': 0,
+                'failed': 1,
+            }
+
+
+def refresh_all_cdc_places_mhlth() -> Dict[str, Any]:
+    """
+    Pre-warm the CDC PLACES mental-distress persistent cache.
+
+    Clears the current MHLTH cache entry and re-fetches frequent mental
+    distress prevalence for all Wisconsin counties via the CDC PLACES Socrata
+    API. Called by the scheduler on the annual track. The underlying
+    _fetch_places_mhlth_wi() function writes the result back to the persistent
+    cache.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+    with app.app_context():
+        try:
+            from utils.health_metrics_data import (
+                _fetch_places_mhlth_wi,
+                PLACES_MHLTH_CACHE_KEY,
+            )
+            from utils.persistent_cache import clear_cache_by_prefix
+            from utils.data_cache_manager import set_cached_data
+
+            clear_cache_by_prefix(PLACES_MHLTH_CACHE_KEY)
+            import time as _time
+            _t0 = _time.time()
+            data = _fetch_places_mhlth_wi()
+            _dur = _time.time() - _t0
+            county_count = len(data)
+            if county_count > 0:
+                set_cached_data(
+                    source_type='places_mhlth',
+                    data={'county_count': county_count, 'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=_dur,
+                    api_source='cdc_places_socrata',
+                )
+                logger.info(
+                    "CDC PLACES MHLTH refresh: %d WI counties loaded", county_count
+                )
+                return {'success': county_count, 'failed': 0, 'fallback': 0, 'errors': []}
+            return {
+                'success': 0, 'failed': 1, 'fallback': 0,
+                'errors': [
+                    {'county': 'bulk', 'error': 'PLACES MHLTH fetch returned no county data'}
+                ],
+            }
+        except Exception as exc:
+            logger.exception("PLACES MHLTH refresh raised unexpectedly: %s", exc)
+            return {
+                'source_type': 'cdc_places_mhlth',
+                'error': f"{type(exc).__name__}: {exc}",
+                'success': 0,
+                'failed': 1,
+            }
+
+
+def refresh_all_wi_dhs_mmr() -> Dict[str, Any]:
+    """
+    Pre-warm the WI DHS MMR immunization persistent cache.
+
+    Clears the current MMR county cache entry and re-fetches MMR (1)
+    vaccination rates for 24-month-old children by county via the WI DHS
+    immunization CSV. Called by the scheduler on the monthly track (~720h).
+    The underlying _fetch_mmr_county_data() function writes the result back
+    to the persistent cache.
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+    with app.app_context():
+        try:
+            from utils.dhs_data import _fetch_mmr_county_data, MMR_COUNTY_CACHE_KEY
+            from utils.persistent_cache import clear_cache_by_prefix
+            from utils.data_cache_manager import set_cached_data
+
+            clear_cache_by_prefix(MMR_COUNTY_CACHE_KEY)
+            import time as _time
+            _t0 = _time.time()
+            data = _fetch_mmr_county_data()
+            _dur = _time.time() - _t0
+            county_count = len(data)
+            if county_count > 0:
+                set_cached_data(
+                    source_type='mmr',
+                    data={'county_count': county_count, 'refreshed_at': datetime.utcnow().isoformat()},
+                    fetch_duration=_dur,
+                    api_source='wi_dhs_immunization_csv',
+                )
+                logger.info("WI DHS MMR refresh: %d counties loaded", county_count)
+                return {'success': county_count, 'failed': 0, 'fallback': 0, 'errors': []}
+            return {
+                'success': 0, 'failed': 1, 'fallback': 0,
+                'errors': [{'county': 'bulk', 'error': 'MMR fetch returned no county data'}],
+            }
+        except Exception as exc:
+            logger.exception("WI DHS MMR refresh raised unexpectedly: %s", exc)
+            return {
+                'source_type': 'wi_dhs_mmr',
+                'error': f"{type(exc).__name__}: {exc}",
+                'success': 0,
+                'failed': 1,
+            }
+
+

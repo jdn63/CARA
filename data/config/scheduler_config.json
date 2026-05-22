@@ -24,12 +24,6 @@
       "module": "utils.data_source_refresher",
       "function": "refresh_all_nws_forecasts"
     },
-    "cdc_epht_heat": {
-      "description": "Annual days >=90F + heat-related ED visit rate per county (annual)",
-      "refresh_interval_hours": 8760,
-      "module": "utils.data_source_refresher",
-      "function": "refresh_all_cdc_epht_heat"
-    },
     "airnow": {
       "description": "Daily AQI per county (daily refresh)",
       "refresh_interval_hours": 24,
@@ -79,7 +73,7 @@
       "function": "refresh_all_dhs_vbd_surveillance"
     },
     "hvi": {
-      "description": "Block-group HVI aggregated to county (quarterly)",
+      "description": "Block-group HVI aggregated to county (quarterly); sole basis for Extreme Heat domain (v29)",
       "refresh_interval_hours": 2160,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_wi_dhs_hvi"
@@ -126,12 +120,6 @@
       "module": "utils.data_source_refresher",
       "function": "refresh_all_county_health_rankings"
     },
-    "hifld_correctional": {
-      "description": "ArcGIS feed of correctional facility locations",
-      "refresh_interval_hours": 2160,
-      "module": "utils.data_source_refresher",
-      "function": "refresh_all_hifld_correctional"
-    },
     "h5n1": {
       "description": "Weekly H5N1 livestock + poultry detections (Wisconsin filter)",
       "refresh_interval_hours": 168,
@@ -151,7 +139,7 @@
       "function": "refresh_all_nndss_enteric"
     },
     "action_plan_source_verifier": {
-      "description": "Quarterly re-verification of action-plan citation URLs",
+      "description": "Quarterly re-verification that action-plan citation URLs still resolve",
       "refresh_interval_hours": 2160,
       "module": "utils.data_source_refresher",
       "function": "refresh_action_plan_source_verifier"

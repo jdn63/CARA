@@ -502,3 +502,6 @@ def get_weather_from_cache(county_name: str) -> Optional[Dict[str, Any]]:
         data['_freshness_status'] = cached.get('freshness_status')
         return data
     return None
+
+
+set_cached_data = save_cached_data

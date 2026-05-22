@@ -174,7 +174,7 @@ def fetch_nfip_claims_wi() -> Dict[str, Any]:
         params = {
             "$filter": f"state eq '{WI_STATE_CODE}'",
             "$select": "countyCode,dateOfLoss,yearOfLoss,amountPaidOnBuildingClaim,"
-                       "amountPaidOnContentsClaim,occupancyType,floodZone",
+                       "amountPaidOnContentsClaim,occupancyType,ratedFloodZone",
             "$top": str(top),
             "$skip": str(skip)
         }
@@ -227,7 +227,7 @@ def fetch_nfip_claims_wi() -> Dict[str, Any]:
         year = str(record.get("yearOfLoss", "Unknown"))
         cd["claims_by_year"][year] = cd["claims_by_year"].get(year, 0) + 1
 
-        zone = record.get("floodZone", "Unknown")
+        zone = record.get("ratedFloodZone", "Unknown")
         cd["claims_by_flood_zone"][zone] = cd["claims_by_flood_zone"].get(zone, 0) + 1
 
     return {"county_data": county_data, "total_records": len(all_records), "fetch_duration": fetch_duration}

@@ -1169,7 +1169,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     extreme_heat_risk_base = extreme_heat_risk
     extreme_heat_risk = max(0.0, min(1.0, extreme_heat_risk))
     logger.info(
-        "Extreme heat risk (SVI already integrated inside EVR vulnerability term): %.2f",
+        "Extreme heat risk (WI DHS HVI vulnerability score; SVI integrated upstream in HVI themes): %.2f",
         extreme_heat_risk,
     )
     
@@ -1774,9 +1774,9 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'pre_svi_score': round(float(extreme_heat_risk_base), 4),
                 'final_score': round(float(extreme_heat_risk), 4),
                 'weighted_contribution': round(weights['extreme_heat'] * (float(extreme_heat_risk) ** p), 4),
-                'svi_adjustment': 'SVI integrated inside EVR vulnerability term (single-pass; v28.9 removed the legacy second-stage blend)',
-                'data_sources': ['NOAA Climate Normals 1991-2020 (static)', 'NWS heat forecasts (cached)', 'Census ACS population 65+/poverty (annual)', 'CDC SVI (annual cache)'],
-                'aggregation': 'EVR framework (exposure × vulnerability × resilience)'
+                'svi_adjustment': 'SVI integrated upstream inside the WI DHS Heat Vulnerability Index (Environmental + Health + Population + Socioeconomic z-score themes); no second-pass SVI multiplier applied here',
+                'data_sources': ['WI DHS Heat Vulnerability Index (ArcGIS MapServer, county-aggregated from block groups)'],
+                'aggregation': 'WI DHS HVI vulnerability_score (0-1, county-aggregated unweighted mean of block-group z-scores)'
             },
             {
                 'name': 'Air Quality',

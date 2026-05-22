@@ -239,13 +239,31 @@ def load_scheduler_config() -> Dict[str, Any]:
 
 def load_scheduler_status():
     """
-    Load scheduler status from global variables or initialize with defaults
+    Load scheduler status from global variables or initialize with defaults.
+
+    Also restores _refresh_timestamps from the persisted DB state so that a
+    Render restart does not trigger an immediate re-fetch of every data source.
+    Previously this dict was always initialised to None, causing each restart
+    to hammer all upstream APIs (notably CDC EPHT, which rate-limits anonymous
+    callers) before the first scheduler tick had run.
     """
     global _scheduler_status, _refresh_timestamps, _refresh_in_progress
-    
+
     # Load configuration
     config = load_scheduler_config()
-    
+
+    # Pull persisted attempt timestamps from Postgres once upfront so we can
+    # restore _refresh_timestamps without a per-source DB round-trip.
+    try:
+        db_status = _store.read_all_status()
+    except Exception as _db_exc:
+        logger.warning(
+            "Could not read scheduler DB state during startup (%s); "
+            "all sources will be treated as needing an immediate refresh.",
+            _db_exc,
+        )
+        db_status = {}
+
     # Initialize status for each data source.
     # Snapshot via list() so a concurrent migration/backfill that mutates
     # the dict mid-iteration cannot raise "dictionary changed size during
@@ -260,14 +278,33 @@ def load_scheduler_status():
                 "refresh_count": 0,
                 "error_count": 0
             }
-            
+
         if source_id not in _refresh_timestamps:
-            _refresh_timestamps[source_id] = None
-            
+            # Restore the last-attempt timestamp from the DB so restarts
+            # do not queue an immediate re-fetch for every source.
+            # We use last_attempt (set on both success and failure) rather
+            # than last_refresh (set on success only) so that a failing
+            # source also respects its configured interval after a restart.
+            db_row = db_status.get(source_id)
+            restored_ts = None
+            if db_row:
+                raw = db_row.get("last_attempt") or db_row.get("last_refresh")
+                if raw:
+                    try:
+                        restored_ts = datetime.fromisoformat(str(raw))
+                    except (ValueError, TypeError):
+                        pass
+            _refresh_timestamps[source_id] = restored_ts
+
         if source_id not in _refresh_in_progress:
             _refresh_in_progress[source_id] = False
-            
-    logger.info(f"Loaded scheduler status for {len(_scheduler_status)} data sources")
+
+    logger.info(
+        "Loaded scheduler status for %d data sources "
+        "(%d timestamps restored from DB)",
+        len(_scheduler_status),
+        sum(1 for v in _refresh_timestamps.values() if v is not None),
+    )
 
 def get_scheduler_status() -> Dict[str, Any]:
     """

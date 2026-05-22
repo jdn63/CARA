@@ -214,21 +214,6 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         freshness_max_age_days=10,
         legacy_aliases=('nws_forecast', 'noaa_nws_forecast'),
     ),
-    # v28.8: CDC Environmental Public Health Tracking (EPHT) replaces
-    # the synthetic statewide heat-days proxy and the NCEI Climate-at-
-    # a-Glance monthly-max heuristic as the primary source for the
-    # Extreme Heat exposure metric. EPHT publishes annually with a
-    # ~12-24 month lag; freshness_max_age_days is widened to 500 days
-    # so the dashboard does not flag an inherently lagged source as
-    # stale. See utils/cdc_epht_heat.py and ARCHITECTURE.md.
-    'cdc_epht_heat': SourceSpec(
-        display_name='CDC EPHT Heat Exposure',
-        description='Annual days >=90F + heat-related ED visit rate per county (annual)',
-        module='utils.data_source_refresher',
-        function='refresh_all_cdc_epht_heat',
-        refresh_interval_hours=8760,
-        freshness_max_age_days=500,
-    ),
     'storm_events': SourceSpec(
         display_name='NOAA Storm Events Database',
         description='Bulk historical severe weather events (weekly refresh)',
@@ -285,16 +270,6 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         refresh_interval_hours=168,
         freshness_max_age_days=30,
         legacy_aliases=('openfema_hma', 'openfema_hma_projects'),
-    ),
-
-    # Other federal
-    'hifld_correctional': SourceSpec(
-        display_name='HIFLD Correctional Facilities',
-        description='ArcGIS feed of correctional facility locations',
-        module='utils.data_source_refresher',
-        function='refresh_all_hifld_correctional',
-        refresh_interval_hours=2160,
-        freshness_max_age_days=180,
     ),
 
     # Internal audit jobs (not upstream feeds, but produce dated
