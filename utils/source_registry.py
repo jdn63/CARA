@@ -70,7 +70,8 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         function='refresh_all_cdc_svi',
         refresh_interval_hours=8760,
         freshness_max_age_days=400,
-        legacy_aliases=('cdc_svi', 'svi_data'),
+        legacy_aliases=('cdc_svi', 'svi_data', 'cdc_svi_bulk',
+                        'cdc_svi_per_county', 'cdc_svi_legacy_api'),
     ),
     'nssp': SourceSpec(
         display_name='CDC NSSP Respiratory ED Visits',
@@ -130,7 +131,7 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         function='refresh_all_cdc_places_copd',
         refresh_interval_hours=8760,
         freshness_max_age_days=400,
-        legacy_aliases=('cdc_places',),
+        legacy_aliases=('cdc_places', 'cdc_places_copd'),
     ),
     'places_mhlth': SourceSpec(
         display_name='CDC PLACES Mental Health Distress',
@@ -139,6 +140,7 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         function='refresh_all_cdc_places_mhlth',
         refresh_interval_hours=8760,
         freshness_max_age_days=400,
+        legacy_aliases=('cdc_places_mhlth',),
     ),
 
     # Wisconsin-specific
@@ -184,7 +186,8 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         function='refresh_all_dhs_vbd_surveillance',
         refresh_interval_hours=168,
         freshness_max_age_days=14,
-        legacy_aliases=('dhs_vbd_surveillance', 'wi_dhs_lyme', 'wi_dhs_wnv'),
+        legacy_aliases=('dhs_vbd_surveillance', 'wi_dhs_lyme', 'wi_dhs_wnv',
+                        'wi_dhs_epht_csv'),
     ),
 
     # Environmental / weather
@@ -195,7 +198,8 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         function='refresh_all_epa_air_quality',
         refresh_interval_hours=24,
         freshness_max_age_days=2,
-        legacy_aliases=('epa_air_quality',),
+        legacy_aliases=('epa_air_quality', 'epa_airnow',
+                        'epa_airnow_multipoint'),
     ),
     # Per review finding M6 (2026-05-20): freshness_max_age_days
     # relaxed from 2 to 10 days so the schedule cadence (refresh

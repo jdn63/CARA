@@ -328,9 +328,9 @@ def calculate_demographic_trend(county_name: str) -> Dict[str, Any]:
     Uses Census ACS data and documented state-level aging trends.
     """
     try:
-        from utils.census_data_loader import get_elderly_population_pct
-        
-        current_pct = get_elderly_population_pct(county_name)
+        from utils.census_data_loader import wisconsin_census
+
+        current_pct = wisconsin_census.get_elderly_population_percentage(county_name)
         
         if current_pct is None or current_pct <= 0:
             current_pct = 18.0

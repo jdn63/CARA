@@ -47,7 +47,6 @@ def _get_fallback(domain: str) -> float:
 
 
 
-from utils.correctional_facilities import CorrectionalFacilitiesConnector
 from utils.dhs_data import get_county_disease_data, get_vaccination_rate, clear_dhs_cache, WISCONSIN_COUNTIES
 from utils.svi_data import get_svi_data
 from utils.strategic_assessments import get_strategic_air_quality_assessment, get_strategic_heat_assessment
@@ -69,7 +68,6 @@ from utils.config_manager import get_config_manager
 from utils.jurisdiction_mapping_code import jurisdiction_mapping
 
 logger = logging.getLogger(__name__)
-# Initializing CorrectionalFacilitiesConnector inline to avoid network errors
 
 # NOTE: The deprecated JURISDICTION_TO_COUNTY dict was removed. It had incorrect IDs
 # (e.g., '40' mapped to Milwaukee instead of Lincoln, tribal IDs were scrambled).
@@ -345,22 +343,10 @@ def load_prison_data() -> Dict[str, Dict]:
                     ],
                     'weights': facility_weights
                 }
-        
-        # Only try to get API data if we already have some required fallback data
-        try:
-            # Get data from correctional facilities connector but with a short timeout
-            from utils.correctional_facilities import CorrectionalFacilitiesConnector
-            connector = CorrectionalFacilitiesConnector()
-            api_prison_data = connector._get_fallback_data()  # Just use fallback data directly
-            
-            # Merge with our base data
-            for county, data in api_prison_data.items():
-                if county not in prison_data:
-                    prison_data[county] = data
-        except Exception as api_e:
-            logger.warning(f"Using static correctional facilities data due to API error: {str(api_e)}")
-            # Continue with our local data - no need to take any action here
-            
+
+        # HIFLD Correctional source was retired; no live or fallback API
+        # data is merged here. The static prison_data assembled above is
+        # the sole source of correctional-facility weights.
         return prison_data
         
     except Exception as e:
