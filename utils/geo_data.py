@@ -164,9 +164,10 @@ def generate_simplified_boundaries(region_type: str) -> Dict:
                 {
                     "type": "Feature",
                     "properties": {
-                        "name": "WEM 1",
+                        "wem_id": "west_central",
+                        "name": "WEM West Central Region",
                         "color": "#FF9F1C",
-                        "counties": ["Barron", "Chippewa", "Clark", "Dunn", "Eau Claire", "Pepin", "Pierce", "Polk", "St. Croix"]
+                        "counties": ["Buffalo", "Chippewa", "Clark", "Dunn", "Eau Claire", "Jackson", "La Crosse", "Monroe", "Pepin", "Pierce", "St. Croix", "Taylor", "Trempealeau"]
                     },
                     "geometry": {
                         "type": "Polygon",

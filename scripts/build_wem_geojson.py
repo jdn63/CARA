@@ -59,7 +59,7 @@ def main():
         print(f"WARNING: unmatched counties in GeoJSON: {unmatched}")
 
     features = []
-    for rid in sorted(grouped.keys(), key=lambda x: int(x)):
+    for rid in sorted(grouped.keys()):
         meta = region_meta[rid]
         features.append({
             'type': 'Feature',

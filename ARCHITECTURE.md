@@ -274,7 +274,7 @@ weights. The EM banner in `templates/components/em_banner.html` makes
 this caveat explicit and is per-session dismissable via
 `sessionStorage`.
 
-WEM regional surface. `data/wem/wem_regions.json` defines 7 WEM regions
+WEM regional surface. `data/wem/wem_regions.json` defines 6 WEM regions
 covering all 72 Wisconsin counties exactly once (no overlap, no gaps).
 `data/geojson/wisconsin_wem_regions.geojson` is built by
 `scripts/build_wem_geojson.py` from the existing county GeoJSON

@@ -42,45 +42,39 @@ def get_all_wem_regions() -> List[Dict[str, Any]]:
             # Default WEM regions data
             default_wem_regions = [
                 {
-                    "id": "1",
-                    "name": "WEM Region 1 - West Central",
-                    "counties": ["Barron", "Buffalo", "Chippewa", "Clark", "Dunn", "Eau Claire", "Jackson", "La Crosse", "Monroe", "Pepin", "Pierce", "Polk", "Rusk", "St. Croix", "Taylor", "Trempealeau"],
-                    "color": "#FF9F1C"
-                },
-                {
-                    "id": "2",
-                    "name": "WEM Region 2 - Northwest",
-                    "counties": ["Ashland", "Bayfield", "Burnett", "Douglas", "Iron", "Price", "Sawyer", "Washburn"],
+                    "id": "northwest",
+                    "name": "WEM Northwest Region",
+                    "counties": ["Ashland", "Barron", "Bayfield", "Burnett", "Douglas", "Iron", "Polk", "Price", "Rusk", "Sawyer", "Washburn"],
                     "color": "#2EC4B6"
                 },
                 {
-                    "id": "3",
-                    "name": "WEM Region 3 - North Central",
-                    "counties": ["Florence", "Forest", "Langlade", "Lincoln", "Marathon", "Oneida", "Portage", "Vilas", "Wood"],
+                    "id": "northeast",
+                    "name": "WEM Northeast Region",
+                    "counties": ["Florence", "Forest", "Langlade", "Lincoln", "Marathon", "Marinette", "Menominee", "Oconto", "Oneida", "Portage", "Shawano", "Vilas", "Wood"],
                     "color": "#E71D36"
                 },
                 {
-                    "id": "4",
-                    "name": "WEM Region 4 - Northeast",
-                    "counties": ["Brown", "Calumet", "Door", "Fond du Lac", "Green Lake", "Kewaunee", "Manitowoc", "Marinette", "Marquette", "Menominee", "Oconto", "Outagamie", "Shawano", "Sheboygan", "Waupaca", "Waushara", "Winnebago"],
-                    "color": "#011627"
+                    "id": "west_central",
+                    "name": "WEM West Central Region",
+                    "counties": ["Buffalo", "Chippewa", "Clark", "Dunn", "Eau Claire", "Jackson", "La Crosse", "Monroe", "Pepin", "Pierce", "St. Croix", "Taylor", "Trempealeau"],
+                    "color": "#FF9F1C"
                 },
                 {
-                    "id": "5",
-                    "name": "WEM Region 5 - Southwest",
-                    "counties": ["Crawford", "Grant", "Iowa", "Juneau", "Lafayette", "Richland", "Sauk", "Vernon"],
+                    "id": "southwest",
+                    "name": "WEM Southwest Region",
+                    "counties": ["Adams", "Columbia", "Crawford", "Dane", "Grant", "Green", "Iowa", "Juneau", "Lafayette", "Richland", "Rock", "Sauk", "Vernon"],
                     "color": "#6A4C93"
                 },
                 {
-                    "id": "6",
-                    "name": "WEM Region 6 - South Central",
-                    "counties": ["Adams", "Columbia", "Dane", "Dodge", "Green", "Jefferson", "Rock"],
-                    "color": "#1982C4"
+                    "id": "east_central",
+                    "name": "WEM East Central Region",
+                    "counties": ["Brown", "Calumet", "Dodge", "Door", "Fond du Lac", "Green Lake", "Kewaunee", "Manitowoc", "Marquette", "Outagamie", "Sheboygan", "Waupaca", "Waushara", "Winnebago"],
+                    "color": "#011627"
                 },
                 {
-                    "id": "7",
-                    "name": "WEM Region 7 - Southeast",
-                    "counties": ["Kenosha", "Milwaukee", "Ozaukee", "Racine", "Walworth", "Washington", "Waukesha"],
+                    "id": "southeast",
+                    "name": "WEM Southeast Region",
+                    "counties": ["Jefferson", "Kenosha", "Milwaukee", "Ozaukee", "Racine", "Walworth", "Washington", "Waukesha"],
                     "color": "#8AC926"
                 }
             ]

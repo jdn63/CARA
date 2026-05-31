@@ -1,7 +1,7 @@
 """
 WEM (Wisconsin Emergency Management) Risk Aggregation Module
 
-Mirrors utils/herc_risk_aggregator.py but rolls risk up to the 7 WEM
+Mirrors utils/herc_risk_aggregator.py but rolls risk up to the 6 WEM
 regions and uses the Emergency Management discipline weights from
 config/risk_weights.yaml (em_overall_risk_weights, em_natural_hazards_*).
 
@@ -70,7 +70,7 @@ def _cache_jurisdiction(jurisdiction_id: str, payload: Dict[str, Any]) -> None:
 
 
 class WEMRiskAggregator:
-    """Roll constituent jurisdiction risk up to the 7 WEM regions under EM weights."""
+    """Roll constituent jurisdiction risk up to the 6 WEM regions under EM weights."""
 
     def __init__(self):
         self.wem_regions = get_all_wem_regions()

@@ -84,6 +84,10 @@ def should_exclude(rel_path: Path) -> bool:
         return True
     if name in EXCLUDE_PATTERNS:
         return True
+    # Per-region statistics JSON files (data/wem, data/herc) are empty
+    # placeholders regenerated on demand at runtime; never ship them.
+    if name.startswith('region_') and name.endswith('_statistics.json'):
+        return True
     if name.startswith('.') and name not in ALLOWED_HIDDEN_NAMES:
         return True
     if rel_path.name == 'tribal_territories.json':

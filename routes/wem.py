@@ -1,7 +1,7 @@
 """
 WEM (Wisconsin Emergency Management) region routes for CARA.
 
-Mirrors routes/herc.py but for the 7 WEM regions, using EM discipline
+Mirrors routes/herc.py but for the 6 WEM regions, using EM discipline
 weights. Phase 1 reuses the regional dashboard template by passing a
 region_kind context variable so labels and links adapt without forking.
 """
