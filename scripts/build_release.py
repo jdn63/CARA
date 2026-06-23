@@ -88,6 +88,11 @@ def should_exclude(rel_path: Path) -> bool:
     # placeholders regenerated on demand at runtime; never ship them.
     if name.startswith('region_') and name.endswith('_statistics.json'):
         return True
+    # config/jurisdiction.yaml is a deployment-specific runtime artifact (the
+    # template ships only jurisdiction.yaml.example + config/samples/). It can
+    # be created on disk by smoke runs; never ship or commit it.
+    if rel_path.as_posix() == 'config/jurisdiction.yaml':
+        return True
     if name.startswith('.') and name not in ALLOWED_HIDDEN_NAMES:
         return True
     if rel_path.name == 'tribal_territories.json':
@@ -103,6 +108,28 @@ def collect_files():
         if not path.is_file():
             continue
         rel = path.relative_to(ROOT)
+        if should_exclude(rel):
+            continue
+        collected.append((path, rel))
+    return collected
+
+
+def collect_template_files():
+    """
+    Collect files for the CARA-template release.
+
+    The template lives in cara_template/ (which collect_files() deliberately
+    excludes from the Wisconsin archive). The template zip must be rooted at
+    cara_template/ so the archive contents sit at the top level, exactly as the
+    CARA-template GitHub repository expects. The same exclude rules apply, with
+    paths evaluated relative to the template directory.
+    """
+    base = ROOT / 'cara_template'
+    collected = []
+    for path in sorted(base.rglob('*')):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(base)
         if should_exclude(rel):
             continue
         collected.append((path, rel))
@@ -144,7 +171,10 @@ def main():
     print(f'Root: {ROOT}')
 
     files = collect_files()
-    print(f'Collected {len(files)} files for inclusion.')
+    print(f'Collected {len(files)} files for the Wisconsin archive.')
+
+    template_files = collect_template_files()
+    print(f'Collected {len(template_files)} files for the template archive.')
 
     cara_zip_name = f'cara_wisconsin_updated.zip'
     template_zip_name = f'cara_template_updated.zip'
@@ -152,8 +182,8 @@ def main():
     cara_zip = build_zip(cara_zip_name, files, version)
     print(f'Created: {cara_zip}  ({cara_zip.stat().st_size // 1024} KB, {len(files)} files)')
 
-    template_zip = build_zip(template_zip_name, files, version)
-    print(f'Created: {template_zip}  ({template_zip.stat().st_size // 1024} KB, {len(files)} files)')
+    template_zip = build_zip(template_zip_name, template_files, version)
+    print(f'Created: {template_zip}  ({template_zip.stat().st_size // 1024} KB, {len(template_files)} files)')
 
     print('Done.')
 

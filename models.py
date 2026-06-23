@@ -4,9 +4,33 @@ from datetime import datetime
 import uuid
 
 # Import SQLAlchemy components for database models
-from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, Float, Index, func
+from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, Float, Index, LargeBinary, func
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from core import Base
+
+
+class PersistentKvCache(Base):
+    """
+    Postgres-backed key/value store for the long-term persistent cache.
+
+    This table replaces the previous file-based pickle cache used by
+    utils/persistent_cache.py. Storing the cache in Postgres (shared by the
+    web service and the scheduler worker) means scheduler refreshes are
+    visible to user requests and the cache survives routine redeploys.
+
+    Values are stored as pickled bytes so any Python object the previous
+    file cache supported continues to work unchanged.
+    """
+    __tablename__ = 'persistent_kv_cache'
+
+    key_hash = Column(String(32), primary_key=True)
+    cache_key = Column(Text, nullable=False)
+    value = Column(LargeBinary, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True, index=True)
+
+    def __repr__(self):
+        return f'<PersistentKvCache {self.cache_key}>'
 
 
 class Feedback(Base):
