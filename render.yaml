@@ -59,6 +59,23 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python -m utils.run_scheduler
     envVars:
+      # The refresh functions call _get_app() -> `from main import app`,
+      # which runs create_app(); create_app() raises ValueError if
+      # SESSION_SECRET is unset. The worker never serves user sessions,
+      # so it just needs a non-empty value -- it does NOT need to match
+      # the web service's secret. Without this every external-data
+      # refresh fails before it starts and the web app falls back to
+      # cache-only forever.
+      - key: SESSION_SECRET
+        generateValue: true
+      # The worker's refresh functions import the full Flask app
+      # (`from main import app` -> create_app()). create_app() starts an
+      # in-process "embedded" scheduler thread UNLESS SCHEDULER_MODE=external.
+      # Without this the worker would run a second, duplicate refresh loop
+      # (plus the dashboard warmer) on top of the run_scheduler loop it
+      # already owns. external = build the app passively, no embedded loop.
+      - key: SCHEDULER_MODE
+        value: external
       - key: DATABASE_URL
         fromDatabase:
           name: cara-db

@@ -22,6 +22,7 @@ Phase 1 caveats:
 import logging
 import time
 from collections import defaultdict
+from math import isfinite
 from statistics import mean
 from typing import Any, Dict, List, Optional
 
@@ -30,6 +31,12 @@ from utils.jurisdiction_mapping_code import jurisdiction_mapping
 from utils.wem_data import get_all_wem_regions
 from utils.data_processor import process_risk_data
 from utils.config_manager import get_config_manager
+from utils.regional_aggregation import (
+    aggregate_detail_blocks,
+    build_regional_provenance,
+    build_regional_data_quality,
+    UTILITIES_SUBKEYS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +141,10 @@ class WEMRiskAggregator:
                 )
             )
             total_by_county: Dict[str, List[float]] = defaultdict(list)
+            # county -> list of full per-jurisdiction risk_data dicts, used by
+            # the shared regional-aggregation core to roll up the detail
+            # blocks (components, metrics, provenance, freshness).
+            risk_by_county: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
             successful = 0
 
             for j in region_jurisdictions:
@@ -152,22 +163,26 @@ class WEMRiskAggregator:
                         # cache_only_context() internally, so no live HTTP fires.
                         risk_data = process_risk_data(jid, discipline=_DISCIPLINE)
                         domain_scores = {
-                            'natural_hazards': risk_data.get('natural_hazards_risk', 0.0),
-                            'health_metrics': risk_data.get('health_risk', 0.0),
-                            'active_shooter': risk_data.get('active_shooter_risk', 0.0),
-                            'extreme_heat': risk_data.get('extreme_heat_risk', 0.0),
-                            'air_quality': risk_data.get('air_quality_risk', 0.0),
-                            'cybersecurity': risk_data.get('cybersecurity_risk', 0.0),
-                            'utilities': risk_data.get('utilities', {}).get('overall', 0.0),
-                            'dam_failure': risk_data.get('dam_failure_risk', 0.0),
-                            'vector_borne_disease': risk_data.get('vector_borne_disease_risk', 0.0),
+                            # No 0.0 defaults: an absent domain stays absent
+                            # (None) so it is excluded from the regional
+                            # composite and weight renormalization rather than
+                            # being coerced into a fabricated zero.
+                            'natural_hazards': risk_data.get('natural_hazards_risk'),
+                            'health_metrics': risk_data.get('health_risk'),
+                            'active_shooter': risk_data.get('active_shooter_risk'),
+                            'extreme_heat': risk_data.get('extreme_heat_risk'),
+                            'air_quality': risk_data.get('air_quality_risk'),
+                            'cybersecurity': risk_data.get('cybersecurity_risk'),
+                            'utilities': (risk_data.get('utilities') or {}).get('overall'),
+                            'dam_failure': risk_data.get('dam_failure_risk'),
+                            'vector_borne_disease': risk_data.get('vector_borne_disease_risk'),
                             # infectious_disease at the jurisdiction level is the
                             # same signal as health_risk (acute infectious-disease
                             # composite score). It is given a separate, smaller
                             # weight in EM mode -- see em_overall_risk_weights.
-                            'infectious_disease': risk_data.get('health_risk', 0.0),
-                            'hazmat_industrial': risk_data.get('hazmat_industrial_risk', 0.0),
-                            'hazmat_agricultural': risk_data.get('hazmat_agricultural_risk', 0.0),
+                            'infectious_disease': risk_data.get('health_risk'),
+                            'hazmat_industrial': risk_data.get('hazmat_industrial_risk'),
+                            'hazmat_agricultural': risk_data.get('hazmat_agricultural_risk'),
                         }
                         _cache_jurisdiction(jid, {
                             'risk_data': risk_data,
@@ -175,7 +190,7 @@ class WEMRiskAggregator:
                         })
 
                     for d in DOMAINS:
-                        domain_by_county[county][d].append(domain_scores.get(d, 0.0))
+                        domain_by_county[county][d].append(domain_scores.get(d))
 
                     nh_detail = risk_data.get('natural_hazards', {}) or {}
                     for comp in NH_COMPONENTS:
@@ -194,6 +209,7 @@ class WEMRiskAggregator:
                                 bucket[ck].append(comps.get(ck, 0.0))
 
                     total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
+                    risk_by_county[county].append(risk_data)
                     successful += 1
 
                 except Exception as e:
@@ -206,13 +222,27 @@ class WEMRiskAggregator:
                 logger.error(f"No successful EM calculations for WEM region {wem_id}")
                 return None
 
-            def _two_stage(by_county: Dict[str, Dict[str, List[float]]], key: str) -> float:
+            def _two_stage(by_county: Dict[str, Dict[str, List[float]]], key: str):
+                """Within-county mean, then across-county mean.
+
+                Only real, finite values are counted; ``None``/NaN/inf samples
+                are skipped so a missing domain is never coerced into a
+                fabricated 0.0. Returns ``None`` when no county has any real
+                value for the key, so the provenance builder excludes it from
+                the composite and from weight renormalization (matching the
+                per-jurisdiction ``_domain_available`` rule).
+                """
                 county_means = []
                 for _c, dmap in by_county.items():
-                    vals = dmap.get(key) or []
+                    vals = [
+                        v for v in (dmap.get(key) or [])
+                        if isinstance(v, (int, float))
+                        and not isinstance(v, bool)
+                        and isfinite(v)
+                    ]
                     if vals:
                         county_means.append(mean(vals))
-                return mean(county_means) if county_means else 0.0
+                return mean(county_means) if county_means else None
 
             natural_hazards_avg = _two_stage(domain_by_county, 'natural_hazards')
             health_avg = _two_stage(domain_by_county, 'health_metrics')
@@ -252,19 +282,50 @@ class WEMRiskAggregator:
                 except Exception:
                     em_weights = {}
 
-            total_risk = (
-                natural_hazards_avg * em_weights.get('natural_hazards', 0.32)
-                + health_avg * em_weights.get('health_metrics', 0.10)
-                + active_shooter_avg * em_weights.get('active_shooter', 0.13)
-                + extreme_heat_avg * em_weights.get('extreme_heat', 0.13)
-                + air_quality_avg * em_weights.get('air_quality', 0.08)
-                + utilities_avg * em_weights.get('utilities', 0.10)
-                + dam_failure_avg * em_weights.get('dam_failure', 0.08)
-                + vbd_avg * em_weights.get('vector_borne_disease', 0.06)
-                + infectious_disease_avg * em_weights.get('infectious_disease', 0.05)
-                + hazmat_industrial_avg * em_weights.get('hazmat_industrial', 0.03)
-                + hazmat_agricultural_avg * em_weights.get('hazmat_agricultural', 0.03)
+            # Only domains that carry real data participate; weights are
+            # renormalized over that surviving set so an unavailable domain is
+            # excluded rather than coerced to a fabricated 0.0. This mirrors
+            # build_regional_provenance, which is the authoritative total.
+            _em_domain_scores = {
+                'natural_hazards': natural_hazards_avg,
+                'health_metrics': health_avg,
+                'active_shooter': active_shooter_avg,
+                'extreme_heat': extreme_heat_avg,
+                'air_quality': air_quality_avg,
+                'utilities': utilities_avg,
+                'dam_failure': dam_failure_avg,
+                'vector_borne_disease': vbd_avg,
+                'infectious_disease': infectious_disease_avg,
+                'hazmat_industrial': hazmat_industrial_avg,
+                'hazmat_agricultural': hazmat_agricultural_avg,
+            }
+            _em_defaults = {
+                'natural_hazards': 0.32, 'health_metrics': 0.10,
+                'active_shooter': 0.13, 'extreme_heat': 0.13,
+                'air_quality': 0.08, 'utilities': 0.10, 'dam_failure': 0.08,
+                'vector_borne_disease': 0.06, 'infectious_disease': 0.05,
+                'hazmat_industrial': 0.03, 'hazmat_agricultural': 0.03,
+            }
+
+            def _avail_score(v):
+                return (
+                    isinstance(v, (int, float))
+                    and not isinstance(v, bool)
+                    and isfinite(v)
+                )
+
+            _present_weight = sum(
+                em_weights.get(k, _em_defaults[k])
+                for k, score in _em_domain_scores.items()
+                if _avail_score(score)
             )
+            total_risk = (
+                sum(
+                    em_weights.get(k, _em_defaults[k]) * score
+                    for k, score in _em_domain_scores.items()
+                    if _avail_score(score)
+                ) / _present_weight
+            ) if _present_weight > 0 else 0.0
 
             aggregated = {
                 'wem_id': wem_id,
@@ -331,6 +392,83 @@ class WEMRiskAggregator:
                         },
                     }
             aggregated['temporal_risk_data'] = temporal_risk_data
+
+            # Roll up the supporting detail blocks (component boxes, metric
+            # tables, nested utilities) via the shared regional-aggregation
+            # core so the WEM dashboard popovers and tiles show real
+            # county-balanced values instead of empty or placeholder data.
+            try:
+                aggregated.update(aggregate_detail_blocks(risk_by_county))
+            except Exception as detail_exc:
+                logger.warning(
+                    f"Failed to aggregate detail blocks for WEM region "
+                    f"{wem_id}: {detail_exc}"
+                )
+
+            # Honest regional score-provenance trace (linear weighted sum of
+            # the aggregated domain scores under EM weights).
+            try:
+                utilities_block = aggregated.get('utilities') or {}
+                utilities_sub_scores = {
+                    k: utilities_block[k]
+                    for k in UTILITIES_SUBKEYS
+                    if isinstance(utilities_block.get(k), (int, float))
+                } or None
+                aggregated['score_provenance'] = build_regional_provenance(
+                    {
+                        'natural_hazards': natural_hazards_avg,
+                        'health_metrics': health_avg,
+                        'active_shooter': active_shooter_avg,
+                        'extreme_heat': extreme_heat_avg,
+                        'air_quality': air_quality_avg,
+                        'cybersecurity': cybersecurity_avg,
+                        'dam_failure': dam_failure_avg,
+                        'vector_borne_disease': vbd_avg,
+                        'infectious_disease': infectious_disease_avg,
+                        'hazmat_industrial': hazmat_industrial_avg,
+                        'hazmat_agricultural': hazmat_agricultural_avg,
+                        'utilities': utilities_avg,
+                    },
+                    weights=em_weights,
+                    discipline_label='Emergency Management',
+                    unique_counties_count=unique_counties_count,
+                    jurisdiction_count=len(region_jurisdictions),
+                    nh_sub_components={
+                        'flood': flood_avg,
+                        'tornado': tornado_avg,
+                        'winter_storm': winter_storm_avg,
+                        'thunderstorm': thunderstorm_avg,
+                        'straight_line_wind': straight_line_wind_avg,
+                    },
+                    utilities_sub_components=utilities_sub_scores,
+                )
+                # The provenance builder is the single source of truth for the
+                # composite total, so the headline score can never diverge from
+                # the trace shown to reviewers.
+                _prov_total = aggregated['score_provenance'].get(
+                    'total_risk_score'
+                )
+                if _prov_total is not None:
+                    aggregated['total_risk_score'] = round(_prov_total, 4)
+            except Exception as prov_exc:
+                logger.warning(
+                    f"Failed to build regional provenance for WEM region "
+                    f"{wem_id}: {prov_exc}"
+                )
+
+            # Regional data quality with most-conservative source freshness.
+            try:
+                aggregated['data_quality'] = build_regional_data_quality(
+                    risk_by_county,
+                    discipline_label='Emergency Management',
+                    unique_counties_count=unique_counties_count,
+                    jurisdiction_count=len(region_jurisdictions),
+                )
+            except Exception as dq_exc:
+                logger.warning(
+                    f"Failed to build regional data quality for WEM region "
+                    f"{wem_id}: {dq_exc}"
+                )
 
             _evict_oldest(_wem_cache, _WEM_MAX)
             aggregated['_cached_at'] = time.time()

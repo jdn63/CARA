@@ -1,0 +1,105 @@
+{# Shared regional detail renderer for WEM and HERC regional dashboards.
+
+   Renders the same numeric Risk Components bars and Key Metrics table the
+   per-jurisdiction _tile_*.html partials show, but from the county-balanced
+   aggregated blocks produced by utils/regional_aggregation.py. Every value
+   here is a real regional aggregate (two-stage county mean for components,
+   per-field sum/mean for metrics) - never a hardcoded placeholder. Fields
+   that cannot be aggregated honestly arrive as "Varies across N counties"
+   strings from the aggregator and are shown verbatim.
+
+   Usage:
+     {% import "dashboard/_regional_detail.html" as rd %}
+     {{ rd.detail_section('flood', risk_data.flood_components, risk_data.flood_metrics) }}
+
+   All macros are safe to call with undefined / missing blocks; they emit
+   nothing rather than raising.
+#}
+{% import "dashboard/_collapsible.html" as col %}
+
+{% macro components_block(components) -%}
+{%- if components and (components.exposure is defined or components.vulnerability is defined or components.resilience is defined) %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Risk Components (regional average)</h6>
+                        <div class="row g-2">
+                            {% if components.exposure is defined %}
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-danger mb-1">Exposure</span>
+                                    <span class="h5">{{ "%.2f"|format(components.exposure) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-danger" style="width: {{ components.exposure * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if components.vulnerability is defined %}
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-warning text-dark mb-1">Vulnerability</span>
+                                    <span class="h5">{{ "%.2f"|format(components.vulnerability) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-warning" style="width: {{ components.vulnerability * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if components.resilience is defined %}
+                            <div class="col-4">
+                                <div class="p-2 border rounded text-center">
+                                    <span class="d-block badge bg-success mb-1">Resilience</span>
+                                    <span class="h5">{{ "%.2f"|format(components.resilience) }}</span>
+                                    <div class="progress mt-1" style="height: 5px;">
+                                        <div class="progress-bar bg-success" style="width: {{ components.resilience * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if components.health_impact is defined or components.climate_multiplier is defined %}
+                        <div class="row g-2 mt-1">
+                            {% if components.health_impact is defined %}
+                            <div class="col-6"><small class="text-muted">Health Impact Factor: <strong>{{ "%.2f"|format(components.health_impact) }}</strong></small></div>
+                            {% endif %}
+                            {% if components.climate_multiplier is defined %}
+                            <div class="col-6"><small class="text-muted">Climate Multiplier: <strong>{{ "%.2f"|format(components.climate_multiplier) }}</strong></small></div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+{%- endif %}
+{%- endmacro %}
+
+{% macro metrics_block(metrics) -%}
+{%- if metrics is mapping and metrics %}
+                    <h6 class="text-muted mb-2">Key Metrics (regional)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Metric</th><th>Value</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for k, v in metrics.items() %}
+                                {% if k not in ['has_real_data'] and v is not none and v is not boolean and (v is string or v is number) %}
+                                <tr>
+                                    <td>{{ k|replace('_', ' ')|title }}</td>
+                                    <td>{% if v is float %}{{ "%.2f"|format(v) }}{% else %}{{ v }}{% endif %}</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+{%- endif %}
+{%- endmacro %}
+
+{% macro detail_section(slug, components, metrics) -%}
+{%- set has_c = components and (components.exposure is defined or components.vulnerability is defined or components.resilience is defined) -%}
+{%- set has_m = metrics is mapping and metrics -%}
+{%- if has_c or has_m -%}
+                    {% call col.section(slug ~ '-regional-details', 'Risk Components & Metrics (regional)') %}
+                        {{ components_block(components) }}
+                        {{ metrics_block(metrics) }}
+                    {% endcall %}
+{%- endif -%}
+{%- endmacro %}

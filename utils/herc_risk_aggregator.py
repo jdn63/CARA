@@ -13,6 +13,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+from math import isfinite
 from statistics import mean, median
 
 from utils.jurisdictions_code import jurisdictions
@@ -20,6 +21,12 @@ from utils.jurisdiction_mapping_code import jurisdiction_mapping
 from utils.herc_data import get_all_herc_regions
 from utils.data_processor import process_risk_data
 from utils.config_manager import get_config_manager
+from utils.regional_aggregation import (
+    aggregate_detail_blocks,
+    build_regional_provenance,
+    build_regional_data_quality,
+    UTILITIES_SUBKEYS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +180,10 @@ class HERCRiskAggregator:
             )
             # county -> list of jurisdiction total_risk_scores
             total_by_county: Dict[str, List[float]] = defaultdict(list)
+            # county -> list of full per-jurisdiction risk_data dicts, used by
+            # the shared regional-aggregation core to roll up the detail
+            # blocks (components, metrics, provenance, freshness).
+            risk_by_county: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
             successful_calculations = 0
 
@@ -196,15 +207,19 @@ class HERCRiskAggregator:
                     else:
                         risk_data = process_risk_data(jurisdiction_id)
                         domain_scores = {
-                            'natural_hazards': risk_data.get('natural_hazards_risk', 0.0),
-                            'health_metrics': risk_data.get('health_risk', 0.0),
-                            'active_shooter': risk_data.get('active_shooter_risk', 0.0),
-                            'extreme_heat': risk_data.get('extreme_heat_risk', 0.0),
-                            'air_quality': risk_data.get('air_quality_risk', 0.0),
-                            'cybersecurity': risk_data.get('cybersecurity_risk', 0.0),
-                            'utilities': risk_data.get('utilities', {}).get('overall', 0.0),
-                            'dam_failure': risk_data.get('dam_failure_risk', 0.0),
-                            'vector_borne_disease': risk_data.get('vector_borne_disease_risk', 0.0),
+                            # No 0.0 defaults: an absent domain stays absent
+                            # (None) so it is excluded from the regional
+                            # composite and weight renormalization rather than
+                            # being coerced into a fabricated zero.
+                            'natural_hazards': risk_data.get('natural_hazards_risk'),
+                            'health_metrics': risk_data.get('health_risk'),
+                            'active_shooter': risk_data.get('active_shooter_risk'),
+                            'extreme_heat': risk_data.get('extreme_heat_risk'),
+                            'air_quality': risk_data.get('air_quality_risk'),
+                            'cybersecurity': risk_data.get('cybersecurity_risk'),
+                            'utilities': (risk_data.get('utilities') or {}).get('overall'),
+                            'dam_failure': risk_data.get('dam_failure_risk'),
+                            'vector_borne_disease': risk_data.get('vector_borne_disease_risk'),
                         }
 
                         # Cache for future use
@@ -215,7 +230,7 @@ class HERCRiskAggregator:
 
                     for domain in DOMAINS:
                         domain_by_county[county][domain].append(
-                            domain_scores.get(domain, 0.0)
+                            domain_scores.get(domain)
                         )
 
                     nh_detail = risk_data.get('natural_hazards', {}) or {}
@@ -235,6 +250,7 @@ class HERCRiskAggregator:
                                 bucket[comp_key].append(components.get(comp_key, 0.0))
 
                     total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
+                    risk_by_county[county].append(risk_data)
                     successful_calculations += 1
 
                 except Exception as e:
@@ -246,19 +262,28 @@ class HERCRiskAggregator:
                 return None
 
             def _two_stage_mean(by_county: Dict[str, Dict[str, List[float]]],
-                                key: str) -> float:
+                                key: str):
                 """Within-county mean, then across-county mean.
 
-                Counties missing the key contribute nothing. Returns 0.0
-                when no county has any value for the key (e.g. a domain
-                where every jurisdiction failed to populate it).
+                Only real, finite values are counted; ``None``/NaN/inf samples
+                are skipped so a missing domain is never coerced into a
+                fabricated 0.0. Returns ``None`` when no county has any real
+                value for the key (a domain that carries no data), so the
+                provenance builder can exclude it from the composite and from
+                weight renormalization, matching the per-jurisdiction
+                ``_domain_available`` rule.
                 """
                 county_means = []
                 for _county, dmap in by_county.items():
-                    vals = dmap.get(key) or []
+                    vals = [
+                        v for v in (dmap.get(key) or [])
+                        if isinstance(v, (int, float))
+                        and not isinstance(v, bool)
+                        and isfinite(v)
+                    ]
                     if vals:
                         county_means.append(mean(vals))
-                return mean(county_means) if county_means else 0.0
+                return mean(county_means) if county_means else None
 
             natural_hazards_avg = _two_stage_mean(domain_by_county, 'natural_hazards')
             health_avg = _two_stage_mean(domain_by_county, 'health_metrics')
@@ -282,16 +307,42 @@ class HERCRiskAggregator:
             config_manager = get_config_manager()
             weights = config_manager.get_overall_weights()
             
-            # Calculate regional total risk score from aggregated domain scores
-            total_risk = (
-                natural_hazards_avg * weights.get('natural_hazards', 0.35) +
-                health_avg * weights.get('health_metrics', 0.20) +
-                active_shooter_avg * weights.get('active_shooter', 0.15) +
-                extreme_heat_avg * weights.get('extreme_heat', 0.15) +
-                cybersecurity_avg * weights.get('cybersecurity', 0.15) +
-                dam_failure_avg * weights.get('dam_failure', 0.0) +
-                vector_borne_disease_avg * weights.get('vector_borne_disease', 0.0)
+            # Calculate regional total risk score from aggregated domain
+            # scores. Only the configured Public Health composite domains are
+            # included (cybersecurity and utilities are supplementary and stay
+            # out of the composite). Weights are renormalized over the domains
+            # that carry data so the total is a true weighted mean, matching
+            # the per-jurisdiction PHRAT renormalization. This value is a
+            # fallback; the authoritative total is taken from the shared
+            # provenance builder below so the headline can never diverge from
+            # the provenance trace shown to reviewers.
+            composite_domain_scores = {
+                'natural_hazards': natural_hazards_avg,
+                'health_metrics': health_avg,
+                'active_shooter': active_shooter_avg,
+                'extreme_heat': extreme_heat_avg,
+                'air_quality': air_quality_avg,
+                'dam_failure': dam_failure_avg,
+                'vector_borne_disease': vector_borne_disease_avg,
+            }
+            # Only domains that carry real data participate; weights are
+            # renormalized over that surviving set so an unavailable domain is
+            # excluded rather than coerced to a fabricated 0.0. This mirrors
+            # build_regional_provenance, which is the authoritative total.
+            _present_weight = sum(
+                weights.get(k, 0.0)
+                for k, score in composite_domain_scores.items()
+                if weights.get(k, 0.0) > 0 and isinstance(score, (int, float))
+                and not isinstance(score, bool) and isfinite(score)
             )
+            total_risk = (
+                sum(
+                    weights.get(k, 0.0) * score
+                    for k, score in composite_domain_scores.items()
+                    if weights.get(k, 0.0) > 0 and isinstance(score, (int, float))
+                    and not isinstance(score, bool) and isfinite(score)
+                ) / _present_weight
+            ) if _present_weight > 0 else 0.0
             
             # Aggregated metrics use the two-stage county mean above so
             # counties with multiple local health departments (e.g.
@@ -366,7 +417,83 @@ class HERCRiskAggregator:
                     }
 
             aggregated_risk['temporal_risk_data'] = temporal_risk_data
-            
+
+            # Roll up the supporting detail blocks (component boxes, metric
+            # tables, nested utilities) via the shared regional-aggregation
+            # core so the regional dashboard popovers and tiles show real
+            # county-balanced values instead of empty or placeholder data.
+            try:
+                detail_blocks = aggregate_detail_blocks(risk_by_county)
+                aggregated_risk.update(detail_blocks)
+            except Exception as detail_exc:
+                logger.warning(
+                    f"Failed to aggregate detail blocks for HERC region "
+                    f"{herc_id}: {detail_exc}"
+                )
+
+            # Honest regional score-provenance trace (linear weighted sum of
+            # the aggregated domain scores; regional totals are linear, not
+            # the per-jurisdiction PHRAT quadratic mean).
+            try:
+                utilities_block = aggregated_risk.get('utilities') or {}
+                utilities_sub_scores = {
+                    k: utilities_block[k]
+                    for k in UTILITIES_SUBKEYS
+                    if isinstance(utilities_block.get(k), (int, float))
+                } or None
+                aggregated_risk['score_provenance'] = build_regional_provenance(
+                    {
+                        'natural_hazards': natural_hazards_avg,
+                        'health_metrics': health_avg,
+                        'active_shooter': active_shooter_avg,
+                        'extreme_heat': extreme_heat_avg,
+                        'air_quality': air_quality_avg,
+                        'cybersecurity': cybersecurity_avg,
+                        'dam_failure': dam_failure_avg,
+                        'vector_borne_disease': vector_borne_disease_avg,
+                        'utilities': utilities_avg,
+                    },
+                    weights=weights,
+                    discipline_label='Public Health',
+                    unique_counties_count=unique_counties_count,
+                    jurisdiction_count=len(region_jurisdictions),
+                    nh_sub_components={
+                        'flood': flood_avg,
+                        'tornado': tornado_avg,
+                        'winter_storm': winter_storm_avg,
+                        'thunderstorm': thunderstorm_avg,
+                        'straight_line_wind': straight_line_wind_avg,
+                    },
+                    utilities_sub_components=utilities_sub_scores,
+                )
+                # The provenance builder is the single source of truth for the
+                # composite total, so the headline score can never diverge from
+                # the trace shown to reviewers.
+                _prov_total = aggregated_risk['score_provenance'].get(
+                    'total_risk_score'
+                )
+                if _prov_total is not None:
+                    aggregated_risk['total_risk_score'] = round(_prov_total, 4)
+            except Exception as prov_exc:
+                logger.warning(
+                    f"Failed to build regional provenance for HERC region "
+                    f"{herc_id}: {prov_exc}"
+                )
+
+            # Regional data quality with most-conservative source freshness.
+            try:
+                aggregated_risk['data_quality'] = build_regional_data_quality(
+                    risk_by_county,
+                    discipline_label='Public Health',
+                    unique_counties_count=unique_counties_count,
+                    jurisdiction_count=len(region_jurisdictions),
+                )
+            except Exception as dq_exc:
+                logger.warning(
+                    f"Failed to build regional data quality for HERC region "
+                    f"{herc_id}: {dq_exc}"
+                )
+
             logger.info(f"Successfully calculated aggregated risk for HERC region {herc_id}: " +
                        f"Total Risk = {aggregated_risk['total_risk_score']:.3f}")
             

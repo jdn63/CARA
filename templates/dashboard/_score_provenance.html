@@ -21,8 +21,13 @@
                             <div><strong>Formula:</strong> {{ risk_data.score_provenance.formula }}</div>
                             <div><strong>Manual check:</strong> {{ risk_data.score_provenance.verification.manual_check }}</div>
                             <div><strong>Weights sum:</strong> {{ risk_data.score_provenance.verification.weights_sum }}</div>
+                            {% if risk_data.score_provenance.method == 'linear_weighted_sum' %}
+                            <div><strong>Weighted sum (Σ wᵢ×Domainᵢ):</strong> {{ risk_data.score_provenance.weighted_sum }}</div>
+                            <div><strong>Final score (regional weighted mean, renormalized over domains with data):</strong> {{ risk_data.score_provenance.total_risk_score }}</div>
+                            {% else %}
                             <div><strong>Weighted sum (Σ wᵢ×Riskᵢ²):</strong> {{ risk_data.score_provenance.weighted_sum }}</div>
                             <div><strong>Final score (√weighted_sum):</strong> {{ risk_data.score_provenance.total_risk_score }}</div>
+                            {% endif %}
                         </div>
 
                         <h6>Primary Domain Breakdown</h6>
@@ -34,7 +39,11 @@
                                         <th>Weight</th>
                                         <th>Pre-SVI Score</th>
                                         <th>Final Score</th>
+                                        {% if risk_data.score_provenance.method == 'linear_weighted_sum' %}
+                                        <th>w×Score</th>
+                                        {% else %}
                                         <th>w×Score²</th>
+                                        {% endif %}
                                         <th>SVI Adjustment</th>
                                         <th>Aggregation Method</th>
                                     </tr>
