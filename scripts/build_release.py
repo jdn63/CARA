@@ -50,6 +50,18 @@ EXCLUDE_EXTENSIONS = {
     '.pyo',
     '.xlsx',
     '.zip',
+    # Raw statistical dataset formats and research artifacts. The runtime only
+    # needs the SPSS .sav file (data/nces/pu_ssocs20.sav); every other format
+    # (.dta Stata, .sas7bdat SAS, .dat ASCII) and the import scripts
+    # (.do/.sas/.sps) are redundant copies of the same data and must never ship.
+    # .pdf covers research codebooks/papers that are not part of the web app.
+    '.pdf',
+    '.dta',
+    '.sas7bdat',
+    '.dat',
+    '.do',
+    '.sas',
+    '.sps',
 }
 
 EXCLUDE_PATTERNS = {
@@ -60,8 +72,8 @@ EXCLUDE_PATTERNS = {
     'imported_utils.txt',
     'mod_direct.txt',
     'mod_from.txt',
-    'pu_ssocs20.sas7bdat',
-    'pu_ssocs20_ASCII.dat',
+    # NCES distribution readme that duplicates data/nces/README.md.
+    'pu_ssocs20_readme.txt',
 }
 
 ALLOWED_HIDDEN_NAMES = {'.env.example', '.gitignore', '.gitattributes', '.github'}
