@@ -1283,3 +1283,158 @@ html {
     .summary-refined .risk-rank { background: #000 !important; color: #fff !important; }
     .summary-refined .pop-tag { background: #fff !important; border: 1px solid #000 !important; }
 }
+
+/* ============================================================
+   Compact categorized risk-tile dashboard (master-detail).
+   Graduated from the CompactCategorized canvas mockup. The compact
+   grid is the default view; clicking a tile opens that domain's
+   existing full-detail card as a wide panel below the grid. Mode is
+   scoped via a body class so it works regardless of the category
+   partials' internal div nesting.
+   ============================================================ */
+
+.compact-dash-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.compact-dash-hint {
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.compact-band {
+    margin-bottom: 1rem;
+}
+.compact-band-header {
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.35rem 0.6rem;
+    border-left: 4px solid #6c757d;
+    background: #f1f3f5;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    color: #212529;
+}
+.compact-band.band-disease .compact-band-header { border-left-color: #dc3545; }
+.compact-band.band-hazards .compact-band-header { border-left-color: #fd7e14; }
+.compact-band.band-environmental .compact-band-header { border-left-color: #0d7377; }
+.compact-band.band-hazmat .compact-band-header { border-left-color: #6f42c1; }
+.compact-band.band-safety .compact-band-header { border-left-color: #1f4788; }
+.compact-band.band-community .compact-band-header { border-left-color: #6c757d; }
+
+.compact-tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 0.6rem;
+}
+
+.compact-risk-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: left;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.7rem 0.8rem;
+    cursor: pointer;
+    width: 100%;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.compact-risk-tile:hover {
+    border-color: #adb5bd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.compact-risk-tile:focus-visible {
+    outline: 3px solid #1f4788;
+    outline-offset: 2px;
+}
+.compact-risk-tile.active {
+    border-color: #1f4788;
+    box-shadow: 0 0 0 2px rgba(31, 71, 136, 0.25);
+}
+.crt-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+.crt-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #212529;
+    line-height: 1.2;
+}
+.crt-weight {
+    font-size: 0.7rem;
+    color: #495057;
+    white-space: nowrap;
+}
+.crt-mid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+.crt-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+}
+.crt-badge {
+    font-size: 0.7rem;
+}
+.crt-bar {
+    display: block;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.crt-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+}
+.crt-bar-success { background-color: #198754; }
+.crt-bar-warning { background-color: #fd7e14; }
+.crt-bar-danger { background-color: #dc3545; }
+.crt-cta {
+    font-size: 0.72rem;
+    color: #1f4788;
+    font-weight: 600;
+}
+.compact-risk-tile.active .crt-cta::after {
+    content: " (open)";
+}
+
+/* Master-detail visibility. Default (compact) view: hide category
+   chrome and all domain cards, reveal only the active one full width. */
+body.compact-dash-mode:not(.show-all-domains) .category-section > .category-header,
+body.compact-dash-mode:not(.show-all-domains) .category-section .freshness-badges {
+    display: none !important;
+}
+body.compact-dash-mode:not(.show-all-domains) .domain-detail {
+    display: none !important;
+}
+body.compact-dash-mode:not(.show-all-domains) .domain-detail.active {
+    display: block !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+/* Collapse empty category-section spacing in compact view. */
+body.compact-dash-mode:not(.show-all-domains) .category-section {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+/* Expand-all view falls back to the full original dashboard layout, so
+   no compact overrides apply there. */

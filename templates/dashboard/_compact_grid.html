@@ -1,0 +1,186 @@
+{# Compact categorized risk-tile overview (graduated from the
+   CompactCategorized canvas mockup). Renders a scannable grid of every
+   risk domain grouped by category. Each tile is a button that opens the
+   matching full-detail panel below it (the existing per-domain card),
+   wired by the script at the bottom of this file.
+
+   All scores and weights are REAL values read straight from risk_data
+   using the same keys and fallbacks as the detail cards; no scoring,
+   weighting, or methodology logic lives here. Public Health and
+   Emergency Management share this view (only the Public Safety weight
+   label varies by discipline_label, exactly as the detail card does). #}
+
+{% macro rt(domain, title, score, weight='') %}
+    {% set sc = score if score is number else 0 %}
+    {% set pct = ([sc * 100, 100]|min) %}
+    {% set lvl = 'danger' if sc > 0.6 else 'warning' if sc > 0.3 else 'success' %}
+    {% set lbl = 'High' if sc > 0.6 else 'Medium' if sc > 0.3 else 'Low' %}
+    <button type="button" class="compact-risk-tile" data-domain="{{ domain }}" aria-expanded="false" aria-controls="detail-{{ domain }}">
+        <span class="crt-top">
+            <span class="crt-title">{{ title }}</span>
+            {% if weight %}<span class="crt-weight">{{ weight }}</span>{% endif %}
+        </span>
+        <span class="crt-mid">
+            <span class="crt-score">{{ "%.2f"|format(sc) }}</span>
+            <span class="badge bg-{{ lvl }} crt-badge">{{ lbl }} Risk</span>
+        </span>
+        <span class="crt-bar" aria-hidden="true">
+            <span class="crt-bar-fill crt-bar-{{ lvl }}" style="width: {{ "%.1f"|format(pct) }}%;"></span>
+        </span>
+        <span class="crt-cta">View details</span>
+    </button>
+{% endmacro %}
+
+{# --- Real score values (mirror the detail-card keys/defaults) --- #}
+{% set s_infectious = risk_data.health_risk if risk_data.health_risk is number
+    else (risk_data.health_metrics.risk_score if (risk_data.health_metrics and risk_data.health_metrics.risk_score is defined and risk_data.health_metrics.risk_score is number) else 0.45) %}
+{% set s_vbd = risk_data.vector_borne_disease_risk if risk_data.vector_borne_disease_risk is number else 0.30 %}
+{% set s_tornado = risk_data.tornado_risk if risk_data.tornado_risk is number else 0.25 %}
+{% set s_thunder = risk_data.thunderstorm_risk if risk_data.thunderstorm_risk is number else 0.10 %}
+{% set s_slw = risk_data.straight_line_wind_risk if risk_data.straight_line_wind_risk is number else 0.20 %}
+{% set s_flood = risk_data.flood_risk if risk_data.flood_risk is number else 0.30 %}
+{% set s_winter = risk_data.winter_storm_risk if risk_data.winter_storm_risk is number else 0.20 %}
+{% set s_air = risk_data.air_quality_risk if risk_data.air_quality_risk is number else 0.30 %}
+{% set s_heat = risk_data.extreme_heat_risk if risk_data.extreme_heat_risk is number else 0.38 %}
+{% set s_dam = risk_data.dam_failure_risk if risk_data.dam_failure_risk is number else 0.30 %}
+{% set s_hz_ind = risk_data.hazmat_industrial_risk if risk_data.hazmat_industrial_risk is number else 0.30 %}
+{% set s_hz_ag = risk_data.hazmat_agricultural_risk if risk_data.hazmat_agricultural_risk is number else 0.30 %}
+{% set s_shooter = risk_data.active_shooter_risk if risk_data.active_shooter_risk is number else 0.32 %}
+{% set s_cyber = risk_data.cybersecurity_risk if risk_data.cybersecurity_risk is number else 0.35 %}
+{% set s_util = risk_data.utilities.overall if (risk_data.utilities is mapping and risk_data.utilities.overall is defined and risk_data.utilities.overall is number) else 0.30 %}
+
+<div class="compact-overview">
+    <div class="compact-dash-controls">
+        <p class="compact-dash-hint mb-0">
+            Select any risk domain to open its full detail, data sources, and Show Work breakdown.
+        </p>
+        <button type="button" id="toggle-all-domains" class="btn btn-outline-secondary btn-sm"
+                aria-pressed="false">Expand all</button>
+    </div>
+
+    <div class="compact-band band-disease">
+        <div class="compact-band-header">Disease and Biological (24% combined weight)</div>
+        <div class="compact-tile-grid">
+            {{ rt('infectious', 'Infectious Disease', s_infectious, '17%') }}
+            {{ rt('vbd', 'Vector-Borne Disease', s_vbd, '7%') }}
+        </div>
+    </div>
+
+    <div class="compact-band band-hazards">
+        <div class="compact-band-header">Natural Hazards (28% combined weight)</div>
+        <div class="compact-tile-grid">
+            {{ rt('tornado', 'Tornado', s_tornado, 'Part of 28%') }}
+            {{ rt('thunderstorm', 'Hail &amp; Lightning', s_thunder, 'Part of 28%') }}
+            {{ rt('straight_line_wind', 'Straight-Line Wind', s_slw, 'Part of 28%') }}
+            {{ rt('flood', 'Flood', s_flood, 'Part of 28%') }}
+            {{ rt('winter_storm', 'Winter Storm', s_winter, 'Part of 28%') }}
+        </div>
+    </div>
+
+    <div class="compact-band band-environmental">
+        <div class="compact-band-header">Environmental (30% combined weight)</div>
+        <div class="compact-tile-grid">
+            {{ rt('air_quality', 'Air Quality', s_air, '12%') }}
+            {{ rt('extreme_heat', 'Extreme Heat', s_heat, '11%') }}
+            {{ rt('dam_failure', 'Dam Failure', s_dam, '7%') }}
+        </div>
+    </div>
+
+    <div class="compact-band band-hazmat">
+        <div class="compact-band-header">Hazardous Materials (6% combined weight)</div>
+        <div class="compact-tile-grid">
+            {{ rt('hazmat_industrial', 'Hazmat &mdash; Industrial', s_hz_ind, 'Fixed-Site') }}
+            {{ rt('hazmat_agricultural', 'Hazmat &mdash; Agricultural', s_hz_ag, 'Rural / Farm') }}
+        </div>
+    </div>
+
+    <div class="compact-band band-safety">
+        <div class="compact-band-header">Public Safety (18% {{ discipline_label|default('Public Health') }} weight + supplementary)</div>
+        <div class="compact-tile-grid">
+            {{ rt('active_shooter', 'Active Shooter', s_shooter, '18%') }}
+            {{ rt('cybersecurity', 'Cybersecurity', s_cyber, 'Supplementary') }}
+        </div>
+    </div>
+
+    <div class="compact-band band-community">
+        <div class="compact-band-header">Community Resources and Utilities (supplementary)</div>
+        <div class="compact-tile-grid">
+            {{ rt('utilities', 'Utilities and Infrastructure', s_util, 'Supplementary') }}
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    document.body.classList.add('compact-dash-mode');
+    function init() {
+        var tiles = document.querySelectorAll('.compact-risk-tile');
+        var toggleAll = document.getElementById('toggle-all-domains');
+        var emptyHint = document.getElementById('domain-detail-empty');
+
+        function panelFor(domain) {
+            return document.querySelector('.domain-detail[data-domain="' + domain + '"]');
+        }
+        function clearActive() {
+            document.querySelectorAll('.domain-detail.active').forEach(function (el) {
+                el.classList.remove('active');
+            });
+            tiles.forEach(function (t) {
+                t.classList.remove('active');
+                t.setAttribute('aria-expanded', 'false');
+            });
+        }
+        function updateEmpty() {
+            if (!emptyHint) return;
+            var anyOpen = document.querySelector('.domain-detail.active') ||
+                          document.body.classList.contains('show-all-domains');
+            emptyHint.style.display = anyOpen ? 'none' : 'block';
+        }
+
+        tiles.forEach(function (tile) {
+            tile.addEventListener('click', function () {
+                var domain = tile.getAttribute('data-domain');
+                var panel = panelFor(domain);
+                if (!panel) return;
+                var wasActive = tile.classList.contains('active');
+                if (document.body.classList.contains('show-all-domains')) {
+                    document.body.classList.remove('show-all-domains');
+                    if (toggleAll) {
+                        toggleAll.setAttribute('aria-pressed', 'false');
+                        toggleAll.textContent = 'Expand all';
+                    }
+                }
+                clearActive();
+                if (!wasActive) {
+                    tile.classList.add('active');
+                    tile.setAttribute('aria-expanded', 'true');
+                    panel.classList.add('active');
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                updateEmpty();
+            });
+        });
+
+        if (toggleAll) {
+            toggleAll.addEventListener('click', function () {
+                var on = document.body.classList.toggle('show-all-domains');
+                toggleAll.setAttribute('aria-pressed', on ? 'true' : 'false');
+                toggleAll.textContent = on ? 'Collapse all' : 'Expand all';
+                if (on) {
+                    tiles.forEach(function (t) { t.setAttribute('aria-expanded', 'true'); });
+                } else {
+                    clearActive();
+                }
+                updateEmpty();
+            });
+        }
+
+        updateEmpty();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>

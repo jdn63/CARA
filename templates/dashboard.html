@@ -6,11 +6,13 @@
 
     {% include "dashboard/_header.html" %}
 
-    {% include "dashboard/_bsta_temporal.html" %}
-
     {% include "dashboard/_score_overview.html" %}
 
-    {% include "dashboard/_score_provenance.html" %}
+    {% include "dashboard/_compact_grid.html" %}
+
+    <p id="domain-detail-empty" class="compact-detail-empty text-muted small mt-2 mb-1">
+        Select a risk domain above to view its full detail, data sources, and Show Work breakdown.
+    </p>
 
     {% include "dashboard/_category_biological.html" %}
 
@@ -24,6 +26,10 @@
 
     {% include "dashboard/_category_community.html" %}
 
+    <div class="dashboard-extra-panels mt-4">
+        {% include "dashboard/_bsta_temporal.html" %}
+        {% include "dashboard/_score_provenance.html" %}
+    </div>
 
 {% include "dashboard/_modals.html" %}
 
