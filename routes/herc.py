@@ -204,7 +204,19 @@ def herc_print_summary(herc_id):
         
         # Add current date for print summary
         current_date = datetime.now().strftime("%B %d, %Y")
-        
+
+        # Build the simplified plain-language top-risk cards from the
+        # aggregated region scores.
+        from utils.summary_content import (
+            region_scores_from_risk_data, build_top_risk_cards,
+            get_summary_page_meta,
+        )
+        region_scores = region_scores_from_risk_data(risk_data)
+        summary_cards = build_top_risk_cards(
+            region_scores, 'public_health', limit=5, risk_data=risk_data,
+        )
+        page_meta = get_summary_page_meta('public_health')
+
         logger.info(f"Successfully generated print summary for HERC region {herc_id} with real risk data")
         
         return render_template('herc_print_summary.html', 
@@ -213,6 +225,9 @@ def herc_print_summary(herc_id):
                              active_discipline='public_health',
                              discipline_label='Public Health',
                              region_kind='HERC',
+                             region_id=herc_id,
+                             summary_cards=summary_cards,
+                             page_meta=page_meta,
                              dashboard_url_prefix='/herc-dashboard')
         
     except Exception as e:

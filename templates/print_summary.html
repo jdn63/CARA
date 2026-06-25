@@ -6,11 +6,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const currentJurisdictionId = '{{ risk_data.jurisdiction_id }}';
     const currentJurisdictionName = '{{ risk_data.location }}';
-    
+
     // Update localStorage to reflect current jurisdiction
     localStorage.setItem('selectedJurisdictionId', currentJurisdictionId);
     localStorage.setItem('selectedJurisdictionName', currentJurisdictionName);
-    
+
     // Update navbar display immediately
     const jurisdictionDisplay = document.getElementById('jurisdiction-display');
     if (jurisdictionDisplay) {
@@ -18,376 +18,126 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<div class="container print-friendly">
-    <div class="row mb-4">
+<div class="container print-friendly summary-refined">
+
+    <div class="row mb-3">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>{% if active_discipline == 'em' %}County Emergency Management Risk Summary{% else %}Risk Assessment Summary{% endif %}</h2>
-                <div class="btn-group">
-                    <a href="{{ back_url if back_url else '/dashboard/' ~ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">
-                        Back to Dashboard
-                    </a>
-                    <a href="/action-plan/{{ risk_data.jurisdiction_id }}" class="btn btn-outline-secondary">
-                        Action Plan
-                    </a>
-                    <button onclick="window.print();" class="btn btn-outline-info">
-                        Print
-                    </button>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h2 class="summary-title mb-1">{% if active_discipline == 'em' %}County Emergency Management Risk Summary{% else %}Risk Assessment Summary{% endif %}</h2>
+                    <p class="summary-sub mb-0">Prepared for {{ risk_data.location }} on {{ current_date }}</p>
+                </div>
+                <div class="btn-group mb-1">
+                    <a href="/action-plan/{{ risk_data.jurisdiction_id }}" class="btn btn-primary">Next: Action Plan</a>
+                    <a href="{{ back_url if back_url else '/dashboard/' ~ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">View Data Dashboard</a>
+                    <button onclick="window.print();" class="btn btn-outline-info">Print</button>
                 </div>
             </div>
-            <p class="text-muted">Generated for: {{ risk_data.location }} on {{ current_date }}</p>
-            <p class="alert alert-info">
-                <span class="badge bg-info">v2.5</span>
-                {% if active_discipline == 'em' %}
-                Comprehensive Wisconsin coverage: 72 counties organized into 6 Wisconsin Emergency Management (WEM) regions.
-                {% else %}
-                Comprehensive Wisconsin coverage: 95 unique public health departments (84 local health departments + 11 tribal nations) across 7 Healthcare Emergency Readiness Coalition (HERC) regions.
-                {% endif %}
-            </p>
-            <div class="alert alert-info mt-2">
-                {% if active_discipline == 'em' %}
-                <strong>Strategic Planning Risk Summary (Emergency Management):</strong> This summary presents hazard scores under the Emergency Management weighting profile, which emphasizes natural-hazard exposure and infrastructure impact to support county emergency management planning. Risk scores reflect structural baseline factors (60%) and seasonal patterns (25%) to inform hazard mitigation plan updates, grant prioritization, and resource allocation. Current events shown for context but do not drive long-term planning recommendations.
-                {% else %}
-                <strong>Strategic Planning Risk Assessment:</strong> This summary provides risk analysis optimized for annual preparedness planning. Risk scores emphasize structural baseline factors (60%) and seasonal patterns (25%) to support strategic resource allocation decisions. Current events shown for context but do not drive long-term planning recommendations.
+        </div>
+    </div>
+
+    {% if page_meta and page_meta.draft_banner %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning mb-0" role="note">
+                {{ page_meta.draft_banner }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-3">
+        <div class="col-12">
+            {% if page_meta and page_meta.purpose %}
+            <p class="summary-lead mb-2">{{ page_meta.purpose }}</p>
+            {% endif %}
+            <div class="summary-section-head">
+                <h3>Top {{ summary_cards|length }} risks for {{ risk_data.location }}</h3>
+                {% if page_meta and page_meta.scale_note %}
+                <p class="scale-note">{{ page_meta.scale_note }}</p>
                 {% endif %}
             </div>
         </div>
     </div>
 
+    {% if summary_cards %}
     <div class="row">
         <div class="col-12">
-            <p class="text-muted small mb-2">
-                {% if active_discipline == 'em' %}
-                Hazard scores below reflect the Emergency Management weighting profile for {{ risk_data.location }} county emergency management planning, with emphasis on natural-hazard exposure and infrastructure impact.
-                {% else %}
-                Risk scores below reflect the Public Health weighting profile for {{ risk_data.location }}, supporting local public health preparedness planning.
-                {% endif %}
-            </p>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Risk Type</th>
-                        <th>Score</th>
-                        <th>Level</th>
-                        <th>Data Source</th>
-                        <th>Calculation Method</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {# Use canonical display scores for consistent alignment with Action Plan #}
-                    {% for risk_name, score in display_scores.items() %}
-                    <tr>
-                        <td>{{ risk_name|format_risk_type }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}</td>
-                        <td>{{ "%.2f"|format(score) }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'danger' if score > 0.6 else 'warning' if score > 0.3 else 'success' }}">
-                                {{ 'High Risk' if score > 0.6 else 'Moderate Risk' if score > 0.3 else 'Low Risk' }}
-                            </span>
-                        </td>
-                        <td>
-                            {# Map risk names to data sources #}
-                            {% if risk_name == 'health' %}
-                                CDC NSSP Emergency Department Visits (data.cdc.gov, weekly)
-                            {% elif risk_name == 'cybersecurity' %}
-                                Census ACS, CDC SVI 2022, WI DOR county budget data (proxy-based model; no live threat API)
-                            {% elif risk_name == 'extreme_heat' %}
-                                NOAA Climate at a Glance API, NWS Alerts API, WI DHS Heat Vulnerability Index (ArcGIS MapServer, county-aggregated), CDC SVI 2022, Census ACS
-                            {% elif risk_name == 'active_shooter' %}
-                                GVA 2023, NCES SSOCS 2019-2020, Census ACS, CDC SVI 2022, CHR 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score
-                            {% elif risk_name == 'air_quality' %}
-                                EPA AirNow API (scheduler-cached), NOAA/WICCI Climate Projections, CDC SVI 2022
-                            {% elif risk_name == 'flood' %}
-                                FEMA NRI (static CSV), NOAA NCEI Storm Events, OpenFEMA NFIP Claims, OpenFEMA Disaster Declarations, CDC SVI, Census ACS
-                            {% elif risk_name == 'tornado' %}
-                                FEMA NRI (static CSV), NOAA NCEI Storm Events, OpenFEMA Disaster Declarations, CDC SVI, Census ACS
-                            {% elif risk_name == 'winter_storm' %}
-                                FEMA NRI (static CSV), NOAA NCEI Storm Events, NOAA/WICCI Climate Projections, CDC SVI, Census ACS
-                            {% elif risk_name == 'thunderstorm' %}
-                                NOAA NCEI Storm Events (hail + lightning EVENT_TYPEs), FEMA NRI (static CSV), CDC SVI, Census ACS, NOAA/EPA Climate Projections
-                            {% elif risk_name == 'straight_line_wind' %}
-                                NOAA NCEI Storm Events (Thunderstorm Wind / High Wind / Strong Wind / Funnel Cloud EVENT_TYPEs), FEMA NRI (static CSV), CDC SVI, Census ACS, NOAA/EPA Climate Projections, SPC derecho climatology
-                            {% elif risk_name == 'dam_failure' %}
-                                WI DNR Dam Safety Database (ArcGIS FeatureServer), USACE National Inventory of Dams (ArcGIS FeatureServer), OpenFEMA NFIP Claims, CDC SVI, Census ACS
-                            {% elif risk_name == 'vector_borne_disease' %}
-                                WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI 2022, NOAA/WICCI Climate Projections, county land cover estimates (NLCD 2021 static)
-                            {% else %}
-                                FEMA NRI, NOAA Historical Data, CDC SVI, Census ACS
-                            {% endif %}
-                        </td>
-                        <td>
-                            {# Map risk names to calculation methods #}
-                            {% if risk_name == 'health' %}
-                                Combined assessment of respiratory illness metrics and vaccination rates
-                            {% elif risk_name == 'cybersecurity' %}
-                                Weighted combination of reported breaches (40%), cybercrime reports (35%), and critical vulnerabilities (25%)
-                            {% elif risk_name == 'extreme_heat' %}
-                                EVR framework: Exposure (FEMA NRI heat risk, climate projections), Vulnerability (4 CDC SVI themes, population aged 65+ (%), urban heat island), Resilience (cooling infrastructure, healthcare capacity). Health impact factor applied.
-                            {% elif risk_name == 'active_shooter' %}
-                                5-domain framework: Historical Incident Density (25%), School & Youth Vulnerability (20%), Social & Community Fragility (20%), Mental Health Risk (20%), Access to Lethal Means (15%)
-                            {% elif risk_name == 'air_quality' %}
-                                Long-term air quality risk based on Canadian wildfire smoke trends (2019-2024) and climate projections (2025-2050)
-                            {% elif risk_name == 'flood' %}
-                                EVR framework: Exposure (FEMA NRI flood risk, river/lake proximity, terrain, precipitation, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), mobile home %), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical event counts and OpenFEMA claims data used for validation.
-                            {% elif risk_name == 'tornado' %}
-                                EVR framework: Exposure (FEMA NRI tornado risk, tornado alley proximity, open terrain, climate trend), Vulnerability (4 CDC SVI themes, mobile home %, population aged 65+ (%), population density), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical tornado events and EF ratings used for validation.
-                            {% elif risk_name == 'winter_storm' %}
-                                EVR framework: Exposure (FEMA NRI winter risk, northern location, lake effect, ice storm climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), power grid vulnerability, rural isolation), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical winter events used for validation.
-                            {% elif risk_name == 'thunderstorm' %}
-                                EVR framework (Hail + Lightning only; v28.6 split from prior single thunderstorm domain): Exposure (NOAA hail EVENT_TYPEs, lightning density, climate trend), Vulnerability (4 CDC SVI themes, population aged 65+ (%), exposed roof/auto stock), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical hail and lightning events used for validation.
-                            {% elif risk_name == 'straight_line_wind' %}
-                                EVR framework (damaging non-tornadic convective wind incl. derechos; v28.6 split from prior single thunderstorm domain): Exposure (NOAA Storm Events wind bucket - Thunderstorm Wind / High Wind / Strong Wind / Funnel Cloud, derecho-corridor climatology, climate trend multiplier), Vulnerability (mobile-home stock dominant + tree-fall susceptibility + 4 CDC SVI themes), Resilience (inverse CDC SVI socioeconomic and housing-transportation themes). NOAA historical wind events used for validation.
-                            {% elif risk_name == 'dam_failure' %}
-                                EVR framework: Exposure (dam density from WI DNR Dam Safety Database, hazard classification severity, flood zone overlap from NFIP claims), Vulnerability (est. % of county population in dam inundation zones based on high/significant hazard dam counts and storage capacity, 4 CDC SVI themes, population aged 65+ (%)), Resilience (per-dam Emergency Action Plan credit from NID plus inverse SVI socioeconomic and housing scores). Real dam inventory data from WI DNR (~4,100 active dams statewide).
-                            {% elif risk_name == 'vector_borne_disease' %}
-                                EVR framework: Exposure (WI DHS EPHT county-level Lyme incidence rates per 100k, WI DHS Vectorborne Disease Program WNV case data, NLCD 2021 forest cover, WI DNR deer density, seasonal factors, WICCI/NOAA climate trend multipliers), Vulnerability (outdoor workforce %, elderly %, rural factor, SVI socioeconomic themes), Resilience (surveillance programs, public awareness, healthcare access). Seasonal adjustment for tick season (Apr-Oct) and mosquito season (Jun-Sep). Data period: 2019-2024.
-                            {% else %}
-                                EVR framework: Exposure-Vulnerability-Resilience calculation with health impact factor
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            {% if active_discipline == 'em' %}
-            <h3>FEMA Core Capabilities and Mitigation Strategies</h3>
-            {% else %}
-            <h3>CDC PHEP Capabilities and Mitigation Strategies</h3>
-            {% endif %}
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Risk Type</th>
-                            <th>{% if active_discipline == 'em' %}Related FEMA Core Capabilities{% else %}Related PHEP Capabilities{% endif %}</th>
-                            <th>Recommended Preparedness Activities</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for risk_name, score in display_scores.items() %}
-                        {% set _ap = (domain_action_plans or {}).get(risk_name) if active_discipline == 'em' else None %}
-                        <tr>
-                            <td>
-                                {{ risk_name|format_risk_type }} Risk{% if risk_name in ['cybersecurity', 'utilities'] %} <span class="badge bg-secondary">Supplementary: Modeled from Proxy Indicators</span>{% endif %}
-                                <br>
-                                <small class="text-muted">Score: {{ "%.2f"|format(score) }}</small>
-                            </td>
-                            <td>
-                                {% if _ap and _ap.framework_capabilities %}
-                                <ul class="mb-0">
-                                    {% for _it in _ap.framework_capabilities['items'] %}
-                                    <li>{{ _it }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% elif risk_name == 'health' %}
-                                <ul class="mb-0">
-                                    <li>Public Health Surveillance and Epidemiological Investigation</li>
-                                    <li>Medical Countermeasure Dispensing and Administration</li>
-                                    <li>Information Sharing</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                </ul>
-                                {% elif risk_name == 'cybersecurity' %}
-                                <ul class="mb-0">
-                                    <li>Information Sharing</li>
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Medical Materiel Management and Distribution</li>
-                                </ul>
-                                {% elif risk_name == 'extreme_heat' %}
-                                <ul class="mb-0">
-                                    <li>Community Preparedness</li>
-                                    <li>Mass Care</li>
-                                    <li>Medical Surge</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                </ul>
-                                {% elif risk_name == 'air_quality' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Public Information and Warning</li>
-                                    <li>Community Preparedness</li>
-                                    <li>Medical Surge</li>
-                                    <li>Environmental Health</li>
-                                </ul>
-                                {% elif risk_name == 'flood' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Mass Care</li>
-                                    <li>Medical Materiel Management and Distribution</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                </ul>
-                                {% elif risk_name == 'tornado' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Mass Care</li>
-                                    <li>Medical Surge</li>
-                                    <li>Fatality Management</li>
-                                </ul>
-                                {% elif risk_name == 'winter_storm' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Mass Care</li>
-                                    <li>Medical Materiel Management and Distribution</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                </ul>
-                                {% elif risk_name == 'thunderstorm' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                    <li>Medical Surge</li>
-                                    <li>Community Preparedness</li>
-                                </ul>
-                                {% elif risk_name == 'active_shooter' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Medical Surge</li>
-                                    <li>Responder Safety and Health</li>
-                                    <li>Information Sharing</li>
-                                </ul>
-                                {% elif risk_name == 'dam_failure' %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Mass Care</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                    <li>Community Preparedness</li>
-                                </ul>
-                                {% elif risk_name == 'vector_borne_disease' %}
-                                <ul class="mb-0">
-                                    <li>Public Health Surveillance and Epidemiological Investigation</li>
-                                    <li>Community Preparedness</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                    <li>Information Sharing</li>
-                                </ul>
-                                {% else %}
-                                <ul class="mb-0">
-                                    <li>Emergency Operations Coordination</li>
-                                    <li>Medical Materiel Management and Distribution</li>
-                                    <li>Emergency Public Information and Warning</li>
-                                    <li>Community Recovery</li>
-                                </ul>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if _ap and _ap.tiers %}
-                                {% for _tier in _ap.tiers %}
-                                <div class="mb-2">
-                                    <strong class="small">{{ _tier.label }}</strong>
-                                    <ul class="mb-0">
-                                        {% for _act in _tier.activities %}
-                                        <li>
-                                            {{ _act.text }}
-                                            {% if _act.source %}
-                                            &nbsp;<small class="text-muted">[<a href="{{ _act.source.url }}" target="_blank" rel="noopener noreferrer">{{ _act.source.org }}: {{ _act.source.title }}</a>]</small>
-                                            {% endif %}
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                                {% endfor %}
-                                {% elif risk_name == 'health' %}
-                                <ul class="mb-0">
-                                    <li>Enhance disease surveillance systems and reporting mechanisms</li>
-                                    <li>Improve vaccination outreach and accessibility</li>
-                                    <li>Establish partnerships with healthcare providers for coordinated response</li>
-                                    <li>Maintain stockpile of essential medical supplies</li>
-                                </ul>
-                                {% elif risk_name == 'cybersecurity' %}
-                                <ul class="mb-0">
-                                    <li>Implement regular cybersecurity training for staff</li>
-                                    <li>Maintain offline backups of critical health data</li>
-                                    <li>Establish incident response protocols</li>
-                                    <li>Regular testing of backup systems and recovery procedures</li>
-                                </ul>
-                                {% elif risk_name == 'extreme_heat' %}
-                                <ul class="mb-0">
-                                    <li>Establish cooling centers in strategic locations</li>
-                                    <li>Develop heat emergency response plans</li>
-                                    <li>Implement early warning system for heat events</li>
-                                </ul>
-                                {% elif risk_name == 'air_quality' %}
-                                <ul class="mb-0">
-                                    <li>Establish air quality monitoring and alert systems</li>
-                                    <li>Develop shelter-in-place protocols for poor air quality</li>
-                                    <li>Implement public health messaging for air quality events</li>
-                                </ul>
-                                {% elif risk_name == 'flood' %}
-                                <ul class="mb-0">
-                                    <li>Update flood emergency response plans</li>
-                                    <li>Pre-position medical and relief supplies</li>
-                                    <li>Establish evacuation protocols and routes</li>
-                                    <li>Maintain emergency communication systems</li>
-                                </ul>
-                                {% elif risk_name == 'tornado' %}
-                                <ul class="mb-0">
-                                    <li>Maintain emergency shelter facilities</li>
-                                    <li>Regular tornado response drills</li>
-                                    <li>Update mass casualty incident plans</li>
-                                    <li>Establish debris management protocols</li>
-                                </ul>
-                                {% elif risk_name == 'winter_storm' %}
-                                <ul class="mb-0">
-                                    <li>Pre-position emergency supplies and equipment</li>
-                                    <li>Establish warming centers</li>
-                                    <li>Develop plans for medication delivery during storms</li>
-                                    <li>Create vulnerable population check-in protocols</li>
-                                </ul>
-                                {% elif risk_name == 'thunderstorm' %}
-                                <ul class="mb-0">
-                                    <li>Maintain emergency alert systems and weather radio networks</li>
-                                    <li>Establish protocols for lightning safety and shelter identification</li>
-                                    <li>Develop flash flood and power outage response procedures</li>
-                                    <li>Create plans for managing downed power lines and damaged infrastructure</li>
-                                </ul>
-                                {% elif risk_name == 'active_shooter' %}
-                                <ul class="mb-0">
-                                    <li>Conduct facility security assessments</li>
-                                    <li>Regular active shooter response training</li>
-                                    <li>Establish trauma care protocols</li>
-                                    <li>Coordinate with law enforcement agencies</li>
-                                </ul>
-                                {% elif risk_name == 'dam_failure' %}
-                                <ul class="mb-0">
-                                    <li>Review and update dam emergency action plans</li>
-                                    <li>Map downstream inundation zones and evacuation routes</li>
-                                    <li>Coordinate with Wisconsin DNR Dam Safety Program</li>
-                                    <li>Conduct dam failure tabletop exercises with downstream communities</li>
-                                </ul>
-                                {% elif risk_name == 'vector_borne_disease' %}
-                                <ul class="mb-0">
-                                    <li>Enhance tick and mosquito surveillance programs</li>
-                                    <li>Develop public education campaigns on tick bite prevention</li>
-                                    <li>Coordinate with WI DHS on Lyme disease reporting and monitoring</li>
-                                    <li>Monitor climate-driven range expansion of tick and mosquito vectors</li>
-                                </ul>
-                                {% else %}
-                                <ul class="mb-0">
-                                    <li>Establish backup power and communications systems</li>
-                                    <li>Develop MOUs with utility providers for priority restoration</li>
-                                    <li>Maintain critical medical supply reserves</li>
-                                    <li>Create fuel contingency plans for emergency vehicles</li>
-                                </ul>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <p><strong>Report Generation Date:</strong> {{ current_date }}</p>
-            <p><small class="text-muted">For methodology details, visit: https://caratool.org/methodology</small></p>
-            <div class="alert alert-warning mt-2 small">
-                This report was generated using CARA (Comprehensive Automated Risk Assessment) <strong>v2.5</strong>, developed as a research project at Georgetown University in collaboration with Wisconsin health departments. While it uses official data sources, users should verify critical information with their authoritative sources when making major decisions.
-                <div class="mt-2">
-                    <strong>Research Tool Notice:</strong> This platform is designed for strategic planning support and educational purposes. All recommendations should be validated through established emergency management protocols and local expertise before implementation.
+            {% for card in summary_cards %}
+            <div class="risk-card risk-card--{{ card.badge }}">
+                <div class="risk-head">
+                    <span class="risk-rank">{{ loop.index }}</span>
+                    <h4 class="risk-name">{{ card.label }}</h4>
+                    <span class="badge bg-{{ card.badge }} rounded-pill">{{ card.level }} Risk &middot; {{ card.score_2dp }}</span>
                 </div>
+
+                {% if card.note %}
+                <p class="risk-note">{{ card.note }}</p>
+                {% endif %}
+
+                {% if card.why or card.impacts %}
+                <div class="risk-grid">
+                    {% if card.why %}
+                    <div>
+                        <p class="risk-label">Why it ranks here</p>
+                        <p class="risk-text">{{ card.why }}</p>
+                        {% if card.drivers %}
+                        <ul class="risk-drivers">
+                            {% for driver in card.drivers %}
+                            <li>{{ driver }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if card.impacts %}
+                    <div>
+                        <p class="risk-label">Likely impacts</p>
+                        <p class="risk-text">{{ card.impacts }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if card.populations or card.local_populations %}
+                <div class="pop-block">
+                    <p class="risk-label">Populations most affected</p>
+                    <div class="pop-tags">
+                        {% for pop in card.local_populations %}
+                        <span class="pop-tag pop-tag--local">{{ pop }}</span>
+                        {% endfor %}
+                        {% for pop in card.populations %}
+                        <span class="pop-tag">{{ pop }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-secondary">Risk scores are not available for this jurisdiction right now.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mt-4 mb-2">
+        <div class="col-12">
+            <h3 class="h5">Next steps</h3>
+            <p class="mb-3">Use the Action Plan to turn these top risks into concrete preparedness activities, or open the data Dashboard to see every hazard and the data behind each score.</p>
+            <div class="btn-group">
+                <a href="/action-plan/{{ risk_data.jurisdiction_id }}" class="btn btn-primary">Go to Action Plan</a>
+                <a href="{{ back_url if back_url else '/dashboard/' ~ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">View Data Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <p class="text-muted small mb-0">Generated by CARA (Comprehensive Automated Risk Assessment) on {{ current_date }}. Methodology: https://caratool.org/methodology</p>
         </div>
     </div>
 </div>

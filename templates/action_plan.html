@@ -25,11 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>{% if active_discipline == 'em' %}Preparedness and Mitigation Action Plan{% else %}Preparedness Action Plan{% endif %}</h2>
                 <div class="btn-group">
-                    <a href="/dashboard/{{ risk_data.jurisdiction_id }}" class="btn btn-outline-primary">
-                        Back to Dashboard
+                    <a href="/dashboard/{{ risk_data.jurisdiction_id }}" class="btn btn-primary">
+                        Next: View Full Dashboard
                     </a>
                     <a href="/print-summary/{{ risk_data.jurisdiction_id }}" class="btn btn-outline-secondary">
-                        Risk Summary
+                        Back to Summary
                     </a>
                 </div>
             </div>

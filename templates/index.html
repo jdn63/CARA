@@ -49,10 +49,10 @@
                 </ul>
 
                 <div class="tab-content" id="selectionTabsContent">
-                    {# Jurisdiction Selection Tab. In Public Health mode the dropdown lists 84 LHDs and navigates to /dashboard/<id>. In Emergency Management mode the same tab swaps to a 72-county dropdown that navigates to /em-dashboard/<county_slug>; EM users think and plan at the county level. #}
+                    {# Jurisdiction Selection Tab. In Public Health mode the dropdown lists 84 LHDs and lands on /print-summary/<id> first (Summary -> Action Plan -> Dashboard). In Emergency Management mode the same tab swaps to a 72-county dropdown that lands on /em-print-summary/<county_slug>; EM users think and plan at the county level. #}
                     <div class="tab-pane fade show active" id="jurisdiction-content" role="tabpanel" aria-labelledby="jurisdiction-tab">
                         {% if active_discipline == 'em' %}
-                        <form id="emCountyForm" action="/em-dashboard/" method="GET">
+                        <form id="emCountyForm" action="/em-print-summary/" method="GET">
                             <div class="mb-3">
                                 <label for="em_county" class="form-label">Select Wisconsin County</label>
                                 <select class="form-select" id="em_county" name="county_slug" required onchange="selectEmCounty(this.value, this.options[this.selectedIndex].text);">
@@ -74,7 +74,7 @@
                             </div>
                         </form>
                         {% else %}
-                        <form id="riskAssessmentForm" action="/dashboard/" method="GET">
+                        <form id="riskAssessmentForm" action="/print-summary/" method="GET">
                             <div class="mb-3">
                                 <label for="jurisdiction" class="form-label">Select Public Health Jurisdiction</label>
                                 <select class="form-select" id="jurisdiction" name="jurisdiction_id" required onchange="selectJurisdiction(this.value, this.options[this.selectedIndex].text);">
@@ -101,7 +101,7 @@
                     {% if active_discipline != 'em' %}
                     <!-- HERC Selection Tab (Public Health discipline) -->
                     <div class="tab-pane fade" id="herc-content" role="tabpanel" aria-labelledby="herc-tab">
-                        <form id="hercAssessmentForm" action="/herc-dashboard/" method="GET">
+                        <form id="hercAssessmentForm" action="/herc-print-summary/" method="GET">
                             <div class="mb-3">
                                 <label for="herc_region" class="form-label">Select HERC Region</label>
                                 <select class="form-select" id="herc_region" name="herc_id" required onchange="selectHercRegion(this.value, this.options[this.selectedIndex].text);">
@@ -129,7 +129,7 @@
                     {% if active_discipline == 'em' %}
                     <!-- WEM Selection Tab (Emergency Management discipline) -->
                     <div class="tab-pane fade" id="wem-content" role="tabpanel" aria-labelledby="wem-tab">
-                        <form id="wemAssessmentForm" action="/wem-dashboard/" method="GET">
+                        <form id="wemAssessmentForm" action="/wem-print-summary/" method="GET">
                             <div class="mb-3">
                                 <label for="wem_region" class="form-label">Select WEM Region</label>
                                 <select class="form-select" id="wem_region" name="wem_id" required onchange="selectWemRegion(this.value, this.options[this.selectedIndex].text);">
@@ -284,8 +284,8 @@
                             localStorage.setItem('selectedJurisdictionId', jurisdictionId);
                             localStorage.setItem('selectedJurisdictionName', jurisdictionName);
                             
-                            // Navigate to the dashboard
-                            window.location.href = `/dashboard/${jurisdictionId}`;
+                            // Land on the summary first (Summary -> Action Plan -> Dashboard)
+                            window.location.href = `/print-summary/${jurisdictionId}`;
                         }
                     }
                     
@@ -295,8 +295,8 @@
                             localStorage.setItem('selectedHercId', hercId);
                             localStorage.setItem('selectedHercName', hercName);
                             
-                            // Navigate to the HERC dashboard
-                            window.location.href = `/herc-dashboard/${hercId}`;
+                            // Land on the HERC summary first (Summary -> Dashboard)
+                            window.location.href = `/herc-print-summary/${hercId}`;
                         }
                     }
 
@@ -304,8 +304,8 @@
                         if (wemId) {
                             localStorage.setItem('selectedWemId', wemId);
                             localStorage.setItem('selectedWemName', wemName);
-                            // Navigate to the WEM dashboard (EM discipline)
-                            window.location.href = `/wem-dashboard/${wemId}`;
+                            // Land on the WEM summary first (Summary -> Dashboard)
+                            window.location.href = `/wem-print-summary/${wemId}`;
                         }
                     }
 
@@ -313,8 +313,8 @@
                         if (countySlug) {
                             localStorage.setItem('selectedEmCountySlug', countySlug);
                             localStorage.setItem('selectedEmCountyName', countyName);
-                            // Navigate to the EM county dashboard
-                            window.location.href = `/em-dashboard/${countySlug}`;
+                            // Land on the EM county summary first (Summary -> Action Plan -> Dashboard)
+                            window.location.href = `/em-print-summary/${countySlug}`;
                         }
                     }
                     

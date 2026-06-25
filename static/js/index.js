@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('selectedJurisdictionId', jurisdictionId);
             localStorage.setItem('selectedJurisdictionName', jurisdictionName);
             
-            // Navigate to the dashboard
-            window.location.href = `/dashboard/${jurisdictionId}`;
+            // Land on the summary first (Summary -> Action Plan -> Dashboard)
+            window.location.href = `/print-summary/${jurisdictionId}`;
         }
     }
     
@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('selectedHercId', hercId);
             localStorage.setItem('selectedHercName', hercName);
             
-            // Navigate to the HERC dashboard
-            window.location.href = `/herc-dashboard/${hercId}`;
+            // Land on the HERC summary first (Summary -> Dashboard)
+            window.location.href = `/herc-print-summary/${hercId}`;
         }
     }
     

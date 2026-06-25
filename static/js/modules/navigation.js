@@ -52,8 +52,8 @@ class NavigationController {
         // Update navbar
         this.updateNavbarDisplay();
         
-        // Navigate to dashboard
-        window.location.href = `/dashboard/${jurisdictionId}`;
+        // Land on the summary first (Summary -> Action Plan -> Dashboard)
+        window.location.href = `/print-summary/${jurisdictionId}`;
     }
 
     /**
@@ -67,8 +67,8 @@ class NavigationController {
         // Store selection
         StorageUtils.setSelectedHercRegion(hercId, hercName);
         
-        // Navigate to HERC dashboard
-        window.location.href = `/herc-dashboard/${hercId}`;
+        // Land on the HERC summary first (Summary -> Dashboard)
+        window.location.href = `/herc-print-summary/${hercId}`;
     }
 
     /**

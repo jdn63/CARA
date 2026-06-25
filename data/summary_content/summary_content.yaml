@@ -1,0 +1,351 @@
+# CARA Summary Page - Plain-Language Content Library
+#
+# This file holds the plain-language descriptions shown on the printable
+# Summary page (jurisdiction, EM county, and regional HERC/WEM views).
+#
+# It is intentionally separate from the risk model. Nothing here changes
+# any score, weight, or threshold. The numeric scores come from CARA's
+# data model; the words below are an editable layer that subject-matter
+# experts can revise without touching code.
+#
+# DRAFT STATUS: The descriptions below were drafted by the CARA team and
+# are awaiting subject-matter-expert review. The Summary page shows a
+# "draft pending expert review" banner reflecting this.
+#
+# Structure
+# ---------
+# page:
+#   purpose_public_health / purpose_em: one-line statement of what the
+#       page is for, shown at the top.
+#   scale_note: plain explanation of the 0.00-1.00 score scale.
+#   draft_banner: the draft-pending-review notice.
+#
+# domains:
+#   <domain_key>:
+#     label:       plain-language hazard name shown on the card.
+#     note:        optional short caveat (e.g. proxy-modeled domains).
+#     why:         shared default - why this hazard can score high.
+#     impacts:     shared default - likely public health / EM impacts.
+#     populations: shared default - groups often hit hardest (a list).
+#     public_health:  optional overrides (why / impacts / populations)
+#                     used only in Public Health mode.
+#     em:             optional overrides used only in Emergency
+#                     Management mode.
+#
+# When a discipline override block is present, its keys replace the
+# shared defaults for that discipline. Anything not overridden falls
+# back to the shared default. This keeps editing simple: write the
+# common version once, and only add an override where the public health
+# and emergency management framing genuinely differ.
+
+page:
+  purpose_public_health: >-
+    This summary highlights the hazards that pose the greatest risk to aid in
+    prioritization and strategic planning.
+  purpose_em: >-
+    This summary highlights the hazards that pose the greatest risk, so your
+    team can focus emergency management planning, exercises, and mitigation
+    funding where they matter most.
+  scale_note: >-
+    Each hazard is scored from 0.00 to 1.00. A score closer to 0 means lower
+    relative risk; a score closer to 1 means higher relative risk. Scores
+    compare this area against the rest of Wisconsin.
+  draft_banner: >-
+    Draft pending expert review. The plain-language descriptions below were
+    drafted by the CARA team and are awaiting review by subject-matter experts.
+    The numeric scores are produced by CARA's data model from official sources.
+
+domains:
+
+  flood:
+    label: Flooding
+    why: >-
+      Flooding scores high where heavy rain, nearby rivers or lakes, flat or
+      low-lying ground, and aging stormwater systems come together. Past flood
+      damage claims and a warming climate that brings heavier downpours push
+      this risk up further.
+    impacts: >-
+      Floods can force evacuations, cut off roads and emergency access, damage
+      homes and clinics, contaminate drinking water, and create mold and
+      injury hazards during cleanup that last long after the water drops.
+    populations:
+      - People living in low-lying areas, floodplains, or near rivers and lakes
+      - Older adults and people with limited mobility who cannot evacuate quickly
+      - Households without a vehicle or reliable transportation
+      - People in basement apartments or poorly maintained housing
+      - Residents who depend on well water, which can be contaminated by floods
+    public_health:
+      impacts: >-
+        Floods can contaminate drinking water and wells, displace residents,
+        interrupt medical care and prescription access, and leave behind mold
+        and injury risks during cleanup that drive longer-term health problems.
+    em:
+      impacts: >-
+        Floods can close roads and bridges, block emergency response, damage
+        critical facilities and utilities, and require swift-water rescue,
+        sheltering, and debris removal over a wide area.
+
+  tornado:
+    label: Tornadoes
+    why: >-
+      Tornado risk reflects how often damaging tornadoes have struck this part
+      of Wisconsin, the amount of open terrain, and the share of housing that
+      is vulnerable, especially manufactured and mobile homes that offer little
+      protection.
+    impacts: >-
+      Tornadoes can cause sudden, severe injuries and deaths, flatten homes and
+      businesses in minutes, knock out power, and leave large amounts of debris
+      that slow recovery.
+    populations:
+      - People living in manufactured or mobile homes
+      - Residents without access to a basement or sturdy shelter
+      - Older adults and people with disabilities who need help taking cover
+      - People who are hard to reach with warnings (language, hearing, or no alerts)
+    em:
+      impacts: >-
+        Tornadoes can produce mass-casualty incidents, destroy housing and
+        critical facilities, generate large debris fields, and require rapid
+        search and rescue, sheltering, and coordinated debris management.
+
+  winter_storm:
+    label: Winter Storms and Extreme Cold
+    why: >-
+      Winter storm risk is higher in colder, northern, and rural parts of the
+      state and where lake-effect snow and ice storms are common. An aging
+      power grid and long distances to help add to the danger.
+    impacts: >-
+      Severe winter weather can knock out power and heat, make roads impassable,
+      cause falls and traffic crashes, and lead to hypothermia and
+      carbon-monoxide poisoning when people use unsafe heating.
+    populations:
+      - Older adults living alone, especially in rural areas
+      - People who depend on electricity for medical equipment or heat
+      - People experiencing homelessness or in poorly insulated housing
+      - Households that cannot afford heating fuel
+      - People in remote areas far from emergency services
+    em:
+      impacts: >-
+        Winter storms can trigger widespread power outages, strand motorists,
+        overwhelm road crews, and require warming shelters and welfare checks
+        across large rural areas with long response times.
+
+  thunderstorm:
+    label: Hail and Lightning Storms
+    why: >-
+      This risk reflects how often severe thunderstorms bring large hail and
+      frequent lightning to the area. A warming climate is making the strongest
+      storms more intense.
+    impacts: >-
+      Hail can damage roofs, vehicles, and crops, while lightning can start
+      fires, injure people outdoors, and damage electronics and power systems.
+    populations:
+      - People who work or spend long periods outdoors
+      - Farmers and others who depend on crops and equipment
+      - People in older or poorly maintained buildings
+      - Households without storm-safe shelter nearby
+
+  straight_line_wind:
+    label: Damaging Straight-Line Winds
+    why: >-
+      This covers strong non-tornado winds, including derechos, that can sweep
+      across Wisconsin. Risk is higher where there is exposed terrain, many
+      trees that can fall, and a large share of manufactured housing.
+    impacts: >-
+      High winds can tear off roofs, topple trees onto homes and power lines,
+      cause long power outages, and block roads with debris.
+    populations:
+      - People living in manufactured or mobile homes
+      - Residents in heavily wooded areas where trees can fall on homes
+      - People who depend on electricity for medical needs
+      - Older adults and others who cannot quickly clear debris or relocate
+    em:
+      impacts: >-
+        Straight-line winds can cause widespread, simultaneous damage across
+        many counties, down power lines and trees, block roads, and require
+        large-scale debris clearance and prolonged power restoration.
+
+  dam_failure:
+    label: Dam Failure
+    why: >-
+      Wisconsin has thousands of dams, many of them old. Risk is higher where
+      there are more high-hazard dams upstream of populated areas and where
+      downstream communities sit in the path of potential flooding.
+    impacts: >-
+      A dam failure can send a fast, dangerous surge of water downstream with
+      little warning, threatening lives, destroying property, and cutting off
+      roads and utilities.
+    populations:
+      - People living or working downstream of a dam
+      - Residents in low-lying areas within potential flood paths
+      - People who would need extra time or help to evacuate quickly
+      - Households unaware they live in a dam inundation zone
+    em:
+      impacts: >-
+        Dam failure can require immediate downstream evacuation, swift-water
+        rescue, and coordination with dam owners and the state, often with very
+        little warning time once a problem is detected.
+
+  extreme_heat:
+    label: Extreme Heat
+    why: >-
+      Extreme heat risk is rising as Wisconsin summers get hotter. Risk is
+      higher in cities with more pavement and less shade, in homes without air
+      conditioning, and where many residents are older or in poor health.
+    impacts: >-
+      Heat waves can cause heat exhaustion, heat stroke, and death, worsen
+      heart and lung conditions, and strain emergency rooms, especially during
+      multi-day events and when the power goes out.
+    populations:
+      - Older adults, especially those living alone
+      - People with chronic illnesses such as heart, lung, or kidney disease
+      - Outdoor workers and people without air conditioning
+      - Young children and pregnant people
+      - People experiencing homelessness
+    em:
+      impacts: >-
+        Extended heat events can drive surges in 911 calls and emergency
+        transports, require cooling centers and welfare checks, and become more
+        dangerous if paired with power outages.
+
+  air_quality:
+    label: Poor Air Quality
+    why: >-
+      Air quality risk has grown as wildfire smoke, much of it drifting in from
+      Canada, becomes more common. Days with unhealthy air are projected to
+      increase in the years ahead.
+    impacts: >-
+      Smoke and poor air quality can trigger asthma and other breathing
+      problems, worsen heart and lung disease, and send more people to clinics
+      and emergency rooms.
+    populations:
+      - People with asthma, COPD, or other lung conditions
+      - People with heart disease
+      - Older adults, young children, and pregnant people
+      - Outdoor workers and people without air filtration at home
+
+  vector_borne_disease:
+    label: Tick- and Mosquito-Borne Disease
+    why: >-
+      Diseases spread by ticks and mosquitoes, such as Lyme disease and West
+      Nile virus, are more common where there is forest and rural land cover.
+      Warming temperatures are lengthening the seasons when ticks and
+      mosquitoes are active.
+    impacts: >-
+      These diseases can cause serious illness and long-term health effects,
+      and cases often rise during warmer months when people spend more time
+      outdoors.
+    populations:
+      - People who work or recreate outdoors
+      - People living in or near wooded and rural areas
+      - Older adults and people with weakened immune systems
+      - Communities with less access to early diagnosis and treatment
+
+  health:
+    label: Infectious Disease and Community Health
+    why: >-
+      This reflects current respiratory illness activity (such as flu, COVID-19,
+      and RSV) together with local vaccination rates. Risk is higher when
+      illness is spreading and fewer people are protected.
+    impacts: >-
+      Outbreaks can overwhelm clinics and hospitals, cause school and workplace
+      absences, and hit hardest among people who are unvaccinated or already in
+      poor health.
+    populations:
+      - Older adults and people with chronic health conditions
+      - Young children and infants
+      - People who are unvaccinated or under-vaccinated
+      - People in congregate settings such as nursing homes and shelters
+      - Communities with limited access to healthcare
+    em:
+      impacts: >-
+        Widespread illness can strain hospitals and EMS, reduce staffing across
+        response agencies, and complicate operations during any concurrent
+        emergency.
+
+  active_shooter:
+    label: Mass Violence and Active Shooter
+    why: >-
+      This estimate combines past incident patterns, characteristics of local
+      schools and community settings, and social and mental-health factors. It
+      is a planning indicator, not a prediction of any specific event.
+    impacts: >-
+      A mass-violence event can cause sudden, severe casualties, lasting trauma
+      for survivors and the community, and a demanding, coordinated response by
+      many agencies.
+    populations:
+      - Students, staff, and families connected to schools
+      - People in crowded public places and large events
+      - Survivors and witnesses who experience lasting trauma
+      - Communities with limited mental-health and crisis resources
+    em:
+      impacts: >-
+        These events require rapid law-enforcement and EMS response, mass-
+        casualty care, family reunification, and long-term recovery and mental-
+        health support across the community.
+
+  cybersecurity:
+    label: Cybersecurity
+    note: >-
+      This score is modeled from proxy indicators (such as community resources
+      and capacity), not from a live threat feed. Treat it as a planning
+      prompt rather than a measured threat level.
+    why: >-
+      Cybersecurity risk is estimated from factors like local resources and
+      capacity to defend and recover. Smaller or under-resourced organizations
+      can be more exposed to ransomware and data breaches.
+    impacts: >-
+      A cyberattack can shut down phones, records, and key systems, expose
+      sensitive data, interrupt services for days or weeks, and disrupt
+      emergency communications.
+    populations:
+      - People who rely on the affected services and records
+      - Patients and clients whose private data could be exposed
+      - Staff who cannot do their jobs when systems are down
+      - Communities served by small agencies with limited IT support
+    em:
+      impacts: >-
+        A cyberattack can disable dispatch, records, and communications systems,
+        forcing a switch to manual operations and complicating response during
+        any concurrent emergency.
+
+  hazmat_industrial:
+    label: Industrial Hazardous Materials
+    why: >-
+      This risk reflects the presence of facilities that store or use hazardous
+      chemicals and the transportation routes that carry them. Areas with more
+      industry and major rail or highway corridors score higher.
+    impacts: >-
+      A chemical release, fire, or explosion can require evacuation or shelter-
+      in-place, cause breathing and chemical-exposure injuries, and contaminate
+      air, soil, or water.
+    populations:
+      - People living or working near industrial facilities
+      - Residents along major rail lines and highways
+      - People who cannot quickly evacuate or shelter in place
+      - Workers and first responders at or near the scene
+    public_health:
+      impacts: >-
+        A chemical release can cause acute breathing and exposure injuries,
+        require decontamination and medical surge, and create longer-term
+        environmental health concerns for nearby residents.
+
+  hazmat_agricultural:
+    label: Agricultural Hazardous Materials
+    why: >-
+      In rural Wisconsin, farms and agricultural suppliers store fertilizers,
+      anhydrous ammonia, and other chemicals. Risk is higher where there is
+      more of this activity and where help is farther away.
+    impacts: >-
+      A spill or release of agricultural chemicals can cause serious breathing
+      and chemical-exposure injuries, require evacuation, and contaminate soil
+      and water supplies.
+    populations:
+      - Farm workers and people living on or near farms
+      - Rural residents far from hospitals and hazmat teams
+      - People who depend on well water that could be contaminated
+      - First responders who may face exposure during response
+    public_health:
+      impacts: >-
+        Agricultural chemical releases can cause acute exposure injuries,
+        require decontamination and rural medical surge, and threaten well water
+        and food supplies for nearby communities.

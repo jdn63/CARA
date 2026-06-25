@@ -1126,3 +1126,160 @@ html {
     margin-left: 0;
     margin-right: 0;
 }
+
+/* ============================================================
+   Refined Summary Pages (Public Health, EM, HERC, WEM)
+   Denser layout, tighter type scale, lighter cards.
+   Scoped under .summary-refined so dashboard cards are untouched.
+   ============================================================ */
+.summary-refined .summary-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    line-height: 1.2;
+}
+.summary-refined .summary-sub {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.summary-refined .summary-lead {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #2c3e50;
+}
+.summary-refined .summary-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 0.4rem;
+}
+.summary-refined .summary-section-head h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin: 0;
+}
+.summary-refined .summary-section-head .scale-note {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 46ch;
+}
+.summary-refined .risk-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.75rem;
+}
+.summary-refined .risk-card--danger  { border-left-color: #c0392b; }
+.summary-refined .risk-card--warning { border-left-color: #c25e00; }
+.summary-refined .risk-card--success { border-left-color: var(--accent-green); }
+.summary-refined .risk-card--accent  { border-left-color: var(--secondary-blue); }
+.summary-refined .risk-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.summary-refined .risk-rank {
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 6px;
+    background: var(--primary-blue);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.summary-refined .risk-name {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    line-height: 1.3;
+}
+.summary-refined .risk-head .badge {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+.summary-refined .risk-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 1.5rem;
+    margin-top: 0.65rem;
+}
+.summary-refined .risk-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent-green);
+    margin: 0 0 0.1rem;
+}
+.summary-refined .risk-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: #2c3e50;
+}
+.summary-refined .risk-note {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0;
+}
+.summary-refined .risk-drivers {
+    margin: 0.35rem 0 0;
+    padding-left: 1.05rem;
+    list-style: disc;
+}
+.summary-refined .risk-drivers li {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #2c3e50;
+    margin-bottom: 0.1rem;
+}
+.summary-refined .pop-block { margin-top: 0.55rem; }
+.summary-refined .pop-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.4rem;
+    margin-top: 0.25rem;
+}
+.summary-refined .pop-tag {
+    font-size: 0.78rem;
+    color: #2c3e50;
+    background: #f4f6f9;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 0.1rem 0.55rem;
+}
+.summary-refined .pop-tag--local {
+    color: #1f4e2c;
+    background: #e6f3ea;
+    border-color: var(--accent-green);
+    font-weight: 600;
+}
+@media (max-width: 575.98px) {
+    .summary-refined .risk-grid { grid-template-columns: 1fr; }
+}
+[data-high-contrast="true"] .summary-refined .risk-card { border-width: 2px; }
+[data-high-contrast="true"] .summary-refined .pop-tag { border-color: #000; }
+@media print {
+    .summary-refined .risk-card {
+        border: 1px solid #000 !important;
+        border-left: 4px solid #000 !important;
+        break-inside: avoid;
+        margin-bottom: 0.5rem;
+    }
+    .summary-refined .risk-rank { background: #000 !important; color: #fff !important; }
+    .summary-refined .pop-tag { background: #fff !important; border: 1px solid #000 !important; }
+}

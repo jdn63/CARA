@@ -347,24 +347,16 @@ def print_summary(jurisdiction_id):
         # Add current date for print summary
         current_date = datetime.now().strftime("%B %d, %Y")
         
-        # Compute canonical display scores for consistent alignment
+        # Compute canonical display scores, then build the simplified
+        # plain-language top-risk cards the Summary page now renders.
         display_scores = compute_display_scores(risk_data)
-
-        # Discipline-aware action plan content layer. Mirrors the
-        # /action-plan view so that the print summary's capabilities and
-        # mitigation strategies section can swap to FEMA Core
-        # Capabilities and EM-appropriate activities in EM mode.
-        from utils.action_plan_content import get_domain_action_plan
-        _ap_domains = (
-            'extreme_heat', 'flood', 'tornado', 'winter_storm',
-            'thunderstorm', 'straight_line_wind',
-            'dam_failure', 'vector_borne_disease',
-            'air_quality', 'active_shooter', 'cybersecurity', 'health',
-            'hazmat_industrial', 'hazmat_agricultural',
+        from utils.summary_content import (
+            build_top_risk_cards, get_summary_page_meta,
         )
-        domain_action_plans = {
-            d: get_domain_action_plan(d, discipline) for d in _ap_domains
-        }
+        summary_cards = build_top_risk_cards(
+            display_scores, discipline, limit=5, risk_data=risk_data,
+        )
+        page_meta = get_summary_page_meta(discipline)
 
         # Build the Back-to-Dashboard link. In EM mode, if the
         # jurisdiction maps to a Wisconsin county (i.e. is reachable via
@@ -382,11 +374,11 @@ def print_summary(jurisdiction_id):
 
         return render_template('print_summary.html', 
                              risk_data=risk_data,
-                             display_scores=display_scores,
+                             summary_cards=summary_cards,
+                             page_meta=page_meta,
                              current_date=current_date,
                              active_discipline=discipline,
                              discipline_label=discipline_label(discipline),
-                             domain_action_plans=domain_action_plans,
                              back_url=back_url)
         
     except Exception as e:

@@ -20,6 +20,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 revision: str = 'b1schedulerstate'
@@ -28,31 +29,49 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _existing_tables() -> set:
+    """Tables already present in the target database.
+
+    The app also creates these tables via db.create_all() at startup, and
+    utils/scheduler_state_store.py runs CREATE TABLE IF NOT EXISTS as a
+    safety net. So by the time this migration runs the tables may already
+    exist; guard each create/drop to stay idempotent on both fresh and
+    already-populated databases.
+    """
+    return set(inspect(op.get_bind()).get_table_names())
+
+
 def upgrade() -> None:
-    op.create_table(
-        'scheduler_source_status',
-        sa.Column('source_id', sa.String(length=64), nullable=False),
-        sa.Column('last_refresh', sa.DateTime(), nullable=True),
-        sa.Column('next_refresh', sa.DateTime(), nullable=True),
-        sa.Column('last_attempt', sa.DateTime(), nullable=True),
-        sa.Column('status', sa.String(length=16), nullable=False, server_default='pending'),
-        sa.Column('last_error', sa.Text(), nullable=True),
-        sa.Column('refresh_count', sa.Integer(), nullable=False, server_default='0'),
-        sa.Column('error_count', sa.Integer(), nullable=False, server_default='0'),
-        sa.Column('in_progress', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-        sa.PrimaryKeyConstraint('source_id'),
-    )
-    op.create_table(
-        'scheduler_heartbeat',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('runner_id', sa.String(length=128), nullable=True),
-        sa.Column('last_beat_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-        sa.Column('started_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-        sa.PrimaryKeyConstraint('id'),
-    )
+    existing = _existing_tables()
+    if 'scheduler_source_status' not in existing:
+        op.create_table(
+            'scheduler_source_status',
+            sa.Column('source_id', sa.String(length=64), nullable=False),
+            sa.Column('last_refresh', sa.DateTime(), nullable=True),
+            sa.Column('next_refresh', sa.DateTime(), nullable=True),
+            sa.Column('last_attempt', sa.DateTime(), nullable=True),
+            sa.Column('status', sa.String(length=16), nullable=False, server_default='pending'),
+            sa.Column('last_error', sa.Text(), nullable=True),
+            sa.Column('refresh_count', sa.Integer(), nullable=False, server_default='0'),
+            sa.Column('error_count', sa.Integer(), nullable=False, server_default='0'),
+            sa.Column('in_progress', sa.Boolean(), nullable=False, server_default=sa.text('FALSE')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.PrimaryKeyConstraint('source_id'),
+        )
+    if 'scheduler_heartbeat' not in existing:
+        op.create_table(
+            'scheduler_heartbeat',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('runner_id', sa.String(length=128), nullable=True),
+            sa.Column('last_beat_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('started_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.PrimaryKeyConstraint('id'),
+        )
 
 
 def downgrade() -> None:
-    op.drop_table('scheduler_heartbeat')
-    op.drop_table('scheduler_source_status')
+    existing = _existing_tables()
+    if 'scheduler_heartbeat' in existing:
+        op.drop_table('scheduler_heartbeat')
+    if 'scheduler_source_status' in existing:
+        op.drop_table('scheduler_source_status')

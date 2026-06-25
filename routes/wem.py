@@ -144,8 +144,20 @@ def wem_print_summary(wem_id):
             'statistics': region_info.get('statistics', {}),
         })
 
-        # Phase 1: WEM print summary reuses the HERC print template via the
-        # region_kind variable. herc_id alias on risk_data preserves links.
+        # Build the simplified plain-language top-risk cards from the
+        # aggregated region scores (EM discipline copy).
+        from utils.summary_content import (
+            region_scores_from_risk_data, build_top_risk_cards,
+            get_summary_page_meta,
+        )
+        region_scores = region_scores_from_risk_data(risk_data)
+        summary_cards = build_top_risk_cards(
+            region_scores, 'em', limit=5, risk_data=risk_data,
+        )
+        page_meta = get_summary_page_meta('em')
+
+        # WEM print summary reuses the shared regional print template via the
+        # region_kind variable.
         return render_template(
             'herc_print_summary.html',
             risk_data=risk_data,
@@ -153,6 +165,9 @@ def wem_print_summary(wem_id):
             region_kind='WEM',
             discipline_label='Emergency Management',
             active_discipline='em',
+            region_id=wem_id,
+            summary_cards=summary_cards,
+            page_meta=page_meta,
             dashboard_url_prefix='/wem-dashboard',
         )
     except Exception as e:
