@@ -697,14 +697,20 @@
     </div>
 
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!--
+    Popover initialization lives inside the content block on purpose.
+    base.html only renders the content block; it defines no scripts block,
+    so a scripts block here would be silently discarded and the popovers would
+    never initialize. This mirrors the jurisdiction dashboard, which inits its
+    popovers from dashboard/_scripts.html inside the content block.
+-->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.map(function(popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl, {
+            container: 'body',
             html: true,
             sanitize: false
         });
