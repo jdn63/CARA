@@ -17,7 +17,7 @@
     {% set lbl = 'High' if sc > 0.6 else 'Medium' if sc > 0.3 else 'Low' %}
     <button type="button" class="compact-risk-tile" data-domain="{{ domain }}" aria-expanded="false" aria-controls="detail-{{ domain }}">
         <span class="crt-top">
-            <span class="crt-title">{{ title }}</span>
+            <span class="crt-title">{{ title|safe }}</span>
             {% if weight %}<span class="crt-weight">{{ weight }}</span>{% endif %}
         </span>
         <span class="crt-mid">
@@ -29,7 +29,7 @@
         </span>
         <span class="crt-cta">View details</span>
     </button>
-    <div class="compact-inline-slot" data-slot="{{ domain }}" role="region" aria-label="{{ title }} details"></div>
+    <div class="compact-inline-slot" data-slot="{{ domain }}" role="region" aria-label="{{ title|safe }} details"></div>
 {% endmacro %}
 
 {# --- Real score values (mirror the detail-card keys/defaults) --- #}
