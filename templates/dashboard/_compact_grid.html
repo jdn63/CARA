@@ -29,6 +29,7 @@
         </span>
         <span class="crt-cta">View details</span>
     </button>
+    <div class="compact-inline-slot" data-slot="{{ domain }}" role="region" aria-label="{{ title }} details"></div>
 {% endmacro %}
 
 {# --- Real score values (mirror the detail-card keys/defaults) --- #}
@@ -52,7 +53,7 @@
 <div class="compact-overview">
     <div class="compact-dash-controls">
         <p class="compact-dash-hint mb-0">
-            Select any risk domain to open its full detail, data sources, and Show Work breakdown.
+            Select any risk domain to expand its full detail inline. Use Expand all to open every domain at once.
         </p>
         <button type="button" id="toggle-all-domains" class="btn btn-outline-secondary btn-sm"
                 aria-pressed="false">Expand all</button>
@@ -116,66 +117,58 @@
     function init() {
         var tiles = document.querySelectorAll('.compact-risk-tile');
         var toggleAll = document.getElementById('toggle-all-domains');
-        var emptyHint = document.getElementById('domain-detail-empty');
 
-        function panelFor(domain) {
+        function slotFor(domain) {
+            return document.querySelector('.compact-inline-slot[data-slot="' + domain + '"]');
+        }
+        function cardFor(domain) {
             return document.querySelector('.domain-detail[data-domain="' + domain + '"]');
         }
-        function clearActive() {
-            document.querySelectorAll('.domain-detail.active').forEach(function (el) {
-                el.classList.remove('active');
-            });
-            tiles.forEach(function (t) {
-                t.classList.remove('active');
-                t.setAttribute('aria-expanded', 'false');
-            });
+
+        // Relocate each detail card once into the full-width slot directly
+        // beneath its tile so it expands in place within the grid.
+        tiles.forEach(function (tile) {
+            var domain = tile.getAttribute('data-domain');
+            var slot = slotFor(domain);
+            var card = cardFor(domain);
+            if (slot && card && card.parentNode !== slot) {
+                slot.appendChild(card);
+            }
+        });
+
+        function setOpen(tile, open) {
+            var slot = slotFor(tile.getAttribute('data-domain'));
+            if (!slot) return;
+            tile.classList.toggle('active', open);
+            tile.setAttribute('aria-expanded', open ? 'true' : 'false');
+            slot.classList.toggle('active', open);
         }
-        function updateEmpty() {
-            if (!emptyHint) return;
-            var anyOpen = document.querySelector('.domain-detail.active') ||
-                          document.body.classList.contains('show-all-domains');
-            emptyHint.style.display = anyOpen ? 'none' : 'block';
+
+        function syncToggleAll() {
+            if (!toggleAll) return;
+            var total = document.querySelectorAll('.compact-inline-slot').length;
+            var openCount = document.querySelectorAll('.compact-inline-slot.active').length;
+            var allOpen = total > 0 && openCount === total;
+            toggleAll.setAttribute('aria-pressed', allOpen ? 'true' : 'false');
+            toggleAll.textContent = allOpen ? 'Collapse all' : 'Expand all';
         }
 
         tiles.forEach(function (tile) {
             tile.addEventListener('click', function () {
-                var domain = tile.getAttribute('data-domain');
-                var panel = panelFor(domain);
-                if (!panel) return;
-                var wasActive = tile.classList.contains('active');
-                if (document.body.classList.contains('show-all-domains')) {
-                    document.body.classList.remove('show-all-domains');
-                    if (toggleAll) {
-                        toggleAll.setAttribute('aria-pressed', 'false');
-                        toggleAll.textContent = 'Expand all';
-                    }
-                }
-                clearActive();
-                if (!wasActive) {
-                    tile.classList.add('active');
-                    tile.setAttribute('aria-expanded', 'true');
-                    panel.classList.add('active');
-                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-                updateEmpty();
+                setOpen(tile, !tile.classList.contains('active'));
+                syncToggleAll();
             });
         });
 
         if (toggleAll) {
             toggleAll.addEventListener('click', function () {
-                var on = document.body.classList.toggle('show-all-domains');
-                toggleAll.setAttribute('aria-pressed', on ? 'true' : 'false');
-                toggleAll.textContent = on ? 'Collapse all' : 'Expand all';
-                if (on) {
-                    tiles.forEach(function (t) { t.setAttribute('aria-expanded', 'true'); });
-                } else {
-                    clearActive();
-                }
-                updateEmpty();
+                var open = toggleAll.getAttribute('aria-pressed') !== 'true';
+                tiles.forEach(function (t) { setOpen(t, open); });
+                syncToggleAll();
             });
         }
 
-        updateEmpty();
+        syncToggleAll();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

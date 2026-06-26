@@ -1413,28 +1413,26 @@ html {
     content: " (open)";
 }
 
-/* Master-detail visibility. Default (compact) view: hide category
-   chrome and all domain cards, reveal only the active one full width. */
-body.compact-dash-mode:not(.show-all-domains) .category-section > .category-header,
-body.compact-dash-mode:not(.show-all-domains) .category-section .freshness-badges {
+/* Inline expansion. JS relocates each detail card into the full-width
+   slot directly beneath its tile, so the original category sections
+   become hidden storage and the detail expands in place within the grid. */
+body.compact-dash-mode .category-section {
     display: none !important;
 }
-body.compact-dash-mode:not(.show-all-domains) .domain-detail {
-    display: none !important;
+.compact-inline-slot {
+    display: none;
 }
-body.compact-dash-mode:not(.show-all-domains) .domain-detail.active {
+.compact-inline-slot.active {
+    display: block;
+    grid-column: 1 / -1;
+    margin: 0.1rem 0 0.5rem;
+}
+.compact-inline-slot > .domain-detail,
+.compact-inline-slot > .domain-detail.active {
     display: block !important;
     flex: 0 0 100% !important;
     max-width: 100% !important;
     width: 100% !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
-/* Collapse empty category-section spacing in compact view. */
-body.compact-dash-mode:not(.show-all-domains) .category-section {
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-}
-/* Expand-all view falls back to the full original dashboard layout, so
-   no compact overrides apply there. */
