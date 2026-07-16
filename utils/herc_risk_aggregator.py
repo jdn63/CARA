@@ -17,7 +17,10 @@ from math import isfinite
 from statistics import mean, median
 
 from utils.jurisdictions_code import jurisdictions
-from utils.jurisdiction_mapping_code import jurisdiction_mapping
+from utils.jurisdiction_mapping_code import (
+    jurisdiction_mapping,
+    get_counties_for_jurisdiction,
+)
 from utils.herc_data import get_all_herc_regions
 from utils.data_processor import process_risk_data
 from utils.config_manager import get_config_manager
@@ -93,12 +96,14 @@ class HERCRiskAggregator:
         counties = region.get('counties', [])
         region_jurisdictions = []
         
-        # Find all jurisdictions that belong to these counties
+        # Find all jurisdictions that belong to these counties. Combined
+        # departments (e.g. Shawano-Menominee) serve multiple counties;
+        # membership holds if ANY served county is in the region.
         for jurisdiction in jurisdictions:
             jurisdiction_id = jurisdiction['id']
-            county = jurisdiction_mapping.get(jurisdiction_id)
-            
-            if county in counties:
+            j_counties = get_counties_for_jurisdiction(jurisdiction_id)
+
+            if any(c in counties for c in j_counties):
                 region_jurisdictions.append(jurisdiction)
         
         logger.info(f"Found {len(region_jurisdictions)} jurisdictions in HERC region {herc_id} ({region.get('name')})")
@@ -129,6 +134,7 @@ class HERCRiskAggregator:
             if not region:
                 logger.error(f"HERC region not found: {herc_id}")
                 return None
+            counties_in_region = set(region.get('counties', []))
             
             # Get all jurisdictions in this region
             region_jurisdictions = self.get_jurisdictions_for_herc_region(herc_id)
@@ -192,12 +198,18 @@ class HERCRiskAggregator:
                     jurisdiction_id = jurisdiction['id']
                     # Use the canonical county mapping so a jurisdiction's
                     # bucket survives any cosmetic name differences between
-                    # jurisdictions_code and herc_data.
-                    county = (
+                    # jurisdictions_code and herc_data. Combined departments
+                    # (e.g. Shawano-Menominee) serve multiple counties, so
+                    # their data is bucketed into EVERY served county that
+                    # belongs to this region.
+                    j_counties = [
+                        c for c in get_counties_for_jurisdiction(jurisdiction_id)
+                        if c in counties_in_region
+                    ] or [
                         jurisdiction_mapping.get(jurisdiction_id)
                         or jurisdiction.get('county')
                         or jurisdiction_id  # last-resort: unique key per jurisdiction
-                    )
+                    ]
 
                     # Check jurisdiction cache first
                     cached_data = _get_cached_jurisdiction_risk(jurisdiction_id)
@@ -228,29 +240,30 @@ class HERCRiskAggregator:
                             'domain_scores': domain_scores
                         })
 
-                    for domain in DOMAINS:
-                        domain_by_county[county][domain].append(
-                            domain_scores.get(domain)
-                        )
-
-                    nh_detail = risk_data.get('natural_hazards', {}) or {}
-                    for comp in NH_COMPONENTS:
-                        nh_by_county[county][comp].append(nh_detail.get(comp, 0.0))
-
-                    temporal_risk_detail = risk_data.get('temporal_risk_detail', {}) or {}
-                    for hazard in TEMPORAL_HAZARDS:
-                        hazard_temporal = temporal_risk_detail.get(hazard)
-                        if isinstance(hazard_temporal, dict):
-                            bucket = temporal_by_county[county][hazard]
-                            bucket['composite_scores'].append(
-                                hazard_temporal.get('composite_score', 0.0)
+                    for county in j_counties:
+                        for domain in DOMAINS:
+                            domain_by_county[county][domain].append(
+                                domain_scores.get(domain)
                             )
-                            components = hazard_temporal.get('temporal_components', {}) or {}
-                            for comp_key in TEMPORAL_COMPONENTS:
-                                bucket[comp_key].append(components.get(comp_key, 0.0))
 
-                    total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
-                    risk_by_county[county].append(risk_data)
+                        nh_detail = risk_data.get('natural_hazards', {}) or {}
+                        for comp in NH_COMPONENTS:
+                            nh_by_county[county][comp].append(nh_detail.get(comp, 0.0))
+
+                        temporal_risk_detail = risk_data.get('temporal_risk_detail', {}) or {}
+                        for hazard in TEMPORAL_HAZARDS:
+                            hazard_temporal = temporal_risk_detail.get(hazard)
+                            if isinstance(hazard_temporal, dict):
+                                bucket = temporal_by_county[county][hazard]
+                                bucket['composite_scores'].append(
+                                    hazard_temporal.get('composite_score', 0.0)
+                                )
+                                components = hazard_temporal.get('temporal_components', {}) or {}
+                                for comp_key in TEMPORAL_COMPONENTS:
+                                    bucket[comp_key].append(components.get(comp_key, 0.0))
+
+                        total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
+                        risk_by_county[county].append(risk_data)
                     successful_calculations += 1
 
                 except Exception as e:

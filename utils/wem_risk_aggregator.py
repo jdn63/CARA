@@ -27,7 +27,10 @@ from statistics import mean
 from typing import Any, Dict, List, Optional
 
 from utils.jurisdictions_code import jurisdictions
-from utils.jurisdiction_mapping_code import jurisdiction_mapping
+from utils.jurisdiction_mapping_code import (
+    jurisdiction_mapping,
+    get_counties_for_jurisdiction,
+)
 from utils.wem_data import get_all_wem_regions
 from utils.data_processor import process_risk_data
 from utils.config_manager import get_config_manager
@@ -90,8 +93,10 @@ class WEMRiskAggregator:
         counties = set(region.get('counties', []))
         out: List[Dict[str, Any]] = []
         for j in jurisdictions:
-            county = jurisdiction_mapping.get(j['id'])
-            if county in counties:
+            # Combined departments (e.g. Shawano-Menominee) serve multiple
+            # counties; membership holds if ANY served county is in region.
+            j_counties = get_counties_for_jurisdiction(j['id'])
+            if any(c in counties for c in j_counties):
                 out.append(j)
         logger.info(
             f"WEM region {wem_id} ({region.get('name')}): {len(out)} jurisdictions "
@@ -109,6 +114,7 @@ class WEMRiskAggregator:
             region = next((r for r in self.wem_regions if r.get('id') == wem_id), None)
             if not region:
                 return None
+            counties_in_region = set(region.get('counties', []))
 
             region_jurisdictions = self.get_jurisdictions_for_wem_region(wem_id)
             if not region_jurisdictions:
@@ -150,9 +156,16 @@ class WEMRiskAggregator:
             for j in region_jurisdictions:
                 try:
                     jid = j['id']
-                    county = (
+                    # Combined departments serve multiple counties; bucket
+                    # this jurisdiction's data into EVERY served county that
+                    # belongs to this region so no county silently vanishes
+                    # from the county-balanced rollup.
+                    j_counties = [
+                        c for c in get_counties_for_jurisdiction(jid)
+                        if c in counties_in_region
+                    ] or [
                         jurisdiction_mapping.get(jid) or j.get('county') or jid
-                    )
+                    ]
                     cached_j = _get_cached_jurisdiction(jid)
                     if cached_j:
                         risk_data = cached_j['risk_data']
@@ -189,27 +202,28 @@ class WEMRiskAggregator:
                             'domain_scores': domain_scores,
                         })
 
-                    for d in DOMAINS:
-                        domain_by_county[county][d].append(domain_scores.get(d))
+                    for county in j_counties:
+                        for d in DOMAINS:
+                            domain_by_county[county][d].append(domain_scores.get(d))
 
-                    nh_detail = risk_data.get('natural_hazards', {}) or {}
-                    for comp in NH_COMPONENTS:
-                        nh_by_county[county][comp].append(nh_detail.get(comp, 0.0))
+                        nh_detail = risk_data.get('natural_hazards', {}) or {}
+                        for comp in NH_COMPONENTS:
+                            nh_by_county[county][comp].append(nh_detail.get(comp, 0.0))
 
-                    temporal_detail = risk_data.get('temporal_risk_detail', {}) or {}
-                    for hz in TEMPORAL_HAZARDS:
-                        hd = temporal_detail.get(hz)
-                        if isinstance(hd, dict):
-                            bucket = temporal_by_county[county][hz]
-                            bucket['composite_scores'].append(
-                                hd.get('composite_score', 0.0)
-                            )
-                            comps = hd.get('temporal_components', {}) or {}
-                            for ck in TEMPORAL_COMPONENTS:
-                                bucket[ck].append(comps.get(ck, 0.0))
+                        temporal_detail = risk_data.get('temporal_risk_detail', {}) or {}
+                        for hz in TEMPORAL_HAZARDS:
+                            hd = temporal_detail.get(hz)
+                            if isinstance(hd, dict):
+                                bucket = temporal_by_county[county][hz]
+                                bucket['composite_scores'].append(
+                                    hd.get('composite_score', 0.0)
+                                )
+                                comps = hd.get('temporal_components', {}) or {}
+                                for ck in TEMPORAL_COMPONENTS:
+                                    bucket[ck].append(comps.get(ck, 0.0))
 
-                    total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
-                    risk_by_county[county].append(risk_data)
+                        total_by_county[county].append(risk_data.get('total_risk_score', 0.0))
+                        risk_by_county[county].append(risk_data)
                     successful += 1
 
                 except Exception as e:

@@ -107,3 +107,51 @@ class TestDomainExclusionRenormalizes:
             unique_counties_count=5, jurisdiction_count=8)
         assert abs(p['verification']['weights_sum'] - 0.94) < 1e-9
         assert abs(p['total_risk_score'] - round(self._manual_total(scores), 4)) < 1e-3
+
+
+class TestMultiCountyJurisdictionCoverage:
+    """Combined health departments must credit EVERY county they serve.
+
+    Shawano-Menominee Counties HD (id 45) and Washington Ozaukee Public
+    Health (id 61) each serve two counties. If regional aggregation only
+    credits one, Shawano and Washington silently vanish from WEM/HERC
+    county rollups and the tool disagrees with the official WEM region
+    composition.
+    """
+
+    def test_get_counties_for_jurisdiction(self):
+        from utils.jurisdiction_mapping_code import get_counties_for_jurisdiction
+        assert set(get_counties_for_jurisdiction('45')) == {'Shawano', 'Menominee'}
+        assert set(get_counties_for_jurisdiction('61')) == {'Washington', 'Ozaukee'}
+        assert get_counties_for_jurisdiction('16') == ['Dane']
+        assert get_counties_for_jurisdiction('does-not-exist') == []
+
+    def test_every_wem_county_has_jurisdiction_coverage(self):
+        import json
+        from utils.jurisdiction_mapping_code import get_counties_for_jurisdiction
+        from utils.data_processor import get_wi_jurisdictions
+        covered = set()
+        for j in get_wi_jurisdictions():
+            covered.update(get_counties_for_jurisdiction(j['id']))
+        with open('data/wem/wem_regions.json') as f:
+            regions = json.load(f)
+        for region in regions:
+            missing = set(region['counties']) - covered
+            assert not missing, (
+                f"WEM region {region['id']} counties without any covering "
+                f"jurisdiction: {sorted(missing)}"
+            )
+
+    def test_every_herc_county_has_jurisdiction_coverage(self):
+        from utils.jurisdiction_mapping_code import get_counties_for_jurisdiction
+        from utils.data_processor import get_wi_jurisdictions
+        from utils.herc_data import get_all_herc_regions
+        covered = set()
+        for j in get_wi_jurisdictions():
+            covered.update(get_counties_for_jurisdiction(j['id']))
+        for region in get_all_herc_regions():
+            missing = set(region['counties']) - covered
+            assert not missing, (
+                f"HERC region {region['id']} counties without any covering "
+                f"jurisdiction: {sorted(missing)}"
+            )

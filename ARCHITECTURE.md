@@ -325,6 +325,24 @@ mirrors the two-stage county-mean rollup in
 dict aliases `herc_id = wem_id` so the shared regional dashboard
 template can consume it without forking.
 
+Multi-county health departments (2026-07-16). Two Wisconsin LHDs serve
+two counties each: Shawano-Menominee Counties Health Department
+(jurisdiction id 45) and Washington Ozaukee Public Health Department
+(id 61). `utils/jurisdiction_mapping_code.py` remains one-to-one
+(id -> primary county) for single-county lookups, but regional
+aggregation must use `get_counties_for_jurisdiction()` (same module),
+which returns every served county via the `multi_county_jurisdictions`
+override. Both `utils/herc_risk_aggregator.py` and
+`utils/wem_risk_aggregator.py` use it for region membership and bucket
+the jurisdiction's scores into EVERY served county that belongs to the
+region. Before this fix, Shawano and Washington silently vanished from
+the county-balanced rollup (Northeast WEM showed 12 of 13 counties,
+Southeast 7 of 8), so the tool disagreed with the official WEM region
+composition at wem.wi.gov/regional-offices. Regression coverage:
+`tests/test_regional_aggregation_integrity.py`
+(TestMultiCountyJurisdictionCoverage) asserts every county in
+`data/wem/wem_regions.json` has at least one covering jurisdiction.
+
 Shared regional dashboard. `templates/herc_dashboard.html` is shared
 between HERC (PH, default) and WEM (EM) via Jinja `set` defaults at the
 top of the template:

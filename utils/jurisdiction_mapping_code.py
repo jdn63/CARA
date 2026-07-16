@@ -105,3 +105,28 @@ jurisdiction_mapping = {
     'T10': 'Burnett',   # St. Croix Chippewa Indians of Wisconsin
     'T11': 'Shawano',   # Stockbridge-Munsee Community
 }
+
+# Jurisdictions whose health department serves MORE THAN ONE county.
+# jurisdiction_mapping above is one-to-one by design (id -> primary
+# county), which is fine for single-county lookups but silently drops
+# the second county from regional (HERC/WEM) county rollups. Regional
+# aggregators must use get_counties_for_jurisdiction() so both counties
+# are represented. Source: wi_health_departments.json department names.
+multi_county_jurisdictions = {
+    '45': ['Shawano', 'Menominee'],   # Shawano-Menominee Counties Health Department
+    '61': ['Washington', 'Ozaukee'],  # Washington Ozaukee Public Health Department
+}
+
+
+def get_counties_for_jurisdiction(jurisdiction_id):
+    """Return ALL counties served by a jurisdiction (list of names).
+
+    Single-county jurisdictions return a one-element list from
+    jurisdiction_mapping; combined departments return every county they
+    serve. Unknown ids return an empty list.
+    """
+    jid = str(jurisdiction_id)
+    if jid in multi_county_jurisdictions:
+        return list(multi_county_jurisdictions[jid])
+    county = jurisdiction_mapping.get(jid)
+    return [county] if county else []
