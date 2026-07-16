@@ -30,7 +30,7 @@ def compute_display_scores(risk_data):
     if 'natural_hazards' in risk_data and isinstance(risk_data['natural_hazards'], dict):
         for key, value in risk_data['natural_hazards'].items():
             # Skip metadata fields and ensure numeric values
-            if key in EXCLUDED_RISK_FIELDS:
+            if key in EXCLUDED_RISK_FIELDS or isinstance(value, bool):
                 continue
             try:
                 score = float(value)

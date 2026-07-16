@@ -6,6 +6,7 @@ This file serves as a single source of truth for metadata field definitions.
 # Fields that should be excluded from risk calculations and displays
 # These fields contain metadata rather than actual risk values
 EXCLUDED_RISK_FIELDS = [
+    'nri_neutral_fallback',
     'tribal_status',
     'tribal_counties',
     'tribal_primary_county',
