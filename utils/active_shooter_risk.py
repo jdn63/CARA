@@ -116,7 +116,7 @@ except Exception as e:
                 "indicators": [
                     {
                         "name": "Firearm ownership and storage permissiveness",
-                        "source": "RAND Firearm Law Database, CDC WISQARS",
+                        "source": "CARA in-house translation of RAND Firearm Law Database categories; CDC WISQARS",
                         "notes": "Use state-level estimates + law leniency scoring"
                     }
                 ]
@@ -144,10 +144,11 @@ class ActiveShooterRiskModel:
         }
         
         # Wisconsin firearm law permissiveness score (0-1 scale, higher = more permissive).
-        # Source: RAND State Firearm Law Database assessment (2022 edition, fixed value).
-        # This is a statewide constant; county-level adjustment is applied separately
-        # using urban/rural classification. No live API fetch — updated manually when
-        # RAND publishes a new edition.
+        # PROVENANCE: this 0.65 is a CARA in-house translation of the RAND State
+        # Firearm Law Database (2022 edition) law categories into a single 0-1
+        # score. RAND does not publish this number; the mapping is a CARA
+        # judgment call. Statewide constant; county-level adjustment applied
+        # separately. No live API fetch.
         self.firearm_law_scores = {
             'WI': 0.65,
         }
@@ -569,8 +570,9 @@ class ActiveShooterRiskModel:
         Calculate the access to lethal means score.
 
         Methodology note:
-          The Wisconsin statewide firearm law permissiveness score (0.65) is derived from
-          the RAND State Firearm Law Database 2022 edition and is a fixed constant — it is
+          The Wisconsin statewide firearm law permissiveness score (0.65) is a CARA
+          in-house translation of RAND State Firearm Law Database 2022 law categories
+          into a 0-1 score; RAND does not publish this number. It is a fixed constant —
           not fetched at runtime. A county-level adjustment is applied based on
           USDA Rural-Urban Continuum Code classification (urban, suburban, rural).
           Estimated firearm ownership rates are derived from the adjusted score using a
@@ -602,7 +604,7 @@ class ActiveShooterRiskModel:
                 "storage_practices_index": round(adjusted_score - 0.1, 2),
                 "county_classification": county_class,
                 "data_sources": [
-                    "RAND State Firearm Law Database 2022 (fixed WI statewide score)",
+                    "CARA in-house 0-1 translation of RAND State Firearm Law Database 2022 categories (fixed WI score, not a published RAND figure)",
                     "USDA Rural-Urban Continuum Code classification (county adjustment)",
                     "CDC WISQARS-calibrated ownership proxy (estimated, not survey data)"
                 ],
@@ -869,7 +871,7 @@ class ActiveShooterRiskModel:
                     'permissiveness score with rural/urban adjustment'
                 ),
                 'data_sources': [
-                    'RAND State Firearm Law Database 2022 (fixed WI statewide score, not fetched at runtime)',
+                    'CARA in-house translation of RAND State Firearm Law Database 2022 categories (fixed WI score, not a published RAND figure, not fetched at runtime)',
                     'USDA Rural-Urban Continuum Code (county classification for adjustment)',
                     'CDC WISQARS-calibrated linear proxy (estimated ownership rate, not survey data)'
                 ],
@@ -894,10 +896,10 @@ class ActiveShooterRiskModel:
 
             formula_details = {
                 'description': (
-                    'Access to Lethal Means uses a fixed RAND WI law score (0.65) '
-                    'adjusted by county urban/rural classification'
+                    'Access to Lethal Means uses a fixed CARA-derived WI law score (0.65, '
+                    'in-house translation of RAND categories) adjusted by county urban/rural classification'
                 ),
-                'base_score': 'RAND WI statewide score: 0.65',
+                'base_score': 'CARA-derived WI statewide score (from RAND categories): 0.65',
                 'county_adjustment': 'Urban: -0.15, Suburban: -0.05, Rural: +0.05, Rural northern: +0.15',
                 'formula': 'Score = clamp(rand_wi_score + county_adjustment, 0, 1)',
                 'actual_calculation': (

@@ -11,7 +11,6 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 _TEMPLATE_CANDIDATES = [
     os.path.join(_PROJECT_ROOT, 'data', 'templates', 'kp_hva_template.xlsm'),
-    os.path.join(_PROJECT_ROOT, 'attached_assets', 'kp_incident_log_hva_(5)_1771953905117.xlsm'),
 ]
 
 KP_TEMPLATE_PATH = None

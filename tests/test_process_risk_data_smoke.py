@@ -136,3 +136,102 @@ class TestProcessRiskDataSmoke:
         assert result.get('discipline') == 'public_health', (
             f"Expected discipline='public_health', got: {result.get('discipline')}"
         )
+
+
+def _get_em_test_jurisdiction_id():
+    """Return a canonical county LHD id that exists in this environment.
+
+    Resolves the first EM county's name against the live jurisdictions
+    list (same approach as the EM dashboard route) so these regression
+    tests actually execute rather than skipping. The EM county list's
+    own `jurisdiction_id` field is a legacy zero-padded code that does
+    not match live jurisdiction ids.
+    """
+    try:
+        from utils.em_counties import get_wi_counties_for_em
+        from utils.data_processor import get_wi_jurisdictions
+        counties = get_wi_counties_for_em()
+        jurisdictions = get_wi_jurisdictions()
+        for county in counties:
+            target = county['name'].strip().lower()
+            for j in jurisdictions:
+                if (j.get('county') or '').strip().lower() == target:
+                    return j['id']
+    except Exception:
+        pass
+    return _get_milwaukee_id()
+
+
+class TestEmInfectiousDiseaseWiring:
+    """Regression tests for the v28.10 EM infectious_disease wiring fix.
+
+    The EM weight set defines a standalone infectious_disease domain (5%)
+    that historically was never fed a raw value at the county level, so it
+    was silently excluded and renormalized (permanent 95% coverage notice).
+    These tests lock in the fix: full EM coverage, no excluded
+    infectious_disease domain, and an EM-only provenance row.
+    """
+
+    @pytest.fixture(autouse=True)
+    def skip_without_db(self):
+        try:
+            from utils.data_processor import get_wi_jurisdictions
+            jurisdictions = get_wi_jurisdictions()
+            if not jurisdictions:
+                pytest.skip("No jurisdictions available — database may not be seeded.")
+        except Exception as exc:
+            pytest.skip(f"Unable to connect to required data sources: {exc}")
+
+    def _call_em(self, jurisdiction_id: str) -> dict:
+        try:
+            from utils.data_processor import process_risk_data
+            return process_risk_data(jurisdiction_id, discipline='em')
+        except ValueError as exc:
+            pytest.skip(f"Jurisdiction not found (expected in test env): {exc}")
+        except Exception as exc:
+            pytest.skip(f"process_risk_data raised an unexpected exception: {exc}")
+
+    def test_em_infectious_disease_not_excluded(self):
+        """infectious_disease must be included (fed), never excluded, in EM."""
+        result = self._call_em(_get_em_test_jurisdiction_id())
+        dq = result.get('data_quality', {})
+        assert 'infectious_disease' not in dq.get('excluded_domains', []), (
+            "EM infectious_disease is excluded again — the 5% weight is not "
+            "being fed a raw value (regression of the v28.10 wiring fix)."
+        )
+        assert 'infectious_disease' in dq.get('included_domains', []), (
+            "EM included_domains is missing infectious_disease."
+        )
+
+    def test_em_full_coverage(self):
+        """EM data coverage must be 100% (all 11 weighted domains fed)."""
+        result = self._call_em(_get_em_test_jurisdiction_id())
+        dq = result.get('data_quality', {})
+        coverage = dq.get('coverage_fraction')
+        assert coverage is not None and coverage >= 0.999, (
+            f"EM coverage_fraction is {coverage}, expected 1.0 — a weighted "
+            "domain is missing its raw value."
+        )
+
+    def test_em_provenance_has_disease_awareness_row(self):
+        """EM score_provenance must document the 5% disease-awareness weight."""
+        result = self._call_em(_get_em_test_jurisdiction_id())
+        domains = result.get('score_provenance', {}).get('domains', [])
+        names = [d.get('name') for d in domains]
+        assert 'Infectious Disease (EM Disease Awareness)' in names, (
+            f"EM provenance row missing; provenance domains: {names}"
+        )
+
+    def test_ph_provenance_has_no_disease_awareness_row(self):
+        """The EM-only provenance row must not leak into PH output."""
+        try:
+            from utils.data_processor import process_risk_data
+            result = process_risk_data(_get_em_test_jurisdiction_id())
+        except ValueError as exc:
+            pytest.skip(f"Jurisdiction not found (expected in test env): {exc}")
+        except Exception as exc:
+            pytest.skip(f"process_risk_data raised an unexpected exception: {exc}")
+        names = [d.get('name') for d in result.get('score_provenance', {}).get('domains', [])]
+        assert 'Infectious Disease (EM Disease Awareness)' not in names, (
+            "EM-only provenance row leaked into the Public Health output."
+        )

@@ -73,7 +73,7 @@
       "function": "refresh_all_dhs_vbd_surveillance"
     },
     "hvi": {
-      "description": "Block-group HVI aggregated to county (quarterly); sole basis for Extreme Heat domain (v29)",
+      "description": "Block-group HVI aggregated to county (quarterly)",
       "refresh_interval_hours": 2160,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_wi_dhs_hvi"
@@ -143,6 +143,24 @@
       "refresh_interval_hours": 2160,
       "module": "utils.data_source_refresher",
       "function": "refresh_action_plan_source_verifier"
+    },
+    "epa_sdwis": {
+      "description": "EPA SDWIS public water systems per county (annual)",
+      "refresh_interval_hours": 8760,
+      "module": "utils.data_source_refresher",
+      "function": "refresh_all_epa_sdwis"
+    },
+    "census_cbp_fuel": {
+      "description": "Census CBP gasoline station density per county (annual)",
+      "refresh_interval_hours": 8760,
+      "module": "utils.data_source_refresher",
+      "function": "refresh_all_census_cbp_fuel"
+    },
+    "acs_broadband": {
+      "description": "Census ACS broadband subscription share per county (annual)",
+      "refresh_interval_hours": 8760,
+      "module": "utils.data_source_refresher",
+      "function": "refresh_all_acs_broadband"
     }
   }
 }

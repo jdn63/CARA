@@ -42,7 +42,7 @@ overall_risk_weights:
   air_quality: 0.11        # 11% - Environmental health, AQI assessment (was 12%; -1)
   dam_failure: 0.07        # 7% - Dam/levee failure risk (NID, WI DNR, FEMA NRI flood)
   vector_borne_disease: 0.07  # 7% - Tick/mosquito-borne disease (WI DHS, CDC ArboNET)
-  hazmat_industrial: 0.03  # 3% - Fixed-site industrial hazmat (EPA TRI, EPCRA Tier II, ASPR CHEMPACK). PH emphasizes medical countermeasures (CHEMPACK/SNS/ASPR/CHEMM/ATSDR).
+  hazmat_industrial: 0.03  # 3% - Fixed-site industrial hazmat scored from EPA TRI + EPCRA Tier II + WI Regional Hazmat Response System (Wis. Stat. 323.13). PH action layer emphasizes medical countermeasures (CHEMPACK/SNS/ASPR/CHEMM/ATSDR) as preparedness coordination, not as a scoring input; CHEMPACK cache locations are federally confidential (42 U.S.C. 247d-6b) and are never used to score counties.
   hazmat_agricultural: 0.03  # 3% - Agricultural hazmat (anhydrous ammonia, pesticide drift, manure-pit H2S). USDA Census of Ag + WI DATCP ACCP + CDC NIOSH ag.
   # Total = 1.00. Hazmat split mirrors the v28.4 content-layer scaffolding;
   # 3% + 3% reflects the smaller annualized-loss footprint of hazmat events

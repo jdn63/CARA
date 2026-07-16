@@ -287,6 +287,32 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         refresh_interval_hours=2160,
         freshness_max_age_days=100,
     ),
+
+    # Utilities and infrastructure
+    'epa_sdwis': SourceSpec(
+        display_name='EPA SDWIS Public Water Systems',
+        description='Per-county water system counts and private-well reliance (annual)',
+        module='utils.data_source_refresher',
+        function='refresh_all_epa_sdwis',
+        refresh_interval_hours=8760,
+        freshness_max_age_days=400,
+    ),
+    'census_cbp_fuel': SourceSpec(
+        display_name='Census CBP Gasoline Stations',
+        description='Per-county gasoline station density, NAICS 447 (annual)',
+        module='utils.data_source_refresher',
+        function='refresh_all_census_cbp_fuel',
+        refresh_interval_hours=8760,
+        freshness_max_age_days=400,
+    ),
+    'acs_broadband': SourceSpec(
+        display_name='Census ACS Broadband Subscriptions',
+        description='Per-county household broadband subscription share, table B28002 (annual)',
+        module='utils.data_source_refresher',
+        function='refresh_all_acs_broadband',
+        refresh_interval_hours=8760,
+        freshness_max_age_days=400,
+    ),
 }
 
 

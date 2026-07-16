@@ -81,7 +81,7 @@ def download_wisconsin_census_data(api_key=None):
         elderly_df[demo_cols].to_csv('data/census/wisconsin_demographics_downloaded.csv', index=False)
         logger.info("Saved demographics data to data/census/wisconsin_demographics_downloaded.csv")
         
-        logger.info("✅ Census data download completed successfully!")
+        logger.info("Census data download completed successfully!")
         return True
         
     except Exception as e:

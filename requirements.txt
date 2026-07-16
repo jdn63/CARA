@@ -32,3 +32,4 @@ scipy
 census
 alembic
 requests
+pyreadstat

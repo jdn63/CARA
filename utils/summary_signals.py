@@ -265,9 +265,15 @@ def _driver_builders():
 
     def hazmat_agricultural(rd):
         out = []
-        tier = _tier(_text(rd, "hazmat_agricultural_metrics", "agricultural_tier"))
-        if tier and tier.lower() in ("moderate", "high", "very high"):
-            out.append(f"agricultural chemical activity tier rated {tier}")
+        intensity = _num(
+            rd, "hazmat_agricultural_metrics", "ag_chemical_intensity"
+        )
+        if intensity is not None and intensity >= 0.45:
+            out.append(
+                "agricultural chemical use intensity of "
+                f"{intensity:.2f} on a 0-1 statewide scale "
+                "(USDA Census of Agriculture)"
+            )
         return out
 
     return {

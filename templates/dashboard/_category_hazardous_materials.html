@@ -23,12 +23,12 @@
                           '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
                           ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</div>'
                           ~ '<ul class="component-list">'
-                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' (EPA TRI facility density; real counts for Milwaukee/Dodge, tiered proxy elsewhere)</li>'
+                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' (real EPA TRI facility counts for all 72 counties, plus a capped PHMSA pipeline-incident bump)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ' (CDC SVI housing/transport + socioeconomic + Census urbanization)</li>'
-                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ' (WEM Regional Hazmat Team hosting + CHEMPACK positioning + inverse SVI)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ' (statutory regional hazmat team per Wis. Stat. 323.13 + inverse SVI)</li>'
                           ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</li>'
                           ~ '</ul>'
-                          ~ '<div class="data-source">Sources: EPA TRI; EPA EPCRA Tier II; Wisconsin SERB Regional Hazmat Teams; ASPR CHEMPACK; CDC SVI 2022; U.S. Census ACS</div>'
+                          ~ '<div class="data-source">Sources: EPA TRI; EPA EPCRA Tier II; Wisconsin Regional Hazmat Response System (Wis. Stat. 323.13); CDC SVI 2022; U.S. Census ACS</div>'
                         ) }}
                         {% endif %}
                         </h3>
@@ -88,15 +88,11 @@
                             </tr>
                             <tr>
                                 <td>EPA TRI facilities</td>
-                                <td>{{ risk_data.hazmat_industrial_metrics.tri_facility_count if risk_data.hazmat_industrial_metrics.tri_facility_count is not none else 'proxy (Phase B fetch pending)' }}</td>
+                                <td>{{ risk_data.hazmat_industrial_metrics.tri_facility_count if risk_data.hazmat_industrial_metrics.tri_facility_count is not none else 'Data unavailable' }}</td>
                             </tr>
                             <tr>
-                                <td>WEM Regional Hazmat Team host</td>
-                                <td>{{ 'Yes' if risk_data.hazmat_industrial_metrics.hazmat_team_host else 'No' }}</td>
-                            </tr>
-                            <tr>
-                                <td>CHEMPACK positioned</td>
-                                <td>{{ 'Yes' if risk_data.hazmat_industrial_metrics.chempack_positioned else 'No' }}</td>
+                                <td>Statutory regional hazmat team (Wis. Stat. 323.13)</td>
+                                <td>{{ 'Yes' if risk_data.hazmat_industrial_metrics.statutory_regional_hazmat_team else 'No' }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -106,7 +102,7 @@
 
                 <div class="mt-2">
                     <small class="text-muted">
-                        Sources: EPA TRI; EPA EPCRA Tier II; WI SERB Regional Hazmat Teams; ASPR CHEMPACK; CDC SVI 2022.
+                        Sources: EPA TRI; EPA EPCRA Tier II; WI Regional Hazmat Response System (Wis. Stat. 323.13); CDC SVI 2022.
                     </small>
                 </div>
             </div>
@@ -131,12 +127,12 @@
                           '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
                           ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</div>'
                           ~ '<ul class="component-list">'
-                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' (USDA NASS dairy + row-crop intensity tier)</li>'
+                          ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' (real USDA Census of Agriculture 2022: chemical and fertilizer expense, harvested cropland, milk-cow inventory, normalized statewide)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ' (rural isolation + SVI minority/socioeconomic for farmworker households)</li>'
-                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ' (UW Extension ag-safety footprint + inverse SVI)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ' (inverse SVI socioeconomic score)</li>'
                           ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</li>'
                           ~ '</ul>'
-                          ~ '<div class="data-source">Sources: USDA NASS Census of Agriculture; WI DATCP Agricultural Chemical Cleanup Program; CDC NIOSH Agricultural Safety; EPA Worker Protection Standard; CDC SVI 2022</div>'
+                          ~ '<div class="data-source">Sources: USDA NASS Census of Agriculture 2022; CDC NIOSH Agricultural Safety; EPA Worker Protection Standard; CDC SVI 2022. WI DATCP ACCP incident history is a documented barrier (no queryable per-county dataset) and is not a scoring input.</div>'
                         ) }}
                         {% endif %}
                         </h3>
@@ -191,12 +187,12 @@
                     <table class="table table-sm">
                         <tbody>
                             <tr>
-                                <td>Agricultural tier</td>
-                                <td>{{ risk_data.hazmat_agricultural_metrics.agricultural_tier|default('-')|title }}</td>
+                                <td>Agricultural chemical intensity (0-1)</td>
+                                <td>{{ '%.2f'|format(risk_data.hazmat_agricultural_metrics.ag_chemical_intensity) if risk_data.hazmat_agricultural_metrics.ag_chemical_intensity is not none else '-' }}</td>
                             </tr>
                             <tr>
-                                <td>UW Extension ag-safety footprint</td>
-                                <td>{{ 'Yes' if risk_data.hazmat_agricultural_metrics.extension_ag_safety_heavy else 'No' }}</td>
+                                <td>Census data status</td>
+                                <td>{{ risk_data.hazmat_agricultural_metrics.ag_census_data_status|default('-')|replace('_', ' ')|title }}</td>
                             </tr>
                             <tr>
                                 <td>Data vintage</td>
@@ -210,7 +206,7 @@
 
                 <div class="mt-2">
                     <small class="text-muted">
-                        Sources: USDA NASS Census of Agriculture; WI DATCP ACCP; CDC NIOSH Agricultural Safety; EPA WPS; CDC SVI 2022.
+                        Sources: USDA NASS Census of Agriculture 2022; CDC NIOSH Agricultural Safety; EPA WPS; CDC SVI 2022. WI DATCP ACCP is a documented barrier, not a scoring input.
                     </small>
                 </div>
             </div>

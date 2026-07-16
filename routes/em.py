@@ -94,7 +94,7 @@ def em_dashboard(county_slug):
     Resolves the slug to a county name, then to its canonical county
     LHD jurisdiction id, pins EM mode, and delegates to the existing
     dashboard view. The view's discipline-aware cache key
-    (dashboard_full_v6_em_<jid>) keeps EM and PH dashboards cached
+    (dashboard_full_v11_em_<jid>) keeps EM and PH dashboards cached
     independently.
     """
     _pin_em_mode()

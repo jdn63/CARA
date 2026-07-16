@@ -11,15 +11,21 @@ Sibling to ``utils.hazmat_industrial_risk``; both are wired into the
 PHRAT composite at 3% on the PH and EM sides for a combined 6%
 Hazardous Materials weight.
 
-Data sources (v0 seed):
-  - USDA NASS Census of Agriculture county dairy + row-crop intensity
-    (tiered proxy in data/hazmat/county_classifications.json pending
-    the Phase B Census of Ag pesticide expenditure ingestion).
-  - WI DATCP Agricultural Chemical Cleanup Program (ACCP) annual
-    summary (proxied via the agricultural tier today).
+Data sources:
+  - USDA NASS Census of Agriculture 2022 (QuickStats API, static seed
+    in data/hazmat_scoping/wi_county_ag_chemical.json): real per-county
+    chemical expense, fertilizer expense, harvested cropland acres, and
+    milk-cow inventory for all 72 counties, combined into a 0-1
+    ag_chemical_intensity score. Census disclosure-suppressed values
+    are stored as null and the score weights renormalize over the
+    available fields; nothing is fabricated. This replaced the former
+    v0 tiered proxy.
   - CDC SVI 2022 housing/transportation theme (drift exposure proxy
     for rural housing near treated cropland).
   - U.S. Census ACS rural-isolation factor.
+  - Known barrier: the WI DATCP Agricultural Chemical Cleanup Program
+    (ACCP) annual summary is a PDF report without a queryable
+    per-county dataset, so ACCP incident history is not yet a signal.
 
 The calculator is cache-only safe: it does not perform any live HTTP.
 """
@@ -33,47 +39,65 @@ from utils.svi_data import get_svi_data
 
 logger = logging.getLogger(__name__)
 
-_CLASSIFICATIONS_CACHE: Optional[Dict[str, Any]] = None
+_AG_CHEMICAL_CACHE: Optional[Dict[str, Any]] = None
 
-# Counties with a well-established Worker Protection Standard /
-# anhydrous ammonia retailer extension presence (UW-Madison Extension
-# Agricultural Health and Safety program county footprint). Used as a
-# resilience signal -- not a perfect proxy, but it captures county-level
-# investment in farmworker training and pesticide-drift mitigation.
-EXTENSION_AG_SAFETY_HEAVY = {
-    "Dane", "Marathon", "Outagamie", "Brown", "Fond du Lac", "Sheboygan",
-    "Manitowoc", "Grant", "Lafayette", "Iowa", "Green", "Rock",
-    "Walworth", "Jefferson", "Columbia", "Dodge", "Sauk",
-}
+# NOTE: UW-Madison Extension operates in all 72 Wisconsin counties, so
+# Extension presence provides no county-level differentiation and is not
+# used as a resilience signal. A previous version credited a subset of
+# counties with an "Extension ag-safety footprint" bonus; that list could
+# not be verified against any published Extension program roster and was
+# removed (2026-07 data-source integrity audit).
 
 
-def _load_classifications() -> Dict[str, Any]:
-    global _CLASSIFICATIONS_CACHE
-    if _CLASSIFICATIONS_CACHE is not None:
-        return _CLASSIFICATIONS_CACHE
-    path = "data/hazmat/county_classifications.json"
+def _load_ag_chemical() -> Dict[str, Any]:
+    global _AG_CHEMICAL_CACHE
+    if _AG_CHEMICAL_CACHE is not None:
+        return _AG_CHEMICAL_CACHE
+    path = "data/hazmat_scoping/wi_county_ag_chemical.json"
     try:
         if os.path.exists(path):
             with open(path) as f:
-                _CLASSIFICATIONS_CACHE = json.load(f)
+                _AG_CHEMICAL_CACHE = json.load(f)
         else:
-            _CLASSIFICATIONS_CACHE = {}
+            _AG_CHEMICAL_CACHE = {}
     except Exception as e:
-        logger.warning(f"hazmat_agricultural: failed to load classifications: {e}")
-        _CLASSIFICATIONS_CACHE = {}
-    return _CLASSIFICATIONS_CACHE
+        logger.warning(f"hazmat_agricultural: failed to load ag chemical seed: {e}")
+        _AG_CHEMICAL_CACHE = {}
+    return _AG_CHEMICAL_CACHE
+
+
+# Minimum exposure floor: even counties with negligible census-recorded
+# agriculture have ambient agricultural-chemical exposure (transport
+# corridors, retail/co-op storage), so exposure never reads exactly zero.
+_EXPOSURE_FLOOR = 0.05
 
 
 def _exposure_score(county_name: str) -> Dict[str, Any]:
-    classifications = _load_classifications()
-    meta = classifications.get("_meta", {})
-    tier_scores = meta.get("tier_scores", {
-        "very_high": 0.85, "high": 0.65, "moderate": 0.45, "low": 0.25,
-    })
-    county_entry = (classifications.get("counties") or {}).get(county_name) or {}
-    tier = county_entry.get("agricultural_tier", "low")
-    tier_score = tier_scores.get(tier, 0.25)
-    return {"score": tier_score, "tier": tier, "tier_score": tier_score}
+    seed = _load_ag_chemical()
+    entry = (seed.get("counties") or {}).get(county_name)
+    if entry is None:
+        logger.warning(
+            f"hazmat_agricultural: no ag chemical record for {county_name}; "
+            "using floor exposure"
+        )
+        return {
+            "score": _EXPOSURE_FLOOR,
+            "ag_chemical_intensity": None,
+            "data_status": "missing",
+            "using_real_ag_census": False,
+        }
+    intensity = float(entry.get("ag_chemical_intensity") or 0.0)
+    score = max(_EXPOSURE_FLOOR, min(1.0, intensity))
+    return {
+        "score": score,
+        "ag_chemical_intensity": intensity,
+        "data_status": entry.get("data_status", "unknown"),
+        "using_real_ag_census": True,
+        "chemical_expense_usd": entry.get("chemical_expense_usd"),
+        "fertilizer_expense_usd": entry.get("fertilizer_expense_usd"),
+        "cropland_harvested_acres": entry.get("cropland_harvested_acres"),
+        "milk_cows_head": entry.get("milk_cows_head"),
+    }
 
 
 def _vulnerability_score(county_name: str, discipline: str) -> Dict[str, Any]:
@@ -126,9 +150,6 @@ def _resilience_score(county_name: str) -> Dict[str, Any]:
     socio_inverse = 1.0 - float(svi.get("socioeconomic", 0.5) or 0.5)
     base = 0.40 + socio_inverse * 0.15
     notes = []
-    if county_name in EXTENSION_AG_SAFETY_HEAVY:
-        base += 0.15
-        notes.append("UW-Madison Extension ag-safety program county footprint")
     base = max(0.10, min(0.90, base))
     return {"score": base, "notes": notes}
 
@@ -162,8 +183,7 @@ def calculate_hazmat_agricultural_risk(
             "health_impact": hif,
         },
         "exposure_factors": {
-            "agricultural_tier": exposure["tier"],
-            "tier_score": exposure["tier_score"],
+            k: v for k, v in exposure.items() if k != "score"
         },
         "vulnerability_breakdown": {
             k: v for k, v in vulnerability.items() if k != "score"
@@ -173,13 +193,12 @@ def calculate_hazmat_agricultural_risk(
             "notes": resilience["notes"],
         },
         "metrics": {
-            "agricultural_tier": exposure["tier"],
-            "extension_ag_safety_heavy": county_name in EXTENSION_AG_SAFETY_HEAVY,
-            "data_vintage": "v0 tiered proxy pending USDA Census of Ag and WI DATCP ACCP ingestion",
+            "ag_chemical_intensity": exposure.get("ag_chemical_intensity"),
+            "ag_census_data_status": exposure.get("data_status"),
+            "data_vintage": "USDA NASS Census of Agriculture 2022 (real county data, all 72 counties)",
         },
         "data_sources": [
-            "USDA NASS Census of Agriculture (Wisconsin county dairy + row-crop intensity)",
-            "WI DATCP Agricultural Chemical Cleanup Program (ACCP) annual summary",
+            "USDA NASS Census of Agriculture 2022 (chemical and fertilizer expense, harvested cropland, milk-cow inventory)",
             "CDC NIOSH Agricultural Safety & Health program",
             "EPA Worker Protection Standard (WPS)",
             "CDC Social Vulnerability Index (SVI) 2022",

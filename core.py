@@ -455,7 +455,7 @@ def initialize_background_services(app):
     try:
         logger.debug("Setting up production logging...")
         setup_production_logging(app)
-        logger.debug("✓ Production logging setup complete")
+        logger.debug("Production logging setup complete")
     except Exception as e:
         logger.error(f"Failed to setup production logging: {e}")
     
@@ -463,7 +463,7 @@ def initialize_background_services(app):
     try:
         logger.debug("Setting up Sentry integration...")
         setup_sentry_integration(app)
-        logger.debug("✓ Sentry integration setup complete")
+        logger.debug("Sentry integration setup complete")
     except Exception as e:
         logger.error(f"Failed to setup Sentry integration: {e}")
     
@@ -471,7 +471,7 @@ def initialize_background_services(app):
     try:
         logger.debug("Setting up performance monitoring...")
         log_performance_metrics(app)
-        logger.debug("✓ Performance monitoring setup complete")
+        logger.debug("Performance monitoring setup complete")
     except Exception as e:
         logger.error(f"Failed to setup performance monitoring: {e}")
     
@@ -479,7 +479,7 @@ def initialize_background_services(app):
     try:
         logger.debug("Setting up security features...")
         setup_security(app)
-        logger.debug("✓ Security features setup complete")
+        logger.debug("Security features setup complete")
     except Exception as e:
         logger.error(f"Failed to setup security features: {e}")
     

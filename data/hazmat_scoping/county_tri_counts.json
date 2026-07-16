@@ -1,14 +1,225 @@
 {
-  "Milwaukee": {
-    "tri_facilities": 336,
-    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Milwaukee/COUNT"
+  "_meta": {
+    "source": "EPA Envirofacts TRI_FACILITY (open facilities, FAC_CLOSED_IND=0)",
+    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/=/WI/FAC_CLOSED_IND/=/0/ROWS/.../JSON",
+    "generated_at": "2026-07-16T16:32:03.701627+00:00",
+    "total_open_facilities": 1995,
+    "note": "Counts are real measured values for all 72 counties; counties without TRI facilities carry a true zero."
+  },
+  "Adams": {
+    "tri_facilities": 2
+  },
+  "Ashland": {
+    "tri_facilities": 4
+  },
+  "Barron": {
+    "tri_facilities": 24
+  },
+  "Bayfield": {
+    "tri_facilities": 3
+  },
+  "Brown": {
+    "tri_facilities": 105
+  },
+  "Buffalo": {
+    "tri_facilities": 3
+  },
+  "Burnett": {
+    "tri_facilities": 4
+  },
+  "Calumet": {
+    "tri_facilities": 18
+  },
+  "Chippewa": {
+    "tri_facilities": 22
+  },
+  "Clark": {
+    "tri_facilities": 14
+  },
+  "Columbia": {
+    "tri_facilities": 26
   },
   "Crawford": {
-    "tri_facilities": null,
-    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Crawford/COUNT"
+    "tri_facilities": 6
+  },
+  "Dane": {
+    "tri_facilities": 106
   },
   "Dodge": {
-    "tri_facilities": 49,
-    "url": "https://data.epa.gov/efservice/TRI_FACILITY/STATE_ABBR/WI/COUNTY_NAME/Dodge/COUNT"
+    "tri_facilities": 45
+  },
+  "Door": {
+    "tri_facilities": 2
+  },
+  "Douglas": {
+    "tri_facilities": 11
+  },
+  "Dunn": {
+    "tri_facilities": 12
+  },
+  "Eau Claire": {
+    "tri_facilities": 18
+  },
+  "Florence": {
+    "tri_facilities": 0
+  },
+  "Fond du Lac": {
+    "tri_facilities": 30
+  },
+  "Forest": {
+    "tri_facilities": 1
+  },
+  "Grant": {
+    "tri_facilities": 20
+  },
+  "Green": {
+    "tri_facilities": 17
+  },
+  "Green Lake": {
+    "tri_facilities": 7
+  },
+  "Iowa": {
+    "tri_facilities": 1
+  },
+  "Iron": {
+    "tri_facilities": 0
+  },
+  "Jackson": {
+    "tri_facilities": 4
+  },
+  "Jefferson": {
+    "tri_facilities": 48
+  },
+  "Juneau": {
+    "tri_facilities": 19
+  },
+  "Kenosha": {
+    "tri_facilities": 47
+  },
+  "Kewaunee": {
+    "tri_facilities": 7
+  },
+  "La Crosse": {
+    "tri_facilities": 35
+  },
+  "Lafayette": {
+    "tri_facilities": 4
+  },
+  "Langlade": {
+    "tri_facilities": 4
+  },
+  "Lincoln": {
+    "tri_facilities": 9
+  },
+  "Manitowoc": {
+    "tri_facilities": 51
+  },
+  "Marathon": {
+    "tri_facilities": 63
+  },
+  "Marinette": {
+    "tri_facilities": 24
+  },
+  "Marquette": {
+    "tri_facilities": 3
+  },
+  "Menominee": {
+    "tri_facilities": 0
+  },
+  "Milwaukee": {
+    "tri_facilities": 299
+  },
+  "Monroe": {
+    "tri_facilities": 14
+  },
+  "Oconto": {
+    "tri_facilities": 13
+  },
+  "Oneida": {
+    "tri_facilities": 9
+  },
+  "Outagamie": {
+    "tri_facilities": 73
+  },
+  "Ozaukee": {
+    "tri_facilities": 46
+  },
+  "Pepin": {
+    "tri_facilities": 2
+  },
+  "Pierce": {
+    "tri_facilities": 7
+  },
+  "Polk": {
+    "tri_facilities": 12
+  },
+  "Portage": {
+    "tri_facilities": 20
+  },
+  "Price": {
+    "tri_facilities": 10
+  },
+  "Racine": {
+    "tri_facilities": 63
+  },
+  "Richland": {
+    "tri_facilities": 6
+  },
+  "Rock": {
+    "tri_facilities": 61
+  },
+  "Rusk": {
+    "tri_facilities": 7
+  },
+  "St. Croix": {
+    "tri_facilities": 18
+  },
+  "Sauk": {
+    "tri_facilities": 25
+  },
+  "Sawyer": {
+    "tri_facilities": 4
+  },
+  "Shawano": {
+    "tri_facilities": 12
+  },
+  "Sheboygan": {
+    "tri_facilities": 54
+  },
+  "Taylor": {
+    "tri_facilities": 4
+  },
+  "Trempealeau": {
+    "tri_facilities": 11
+  },
+  "Vernon": {
+    "tri_facilities": 5
+  },
+  "Vilas": {
+    "tri_facilities": 3
+  },
+  "Walworth": {
+    "tri_facilities": 41
+  },
+  "Washburn": {
+    "tri_facilities": 1
+  },
+  "Washington": {
+    "tri_facilities": 58
+  },
+  "Waukesha": {
+    "tri_facilities": 160
+  },
+  "Waupaca": {
+    "tri_facilities": 21
+  },
+  "Waushara": {
+    "tri_facilities": 6
+  },
+  "Winnebago": {
+    "tri_facilities": 87
+  },
+  "Wood": {
+    "tri_facilities": 24
   }
 }

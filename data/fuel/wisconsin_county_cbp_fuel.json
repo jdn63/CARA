@@ -1,0 +1,646 @@
+{
+  "counties": {
+    "adams": {
+      "cbp_year": 2023,
+      "county": "Adams",
+      "county_population": 20654,
+      "fuel_access_exposure": 0.721,
+      "gas_stations": 9,
+      "retrieved_at": "2026-07-16T16:26:23.052064",
+      "stations_per_10k": 4.358
+    },
+    "ashland": {
+      "cbp_year": 2023,
+      "county": "Ashland",
+      "county_population": 15666,
+      "fuel_access_exposure": 0.276,
+      "gas_stations": 13,
+      "retrieved_at": "2026-07-16T16:26:23.052070",
+      "stations_per_10k": 8.298
+    },
+    "barron": {
+      "cbp_year": 2023,
+      "county": "Barron",
+      "county_population": 45594,
+      "fuel_access_exposure": 0.413,
+      "gas_stations": 30,
+      "retrieved_at": "2026-07-16T16:26:23.052071",
+      "stations_per_10k": 6.58
+    },
+    "bayfield": {
+      "cbp_year": 2023,
+      "county": "Bayfield",
+      "county_population": 15013,
+      "fuel_access_exposure": 0.219,
+      "gas_stations": 14,
+      "retrieved_at": "2026-07-16T16:26:23.052072",
+      "stations_per_10k": 9.325
+    },
+    "brown": {
+      "cbp_year": 2023,
+      "county": "Brown",
+      "county_population": 268740,
+      "fuel_access_exposure": 0.779,
+      "gas_stations": 107,
+      "retrieved_at": "2026-07-16T16:26:23.052073",
+      "stations_per_10k": 3.982
+    },
+    "buffalo": {
+      "cbp_year": 2023,
+      "county": "Buffalo",
+      "county_population": 13317,
+      "fuel_access_exposure": 0.687,
+      "gas_stations": 6,
+      "retrieved_at": "2026-07-16T16:26:23.052074",
+      "stations_per_10k": 4.506
+    },
+    "burnett": {
+      "cbp_year": 2023,
+      "county": "Burnett",
+      "county_population": 15674,
+      "fuel_access_exposure": 0.527,
+      "gas_stations": 9,
+      "retrieved_at": "2026-07-16T16:26:23.052075",
+      "stations_per_10k": 5.742
+    },
+    "calumet": {
+      "cbp_year": 2023,
+      "county": "Calumet",
+      "county_population": 50089,
+      "fuel_access_exposure": 0.824,
+      "gas_stations": 19,
+      "retrieved_at": "2026-07-16T16:26:23.052075",
+      "stations_per_10k": 3.793
+    },
+    "chippewa": {
+      "cbp_year": 2023,
+      "county": "Chippewa",
+      "county_population": 66297,
+      "fuel_access_exposure": 0.493,
+      "gas_stations": 39,
+      "retrieved_at": "2026-07-16T16:26:23.052076",
+      "stations_per_10k": 5.883
+    },
+    "clark": {
+      "cbp_year": 2023,
+      "county": "Clark",
+      "county_population": 34659,
+      "fuel_access_exposure": 0.516,
+      "gas_stations": 20,
+      "retrieved_at": "2026-07-16T16:26:23.052077",
+      "stations_per_10k": 5.771
+    },
+    "columbia": {
+      "cbp_year": 2023,
+      "county": "Columbia",
+      "county_population": 58457,
+      "fuel_access_exposure": 0.561,
+      "gas_stations": 33,
+      "retrieved_at": "2026-07-16T16:26:23.052077",
+      "stations_per_10k": 5.645
+    },
+    "crawford": {
+      "cbp_year": 2023,
+      "county": "Crawford",
+      "county_population": 16113,
+      "fuel_access_exposure": 0.253,
+      "gas_stations": 14,
+      "retrieved_at": "2026-07-16T16:26:23.052078",
+      "stations_per_10k": 8.689
+    },
+    "dane": {
+      "cbp_year": 2023,
+      "county": "Dane",
+      "county_population": 561504,
+      "fuel_access_exposure": 0.927,
+      "gas_stations": 161,
+      "retrieved_at": "2026-07-16T16:26:23.052079",
+      "stations_per_10k": 2.867
+    },
+    "dodge": {
+      "cbp_year": 2023,
+      "county": "Dodge",
+      "county_population": 88759,
+      "fuel_access_exposure": 0.79,
+      "gas_stations": 35,
+      "retrieved_at": "2026-07-16T16:26:23.052080",
+      "stations_per_10k": 3.943
+    },
+    "door": {
+      "cbp_year": 2023,
+      "county": "Door",
+      "county_population": 30066,
+      "fuel_access_exposure": 0.241,
+      "gas_stations": 27,
+      "retrieved_at": "2026-07-16T16:26:23.052080",
+      "stations_per_10k": 8.98
+    },
+    "douglas": {
+      "cbp_year": 2023,
+      "county": "Douglas",
+      "county_population": 43834,
+      "fuel_access_exposure": 0.55,
+      "gas_stations": 25,
+      "retrieved_at": "2026-07-16T16:26:23.052081",
+      "stations_per_10k": 5.703
+    },
+    "dunn": {
+      "cbp_year": 2023,
+      "county": "Dunn",
+      "county_population": 44759,
+      "fuel_access_exposure": 0.607,
+      "gas_stations": 24,
+      "retrieved_at": "2026-07-16T16:26:23.052082",
+      "stations_per_10k": 5.362
+    },
+    "eau claire": {
+      "cbp_year": 2023,
+      "county": "Eau Claire",
+      "county_population": 105710,
+      "fuel_access_exposure": 0.676,
+      "gas_stations": 49,
+      "retrieved_at": "2026-07-16T16:26:23.052083",
+      "stations_per_10k": 4.635
+    },
+    "florence": {
+      "cbp_year": 2023,
+      "county": "Florence",
+      "county_population": 4295,
+      "fuel_access_exposure": 0.23,
+      "gas_stations": 4,
+      "retrieved_at": "2026-07-16T16:26:23.052083",
+      "stations_per_10k": 9.313
+    },
+    "fond du lac": {
+      "cbp_year": 2023,
+      "county": "Fond du Lac",
+      "county_population": 104154,
+      "fuel_access_exposure": 0.653,
+      "gas_stations": 50,
+      "retrieved_at": "2026-07-16T16:26:23.052084",
+      "stations_per_10k": 4.801
+    },
+    "forest": {
+      "cbp_year": 2023,
+      "county": "Forest",
+      "county_population": 9179,
+      "fuel_access_exposure": 0.207,
+      "gas_stations": 9,
+      "retrieved_at": "2026-07-16T16:26:23.052085",
+      "stations_per_10k": 9.805
+    },
+    "grant": {
+      "cbp_year": 2023,
+      "county": "Grant",
+      "county_population": 51938,
+      "fuel_access_exposure": 0.504,
+      "gas_stations": 30,
+      "retrieved_at": "2026-07-16T16:26:23.052086",
+      "stations_per_10k": 5.776
+    },
+    "green": {
+      "cbp_year": 2023,
+      "county": "Green",
+      "county_population": 37093,
+      "fuel_access_exposure": 0.733,
+      "gas_stations": 16,
+      "retrieved_at": "2026-07-16T16:26:23.052087",
+      "stations_per_10k": 4.313
+    },
+    "green lake": {
+      "cbp_year": 2023,
+      "county": "Green Lake",
+      "county_population": 18913,
+      "fuel_access_exposure": 0.356,
+      "gas_stations": 14,
+      "retrieved_at": "2026-07-16T16:26:23.052088",
+      "stations_per_10k": 7.402
+    },
+    "iowa": {
+      "cbp_year": 2023,
+      "county": "Iowa",
+      "county_population": 23687,
+      "fuel_access_exposure": 0.299,
+      "gas_stations": 19,
+      "retrieved_at": "2026-07-16T16:26:23.052088",
+      "stations_per_10k": 8.021
+    },
+    "iron": {
+      "cbp_year": 2023,
+      "county": "Iron",
+      "county_population": 5857,
+      "fuel_access_exposure": 0.161,
+      "gas_stations": 7,
+      "retrieved_at": "2026-07-16T16:26:23.052089",
+      "stations_per_10k": 11.952
+    },
+    "jackson": {
+      "cbp_year": 2023,
+      "county": "Jackson",
+      "county_population": 21196,
+      "fuel_access_exposure": 0.31,
+      "gas_stations": 17,
+      "retrieved_at": "2026-07-16T16:26:23.052090",
+      "stations_per_10k": 8.02
+    },
+    "jefferson": {
+      "cbp_year": 2023,
+      "county": "Jefferson",
+      "county_population": 84900,
+      "fuel_access_exposure": 0.756,
+      "gas_stations": 35,
+      "retrieved_at": "2026-07-16T16:26:23.052091",
+      "stations_per_10k": 4.122
+    },
+    "juneau": {
+      "cbp_year": 2023,
+      "county": "Juneau",
+      "county_population": 26718,
+      "fuel_access_exposure": 0.344,
+      "gas_stations": 20,
+      "retrieved_at": "2026-07-16T16:26:23.052092",
+      "stations_per_10k": 7.486
+    },
+    "kenosha": {
+      "cbp_year": 2023,
+      "county": "Kenosha",
+      "county_population": 169151,
+      "fuel_access_exposure": 0.767,
+      "gas_stations": 68,
+      "retrieved_at": "2026-07-16T16:26:23.052092",
+      "stations_per_10k": 4.02
+    },
+    "kewaunee": {
+      "cbp_year": 2023,
+      "county": "Kewaunee",
+      "county_population": 20563,
+      "fuel_access_exposure": 0.39,
+      "gas_stations": 14,
+      "retrieved_at": "2026-07-16T16:26:23.052093",
+      "stations_per_10k": 6.808
+    },
+    "la crosse": {
+      "cbp_year": 2023,
+      "county": "La Crosse",
+      "county_population": 120784,
+      "fuel_access_exposure": 0.904,
+      "gas_stations": 39,
+      "retrieved_at": "2026-07-16T16:26:23.052094",
+      "stations_per_10k": 3.229
+    },
+    "lafayette": {
+      "cbp_year": 2023,
+      "county": "Lafayette",
+      "county_population": 16617,
+      "fuel_access_exposure": 0.584,
+      "gas_stations": 9,
+      "retrieved_at": "2026-07-16T16:26:23.052095",
+      "stations_per_10k": 5.416
+    },
+    "langlade": {
+      "cbp_year": 2023,
+      "county": "Langlade",
+      "county_population": 19491,
+      "fuel_access_exposure": 0.173,
+      "gas_stations": 20,
+      "retrieved_at": "2026-07-16T16:26:23.052095",
+      "stations_per_10k": 10.261
+    },
+    "lincoln": {
+      "cbp_year": 2023,
+      "county": "Lincoln",
+      "county_population": 27958,
+      "fuel_access_exposure": 0.333,
+      "gas_stations": 21,
+      "retrieved_at": "2026-07-16T16:26:23.052096",
+      "stations_per_10k": 7.511
+    },
+    "manitowoc": {
+      "cbp_year": 2023,
+      "county": "Manitowoc",
+      "county_population": 78981,
+      "fuel_access_exposure": 0.664,
+      "gas_stations": 37,
+      "retrieved_at": "2026-07-16T16:26:23.052097",
+      "stations_per_10k": 4.685
+    },
+    "marathon": {
+      "cbp_year": 2023,
+      "county": "Marathon",
+      "county_population": 134063,
+      "fuel_access_exposure": 0.847,
+      "gas_stations": 50,
+      "retrieved_at": "2026-07-16T16:26:23.052097",
+      "stations_per_10k": 3.73
+    },
+    "marinette": {
+      "cbp_year": 2023,
+      "county": "Marinette",
+      "county_population": 40350,
+      "fuel_access_exposure": 0.264,
+      "gas_stations": 34,
+      "retrieved_at": "2026-07-16T16:26:23.052098",
+      "stations_per_10k": 8.426
+    },
+    "marquette": {
+      "cbp_year": 2023,
+      "county": "Marquette",
+      "county_population": 15592,
+      "fuel_access_exposure": 0.436,
+      "gas_stations": 10,
+      "retrieved_at": "2026-07-16T16:26:23.052099",
+      "stations_per_10k": 6.414
+    },
+    "milwaukee": {
+      "cbp_year": 2023,
+      "county": "Milwaukee",
+      "county_population": 939489,
+      "fuel_access_exposure": 0.881,
+      "gas_stations": 318,
+      "retrieved_at": "2026-07-16T16:26:23.052100",
+      "stations_per_10k": 3.385
+    },
+    "monroe": {
+      "cbp_year": 2023,
+      "county": "Monroe",
+      "county_population": 46253,
+      "fuel_access_exposure": 0.596,
+      "gas_stations": 25,
+      "retrieved_at": "2026-07-16T16:26:23.052100",
+      "stations_per_10k": 5.405
+    },
+    "oconto": {
+      "cbp_year": 2023,
+      "county": "Oconto",
+      "county_population": 38965,
+      "fuel_access_exposure": 0.63,
+      "gas_stations": 20,
+      "retrieved_at": "2026-07-16T16:26:23.052101",
+      "stations_per_10k": 5.133
+    },
+    "oneida": {
+      "cbp_year": 2023,
+      "county": "Oneida",
+      "county_population": 268740,
+      "fuel_access_exposure": 0.95,
+      "gas_stations": 28,
+      "retrieved_at": "2026-07-16T16:26:23.052102",
+      "stations_per_10k": 1.042
+    },
+    "outagamie": {
+      "cbp_year": 2023,
+      "county": "Outagamie",
+      "county_population": 187885,
+      "fuel_access_exposure": 0.699,
+      "gas_stations": 84,
+      "retrieved_at": "2026-07-16T16:26:23.052103",
+      "stations_per_10k": 4.471
+    },
+    "ozaukee": {
+      "cbp_year": 2023,
+      "county": "Ozaukee",
+      "county_population": 91077,
+      "fuel_access_exposure": 0.939,
+      "gas_stations": 25,
+      "retrieved_at": "2026-07-16T16:26:23.052103",
+      "stations_per_10k": 2.745
+    },
+    "pepin": {
+      "cbp_year": 2023,
+      "county": "Pepin",
+      "county_population": 7318,
+      "fuel_access_exposure": 0.287,
+      "gas_stations": 6,
+      "retrieved_at": "2026-07-16T16:26:23.052104",
+      "stations_per_10k": 8.199
+    },
+    "pierce": {
+      "cbp_year": 2023,
+      "county": "Pierce",
+      "county_population": 42692,
+      "fuel_access_exposure": 0.573,
+      "gas_stations": 24,
+      "retrieved_at": "2026-07-16T16:26:23.052105",
+      "stations_per_10k": 5.622
+    },
+    "polk": {
+      "cbp_year": 2023,
+      "county": "Polk",
+      "county_population": 44977,
+      "fuel_access_exposure": 0.447,
+      "gas_stations": 28,
+      "retrieved_at": "2026-07-16T16:26:23.052105",
+      "stations_per_10k": 6.225
+    },
+    "portage": {
+      "cbp_year": 2023,
+      "county": "Portage",
+      "county_population": 70019,
+      "fuel_access_exposure": 0.893,
+      "gas_stations": 23,
+      "retrieved_at": "2026-07-16T16:26:23.052106",
+      "stations_per_10k": 3.285
+    },
+    "price": {
+      "cbp_year": 2023,
+      "county": "Price",
+      "county_population": 14054,
+      "fuel_access_exposure": 0.367,
+      "gas_stations": 10,
+      "retrieved_at": "2026-07-16T16:26:23.052107",
+      "stations_per_10k": 7.115
+    },
+    "racine": {
+      "cbp_year": 2023,
+      "county": "Racine",
+      "county_population": 195408,
+      "fuel_access_exposure": 0.813,
+      "gas_stations": 75,
+      "retrieved_at": "2026-07-16T16:26:23.052108",
+      "stations_per_10k": 3.838
+    },
+    "richland": {
+      "cbp_year": 2023,
+      "county": "Richland",
+      "county_population": 17304,
+      "fuel_access_exposure": 0.321,
+      "gas_stations": 13,
+      "retrieved_at": "2026-07-16T16:26:23.052108",
+      "stations_per_10k": 7.513
+    },
+    "rock": {
+      "cbp_year": 2023,
+      "county": "Rock",
+      "county_population": 163687,
+      "fuel_access_exposure": 0.71,
+      "gas_stations": 73,
+      "retrieved_at": "2026-07-16T16:26:23.052131",
+      "stations_per_10k": 4.46
+    },
+    "rusk": {
+      "cbp_year": 2023,
+      "county": "Rusk",
+      "county_population": 14188,
+      "fuel_access_exposure": 0.196,
+      "gas_stations": 14,
+      "retrieved_at": "2026-07-16T16:26:23.052133",
+      "stations_per_10k": 9.867
+    },
+    "sauk": {
+      "cbp_year": 2023,
+      "county": "Sauk",
+      "county_population": 65763,
+      "fuel_access_exposure": 0.424,
+      "gas_stations": 43,
+      "retrieved_at": "2026-07-16T16:26:23.052135",
+      "stations_per_10k": 6.539
+    },
+    "sawyer": {
+      "cbp_year": 2023,
+      "county": "Sawyer",
+      "county_population": 16196,
+      "fuel_access_exposure": 0.459,
+      "gas_stations": 10,
+      "retrieved_at": "2026-07-16T16:26:23.052135",
+      "stations_per_10k": 6.174
+    },
+    "shawano": {
+      "cbp_year": 2023,
+      "county": "Shawano",
+      "county_population": 40899,
+      "fuel_access_exposure": 0.744,
+      "gas_stations": 17,
+      "retrieved_at": "2026-07-16T16:26:23.052136",
+      "stations_per_10k": 4.157
+    },
+    "sheboygan": {
+      "cbp_year": 2023,
+      "county": "Sheboygan",
+      "county_population": 117062,
+      "fuel_access_exposure": 0.836,
+      "gas_stations": 44,
+      "retrieved_at": "2026-07-16T16:26:23.052137",
+      "stations_per_10k": 3.759
+    },
+    "st. croix": {
+      "cbp_year": 2023,
+      "county": "St. Croix",
+      "county_population": 15674,
+      "fuel_access_exposure": 0.15,
+      "gas_stations": 50,
+      "retrieved_at": "2026-07-16T16:26:23.052134",
+      "stations_per_10k": 31.9
+    },
+    "taylor": {
+      "cbp_year": 2023,
+      "county": "Taylor",
+      "county_population": 19913,
+      "fuel_access_exposure": 0.481,
+      "gas_stations": 12,
+      "retrieved_at": "2026-07-16T16:26:23.052138",
+      "stations_per_10k": 6.026
+    },
+    "trempealeau": {
+      "cbp_year": 2023,
+      "county": "Trempealeau",
+      "county_population": 30714,
+      "fuel_access_exposure": 0.379,
+      "gas_stations": 21,
+      "retrieved_at": "2026-07-16T16:26:23.052139",
+      "stations_per_10k": 6.837
+    },
+    "vernon": {
+      "cbp_year": 2023,
+      "county": "Vernon",
+      "county_population": 30714,
+      "fuel_access_exposure": 0.801,
+      "gas_stations": 12,
+      "retrieved_at": "2026-07-16T16:26:23.052139",
+      "stations_per_10k": 3.907
+    },
+    "vilas": {
+      "cbp_year": 2023,
+      "county": "Vilas",
+      "county_population": 23047,
+      "fuel_access_exposure": 0.184,
+      "gas_stations": 23,
+      "retrieved_at": "2026-07-16T16:26:23.052140",
+      "stations_per_10k": 9.98
+    },
+    "walworth": {
+      "cbp_year": 2023,
+      "county": "Walworth",
+      "county_population": 106478,
+      "fuel_access_exposure": 0.619,
+      "gas_stations": 56,
+      "retrieved_at": "2026-07-16T16:26:23.052141",
+      "stations_per_10k": 5.259
+    },
+    "washburn": {
+      "cbp_year": 2023,
+      "county": "Washburn",
+      "county_population": 16623,
+      "fuel_access_exposure": 0.401,
+      "gas_stations": 11,
+      "retrieved_at": "2026-07-16T16:26:23.052142",
+      "stations_per_10k": 6.617
+    },
+    "washington": {
+      "cbp_year": 2023,
+      "county": "Washington",
+      "county_population": 135138,
+      "fuel_access_exposure": 0.87,
+      "gas_stations": 48,
+      "retrieved_at": "2026-07-16T16:26:23.052142",
+      "stations_per_10k": 3.552
+    },
+    "waukesha": {
+      "cbp_year": 2023,
+      "county": "Waukesha",
+      "county_population": 406978,
+      "fuel_access_exposure": 0.916,
+      "gas_stations": 119,
+      "retrieved_at": "2026-07-16T16:26:23.052143",
+      "stations_per_10k": 2.924
+    },
+    "waupaca": {
+      "cbp_year": 2023,
+      "county": "Waupaca",
+      "county_population": 50730,
+      "fuel_access_exposure": 0.539,
+      "gas_stations": 29,
+      "retrieved_at": "2026-07-16T16:26:23.052144",
+      "stations_per_10k": 5.717
+    },
+    "waushara": {
+      "cbp_year": 2023,
+      "county": "Waushara",
+      "county_population": 24443,
+      "fuel_access_exposure": 0.47,
+      "gas_stations": 15,
+      "retrieved_at": "2026-07-16T16:26:23.052144",
+      "stations_per_10k": 6.137
+    },
+    "winnebago": {
+      "cbp_year": 2023,
+      "county": "Winnebago",
+      "county_population": 171907,
+      "fuel_access_exposure": 0.859,
+      "gas_stations": 62,
+      "retrieved_at": "2026-07-16T16:26:23.052145",
+      "stations_per_10k": 3.607
+    },
+    "wood": {
+      "cbp_year": 2023,
+      "county": "Wood",
+      "county_population": 72595,
+      "fuel_access_exposure": 0.641,
+      "gas_stations": 37,
+      "retrieved_at": "2026-07-16T16:26:23.052146",
+      "stations_per_10k": 5.097
+    }
+  },
+  "county_count": 71,
+  "generated_at": "2026-07-16T16:26:25.730439",
+  "source": "Census County Business Patterns 2023, NAICS 447"
+}

@@ -1646,3 +1646,182 @@ def refresh_all_wi_dhs_mmr() -> Dict[str, Any]:
             }
 
 
+
+
+def refresh_all_epa_sdwis() -> Dict[str, Any]:
+    """
+    Refresh the EPA SDWIS public water system cache.
+
+    Paginates the Envirofacts WATER_SYSTEM and GEOGRAPHIC_AREA tables
+    for Wisconsin, joins on pwsid, aggregates to a 72-county table
+    (system counts, CWS population served, private-well reliance), and
+    writes per-county payloads to the persistent cache. SDWIS inventory
+    changes slowly, so this job runs on the annual track (8760h).
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.sdwis_water import fetch_bulk_sdwis_data, populate_cache_from_bulk
+        from utils.data_cache_manager import set_cached_data
+
+        results = {
+            'source_type': 'epa_sdwis',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'errors': [],
+        }
+        try:
+            start = time.time()
+            table = fetch_bulk_sdwis_data()
+            duration = time.time() - start
+            if not table:
+                results['failed'] = 1
+                results['errors'].append({'error': 'SDWIS bulk fetch returned empty'})
+                logger.error("EPA SDWIS refresh failed: empty bulk result")
+            else:
+                written = populate_cache_from_bulk(table)
+                results['success'] = written
+                results['failed'] = max(0, len(table) - written)
+                set_cached_data(
+                    source_type='epa_sdwis',
+                    data={
+                        'county_count': written,
+                        'system_count': sum(
+                            int(r.get('active_systems_total') or 0)
+                            for r in table.values()),
+                        'refreshed_at': datetime.utcnow().isoformat(),
+                    },
+                    fetch_duration=duration,
+                    api_source='epa_envirofacts_sdwis',
+                )
+                logger.info(
+                    "EPA SDWIS refresh: %d counties cached in %.1fs",
+                    written, duration)
+        except Exception as e:
+            results['failed'] = 1
+            results['errors'].append({'error': str(e)})
+            logger.error(f"EPA SDWIS refresh exception: {e}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_census_cbp_fuel() -> Dict[str, Any]:
+    """
+    Refresh the Census CBP gasoline station cache.
+
+    Single-request fetch of NAICS 447 establishment counts for all
+    Wisconsin counties, with per-capita density and exposure scoring.
+    CBP is published annually, so this job runs on the annual track
+    (8760h).
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.census_cbp_fuel import (
+            fetch_bulk_cbp_fuel, populate_cache_from_bulk, write_snapshot)
+        from utils.data_cache_manager import set_cached_data
+
+        results = {
+            'source_type': 'census_cbp_fuel',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'errors': [],
+        }
+        try:
+            start = time.time()
+            table = fetch_bulk_cbp_fuel()
+            duration = time.time() - start
+            if not table:
+                results['failed'] = 1
+                results['errors'].append({'error': 'CBP fuel fetch returned empty'})
+                logger.error("Census CBP fuel refresh failed: empty result")
+            else:
+                written = populate_cache_from_bulk(table)
+                write_snapshot(table)
+                results['success'] = written
+                results['failed'] = max(0, len(table) - written)
+                set_cached_data(
+                    source_type='census_cbp_fuel',
+                    data={
+                        'county_count': written,
+                        'refreshed_at': datetime.utcnow().isoformat(),
+                    },
+                    fetch_duration=duration,
+                    api_source='census_cbp_api',
+                )
+                logger.info(
+                    "Census CBP fuel refresh: %d counties cached in %.1fs",
+                    written, duration)
+        except Exception as e:
+            results['failed'] = 1
+            results['errors'].append({'error': str(e)})
+            logger.error(f"Census CBP fuel refresh exception: {e}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results
+
+
+def refresh_all_acs_broadband() -> Dict[str, Any]:
+    """
+    Refresh the Census ACS broadband subscription cache (table B28002).
+
+    Single-request fetch of household broadband subscription counts for
+    all Wisconsin counties, with percentile-scaled communications
+    vulnerability scoring. ACS 5-year publishes annually, so this job
+    runs on the annual track (8760h).
+    """
+    app = _get_app()
+    if not app:
+        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
+
+    with app.app_context():
+        from utils.acs_broadband import (
+            fetch_bulk_acs_broadband, populate_cache_from_bulk, write_snapshot)
+        from utils.data_cache_manager import set_cached_data
+
+        results = {
+            'source_type': 'acs_broadband',
+            'started_at': datetime.utcnow().isoformat(),
+            'success': 0,
+            'failed': 0,
+            'errors': [],
+        }
+        try:
+            start = time.time()
+            table = fetch_bulk_acs_broadband()
+            duration = time.time() - start
+            if not table:
+                results['failed'] = 1
+                results['errors'].append({'error': 'ACS broadband fetch returned empty'})
+                logger.error("ACS broadband refresh failed: empty result")
+            else:
+                written = populate_cache_from_bulk(table)
+                write_snapshot(table)
+                results['success'] = written
+                results['failed'] = max(0, len(table) - written)
+                set_cached_data(
+                    source_type='acs_broadband',
+                    data={
+                        'county_count': written,
+                        'refreshed_at': datetime.utcnow().isoformat(),
+                    },
+                    fetch_duration=duration,
+                    api_source='census_acs_api',
+                )
+                logger.info(
+                    "ACS broadband refresh: %d counties cached in %.1fs",
+                    written, duration)
+        except Exception as e:
+            results['failed'] = 1
+            results['errors'].append({'error': str(e)})
+            logger.error(f"ACS broadband refresh exception: {e}")
+
+        results['finished_at'] = datetime.utcnow().isoformat()
+        return results

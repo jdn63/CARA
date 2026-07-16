@@ -103,6 +103,43 @@ accepted by the admin refresh endpoint live in
   from official EPHT CSVs (lyme-county.csv, west-nile-data-county.csv). All
   72 counties, confirmed and probable case counts and crude rates per 100k.
   Weekly automated CSV download. Source WEDSS via dhs.wisconsin.gov/epht.
+- USDA Forest Service FIA (Forest Inventory and Analysis) forest cover:
+  per-county forest-cover percent for all 72 counties, used by the
+  vector-borne disease land-cover exposure term. Design-based area
+  estimate from FIADB EVALID 552501 (WISCONSIN 2025 current-area
+  evaluation): forest_cover_pct = accessible forest land
+  (COND_STATUS_CD=1) divided by total land (COND_STATUS_CD in 1,2), each
+  condition expanded by CONDPROP_UNADJ * ADJ_FACTOR (SUBP or MACR by
+  PROP_BASIS) * EXPNS from POP_STRATUM. Replaces the v1 curated seed
+  estimates. Static seed written into
+  `data/disease/wisconsin_vector_borne_baseline.json`
+  (`forest_cover_source` = FIA_EVALID_552501 on every county) with an
+  audit snapshot in `data/forest/wisconsin_county_forest_cover.json`.
+  Source `apps.fs.usda.gov/fia/datamart/CSV/`.
+- PHMSA Pipeline Safety Flagged Incident Files: per-county Wisconsin
+  pipeline incident counts (gas distribution, gas transmission/gathering,
+  hazardous liquid), trailing 20 years (incident year 2006 onward), used
+  as an additive term in hazmat_industrial exposure. All 72 counties;
+  zero counts are real measurements (full WI extract), not gaps. The
+  PHMSA host blocks automated access (Akamai 403), so the file is
+  retrieved from the Internet Archive Wayback snapshot; the dataset is
+  also cataloged at datahub.transportation.gov (qdme-9bbm). Seed in
+  `data/hazmat_scoping/wi_county_pipeline_incidents.json`.
+- USDA NASS Census of Agriculture 2022 (QuickStats API): real per-county
+  chemical expense, fertilizer expense, harvested cropland acres, and
+  milk-cow inventory for all 72 counties, combined into a 0-1
+  ag_chemical_intensity score (weights 0.5 chemical+fertilizer expense,
+  0.25 cropland, 0.25 milk cows; each normalized to the statewide 95th
+  percentile; weights renormalize when a field is census
+  disclosure-suppressed). Drives hazmat_agricultural exposure, replacing
+  the v0 tier proxy. Rebuilt with
+  `python3 scripts/build_ag_chemical_seed.py` using the
+  NASS_QUICKSTATS_API_KEY secret (development only; the runtime app
+  never calls the API, so the key is NOT needed on Render). Rerun when
+  a new Census of Agriculture is released (every 5 years). Static seed
+  in `data/hazmat_scoping/wi_county_ag_chemical.json`. Suppressed
+  values are stored as null, never fabricated; Menominee has no census
+  farm records and scores an honest floor.
 - CDC/ATSDR SVI 2022 ArcGIS REST API: county SVI percentile rankings for
   all 72 WI counties. Bulk fetch. Stored in
   `data/svi/wisconsin_svi_data.json`. Scheduler refreshes annually via
@@ -454,6 +491,28 @@ EM weighted linear sum sources its per-jurisdiction value from
 `risk_data['health_risk']` (the acute infectious-disease composite signal
 already produced at the LHD level), so WEM regional scores also reflect
 the 5% contribution.
+
+County-level infectious_disease wiring fix (v28.10, 2026-07-07). The v28
+redistribution above wired infectious_disease into the WEM regional
+aggregator, but the county-level EM composite in
+`utils/data_processor.py` never received a corresponding entry in its EM
+`raw_values` map. The domain was therefore treated as missing on every
+EM county dashboard: silently excluded from the weighted quadratic mean,
+weights renormalized over the other ten domains, and a permanent "data
+coverage 95%; excluded: infectious_disease" notice shown. The EM
+`raw_values` map now feeds `infectious_disease` from
+`health_metrics_score` (the same acute infectious-disease composite
+signal as `health_risk`), exactly as the WEM aggregator does. This
+restores the documented 5% contribution, 100% EM data coverage, and
+county-vs-regional consistency. EM county composites shift slightly
+(counties whose disease signal sits above their renormalized composite
+tick up, those below tick down); PH scores are unchanged. An
+"Infectious Disease (EM Disease Awareness)" row is appended to
+`score_provenance.domains` in EM mode only, and the dashboard context
+cache key was bumped (`dashboard_full_v6` to `dashboard_full_v7`) so
+cached pre-fix EM dashboards are invalidated at deploy. The compact-grid
+EM disease tile label shows the combined 14% (9% health_metrics + 5%
+disease awareness) applied to that single signal.
 
 Streamlined EM biological panel
 (`templates/dashboard/_category_biological.html`). When the composite is
@@ -956,3 +1015,163 @@ scoring pipeline; they are presentation-layer only.
     (baseline value, current-month label and value, composite), and
     inner SVG primitives are `aria-hidden="true"` so they do not
     pollute the accessibility tree.
+
+## Hazardous Materials domains (industrial + agricultural)
+
+The Hazardous Materials category contributes 6% of the composite,
+split evenly: hazmat_industrial at 3% and hazmat_agricultural at 3%.
+The split and weights are identical on the Public Health and Emergency
+Management sides by design, so a PH-vs-EM comparison reflects the
+difference in framing (action-plan voice and vulnerability weighting),
+not a difference in weight. Both scores use the standard CARA EVR
+residual-risk formula:
+
+    Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * HIF
+
+Both calculators are cache-only safe: they perform no live HTTP. Inputs
+come from local JSON seed files or from already-cached SVI and Census
+helpers that themselves obey the cache-only request-path invariant.
+Code lives in `utils/hazmat_industrial_risk.py` and
+`utils/hazmat_agricultural_risk.py`; both are called from
+`utils/data_processor.py` on the request path and surfaced through
+`templates/dashboard/_category_hazardous_materials.html` and the
+compact grid.
+
+### Data maturity (read before trusting a specific number)
+
+These two domains remain among the less data-mature in CARA, though
+hazmat_industrial exposure has been upgraded to real EPA TRI and PHMSA
+pipeline data. Current exposure inputs:
+
+  - hazmat_industrial exposure now uses real EPA Toxics Release
+    Inventory (TRI) facility counts for all 72 counties
+    (`data/hazmat_scoping/county_tri_counts.json`), replacing the former
+    Milwaukee/Dodge-only seed and the tiered proxy that covered the rest.
+    On top of TRI, a real PHMSA pipeline-incident term (trailing 20-year
+    counts, `data/hazmat_scoping/wi_county_pipeline_incidents.json`) adds
+    a capped additive bump (max +0.15, /25 saturation) to exposure. Zero
+    pipeline incidents is a real measurement, not a gap.
+  - Known barrier (documented, not proxied): the EPA RMP (Risk
+    Management Plan) facility dataset is not publicly queryable at
+    per-county granularity (Envirofacts RMP is access-restricted), so RMP
+    facility counts are not incorporated.
+  - hazmat_agricultural exposure now uses real USDA NASS Census of
+    Agriculture 2022 county data for all 72 counties
+    (`data/hazmat_scoping/wi_county_ag_chemical.json`), replacing the
+    former tier proxy. Known barrier: the WI DATCP ACCP annual summary
+    is a PDF without a queryable per-county dataset, so ACCP incident
+    history is not yet a signal. The tile shows the data vintage.
+
+Vulnerability for both comes from CDC SVI 2022 themes plus Census
+population; the industrial HIF and agricultural HIF are not defined in
+the NRI factor table and therefore default to 1.0 (neutral) -- this is
+intentional and honest, not a fabricated value.
+
+### Resilience is statute-backed only (do not reintroduce guessed lists)
+
+Response speed dominates consequence in a chemical release, so the
+resilience term can be raised for a county with a nearby Level A
+response capability. The signal is deliberately narrow:
+
+  - hazmat_industrial adds a resilience boost ONLY for La Crosse County,
+    the single county whose regional hazmat team is fixed in Wisconsin
+    statute (Wis. Stat. 323.13(2)(a) authorizes no more than nine
+    regional teams and mandates one in La Crosse). The full current
+    roster of regional-team host counties is not published in a single
+    authoritative public source, so no other county receives a
+    team-based boost. This avoids asserting unverified host locations.
+  - hazmat_agricultural previously added a small resilience boost for a
+    17-county "UW Extension agricultural-safety footprint" list. That
+    signal was removed in the v28.10 integrity audit (UW-Madison
+    Extension operates in all 72 counties, so the list carried no real
+    differentiation). No Extension-based boost remains.
+
+CHEMPACK is NOT used to score any county. CHEMPACK cache locations are
+confidential by federal law (42 U.S.C. 247d-6b prohibits disclosure of
+storage locations, even under FOIA), and neither ASPR, Wisconsin DHS,
+nor WEM publishes county-level positioning. An earlier v0 seed carried
+a hardcoded eight-county CHEMPACK list mislabeled as "ASPR public
+guidance"; because no lawful authoritative public source can ever back
+it, the signal was removed entirely from the calculator, the displayed
+methodology, and the metrics table. CHEMPACK still appears in the
+Public Health action-plan content layer as a preparedness-coordination
+step (verify access plans with the regional coordinator), which is
+accurate because it references the program, never a location. Do not
+reintroduce a CHEMPACK scoring signal or any county-level CHEMPACK
+location list.
+
+Removing the CHEMPACK boost and correcting the hazmat-team list lowered
+the resilience term for the previously boosted counties, which raised
+their industrial residual risk (for example Milwaukee's industrial
+score rose to the 1.0 ceiling because its exposure was already maxed).
+This is the correct, honest result of dropping an unearned resilience
+credit. The full-dashboard cache key was bumped
+(`dashboard_full_v7` to `dashboard_full_v8`) so pre-fix cached
+composites are invalidated cleanly at deploy.
+
+## Data-source integrity audit fixes (v28.10, 2026-07)
+
+A full audit of every claimed data source found four critical
+false-citation problems and several partially disclosed heuristics.
+All were fixed in one pass; the full-dashboard cache key was bumped
+(`dashboard_full_v8` to `dashboard_full_v9`).
+
+1. NCES SSOCS school safety (20 percent of Active Shooter). The
+   pyreadstat dependency was never installed, so the real 2.1 MB
+   public-use microdata file was never read and every county received
+   a hardcoded tier guess while the UI claimed "NCES SSOCS 2019-2020".
+   Two deeper problems surfaced during the fix: the public-use file
+   contains no state or county identifiers at all (they are suppressed
+   for confidentiality), and the previous variable-name map did not
+   match the file (guessed names like FR_CNTRL vs real codes like
+   C0112). The processor (utils/nces_ssocs_processor.py) was rewritten:
+   it now computes real national averages per school urbanicity class
+   (city, suburb, town-rural pooled) from the microdata, assigns each
+   Wisconsin county to a class via a disclosed CARA heuristic, and
+   labels data_quality low with an explicit provenance note. Incident
+   rates per 1,000 students are approximate (school size is categorical
+   in the public file; category midpoints are used). Wisconsin-specific
+   or county-measured SSOCS values are impossible from the public file;
+   do not reintroduce claims of them.
+
+2. UW Extension agricultural-safety county list. A 17-county
+   "Extension ag-safety footprint" resilience bonus (+0.15) in
+   utils/hazmat_agricultural_risk.py was fabricated: UW-Madison
+   Extension operates in all 72 counties, so the signal carried no real
+   differentiation. Removed from the calculator, metrics, and template.
+
+3. Utilities domain (utils/utilities_risk.py). All four sub-risk
+   data_sources lists cited federal and state feeds (DOE disturbance
+   events, EPA SDWIS, WI PSC, FCC DIRS, FEMA Lifelines, EIA, USDA,
+   WisDOT) that were never fetched. They now honestly state
+   "CARA rule-based county proxy model" plus SVI, matching the UI
+   labels which already said proxy-based estimates. The invented
+   COUNTY_WATER_SYSTEM_MAP per-county system counts were removed and
+   replaced with a disclosed urban/rural private-well reliance rule.
+
+4. Correctional facility loader (load_prison_data in
+   utils/data_processor.py). Docstring claimed OpenFEMA and WI DOC
+   fetch; it is a static hand-maintained seed with partial coverage
+   and is now labeled as such.
+
+High-priority disclosure fixes: the tornado tile now discloses the
+CARA tornado-corridor and open-terrain county-list heuristics (25
+percent of tornado exposure); the winter storm tile discloses the
+northern-location and lake-effect lists; the WI firearm-law score 0.65
+is now labeled everywhere as a CARA in-house translation of RAND 2022
+law categories (RAND publishes no such number); the vector-borne
+forest-cover and deer-density seed scores are labeled as CARA-curated
+v1 estimates pending re-derivation.
+
+Medium items: the BSTA temporal 0.5 baseline fallback was already
+disclosed via baseline_used_fallback; the NRI neutral fallback
+(0.33/0.35/0.40) now sets an nri_neutral_fallback flag in the
+natural-hazards payload (excluded from the numeric composite; note
+that bool is an int subtype in Python, so the exclusion is by name).
+
+Score effects: Active Shooter school-safety component now uses real
+SSOCS class averages (city 0.54, suburb 0.46, town-rural 0.42 versus
+the old guesses 0.68/0.52/0.42), and agricultural hazmat resilience
+dropped by 0.15 for the 17 previously boosted counties (raising their
+residual risk slightly). These are the honest results of removing
+unearned or fabricated signals.

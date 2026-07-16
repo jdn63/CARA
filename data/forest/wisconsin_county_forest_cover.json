@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "source": "USDA Forest Service FIADB (Forest Inventory and Analysis)",
+    "evalid": "552501",
+    "eval_description": "WISCONSIN 2025: 2019-2025: CURRENT AREA, CURRENT VOLUME",
+    "method": "Design-based area estimate: forest_cover_pct = accessible forest land (COND_STATUS_CD=1) / total land (COND_STATUS_CD in 1,2), each condition expanded by CONDPROP_UNADJ * ADJ_FACTOR (SUBP/MACR by PROP_BASIS) * EXPNS from POP_STRATUM.",
+    "datamart": "https://apps.fs.usda.gov/fia/datamart/CSV/",
+    "fetched": "2026-07-16",
+    "coverage": "72 of 72 counties"
+  },
+  "counties": {
+    "Adams": {
+      "forest_acres": 217524,
+      "land_acres": 376803,
+      "forest_cover_pct": 57.7
+    },
+    "Ashland": {
+      "forest_acres": 436351,
+      "land_acres": 531141,
+      "forest_cover_pct": 82.2
+    },
+    "Barron": {
+      "forest_acres": 174108,
+      "land_acres": 544811,
+      "forest_cover_pct": 32.0
+    },
+    "Bayfield": {
+      "forest_acres": 762127,
+      "land_acres": 896098,
+      "forest_cover_pct": 85.0
+    },
+    "Brown": {
+      "forest_acres": 55576,
+      "land_acres": 332043,
+      "forest_cover_pct": 16.7
+    },
+    "Buffalo": {
+      "forest_acres": 225219,
+      "land_acres": 466848,
+      "forest_cover_pct": 48.2
+    },
+    "Burnett": {
+      "forest_acres": 384337,
+      "land_acres": 557712,
+      "forest_cover_pct": 68.9
+    },
+    "Calumet": {
+      "forest_acres": 35110,
+      "land_acres": 202095,
+      "forest_cover_pct": 17.4
+    },
+    "Chippewa": {
+      "forest_acres": 289108,
+      "land_acres": 665700,
+      "forest_cover_pct": 43.4
+    },
+    "Clark": {
+      "forest_acres": 340664,
+      "land_acres": 789969,
+      "forest_cover_pct": 43.1
+    },
+    "Columbia": {
+      "forest_acres": 104721,
+      "land_acres": 494728,
+      "forest_cover_pct": 21.2
+    },
+    "Crawford": {
+      "forest_acres": 153145,
+      "land_acres": 347357,
+      "forest_cover_pct": 44.1
+    },
+    "Dane": {
+      "forest_acres": 104350,
+      "land_acres": 753667,
+      "forest_cover_pct": 13.8
+    },
+    "Dodge": {
+      "forest_acres": 48593,
+      "land_acres": 556634,
+      "forest_cover_pct": 8.7
+    },
+    "Door": {
+      "forest_acres": 167331,
+      "land_acres": 344436,
+      "forest_cover_pct": 48.6
+    },
+    "Douglas": {
+      "forest_acres": 681782,
+      "land_acres": 867561,
+      "forest_cover_pct": 78.6
+    },
+    "Dunn": {
+      "forest_acres": 234833,
+      "land_acres": 572632,
+      "forest_cover_pct": 41.0
+    },
+    "Eau Claire": {
+      "forest_acres": 172145,
+      "land_acres": 415407,
+      "forest_cover_pct": 41.4
+    },
+    "Florence": {
+      "forest_acres": 296074,
+      "land_acres": 318509,
+      "forest_cover_pct": 93.0
+    },
+    "Fond du Lac": {
+      "forest_acres": 47886,
+      "land_acres": 458609,
+      "forest_cover_pct": 10.4
+    },
+    "Forest": {
+      "forest_acres": 567982,
+      "land_acres": 609737,
+      "forest_cover_pct": 93.2
+    },
+    "Grant": {
+      "forest_acres": 197855,
+      "land_acres": 728954,
+      "forest_cover_pct": 27.1
+    },
+    "Green": {
+      "forest_acres": 33656,
+      "land_acres": 356049,
+      "forest_cover_pct": 9.5
+    },
+    "Green Lake": {
+      "forest_acres": 42853,
+      "land_acres": 226212,
+      "forest_cover_pct": 18.9
+    },
+    "Iowa": {
+      "forest_acres": 149315,
+      "land_acres": 460880,
+      "forest_cover_pct": 32.4
+    },
+    "Iron": {
+      "forest_acres": 431239,
+      "land_acres": 476266,
+      "forest_cover_pct": 90.5
+    },
+    "Jackson": {
+      "forest_acres": 346472,
+      "land_acres": 593342,
+      "forest_cover_pct": 58.4
+    },
+    "Jefferson": {
+      "forest_acres": 52388,
+      "land_acres": 333114,
+      "forest_cover_pct": 15.7
+    },
+    "Juneau": {
+      "forest_acres": 244274,
+      "land_acres": 454325,
+      "forest_cover_pct": 53.8
+    },
+    "Kenosha": {
+      "forest_acres": 23185,
+      "land_acres": 170790,
+      "forest_cover_pct": 13.6
+    },
+    "Kewaunee": {
+      "forest_acres": 31347,
+      "land_acres": 213067,
+      "forest_cover_pct": 14.7
+    },
+    "La Crosse": {
+      "forest_acres": 132141,
+      "land_acres": 278079,
+      "forest_cover_pct": 47.5
+    },
+    "Lafayette": {
+      "forest_acres": 47263,
+      "land_acres": 397363,
+      "forest_cover_pct": 11.9
+    },
+    "Langlade": {
+      "forest_acres": 420866,
+      "land_acres": 555001,
+      "forest_cover_pct": 75.8
+    },
+    "Lincoln": {
+      "forest_acres": 437276,
+      "land_acres": 563637,
+      "forest_cover_pct": 77.6
+    },
+    "Manitowoc": {
+      "forest_acres": 93299,
+      "land_acres": 367515,
+      "forest_cover_pct": 25.4
+    },
+    "Marathon": {
+      "forest_acres": 474983,
+      "land_acres": 1006966,
+      "forest_cover_pct": 47.2
+    },
+    "Marinette": {
+      "forest_acres": 726797,
+      "land_acres": 886405,
+      "forest_cover_pct": 82.0
+    },
+    "Marquette": {
+      "forest_acres": 122111,
+      "land_acres": 271944,
+      "forest_cover_pct": 44.9
+    },
+    "Menominee": {
+      "forest_acres": 222570,
+      "land_acres": 232576,
+      "forest_cover_pct": 95.7
+    },
+    "Milwaukee": {
+      "forest_acres": 11583,
+      "land_acres": 160476,
+      "forest_cover_pct": 7.2
+    },
+    "Monroe": {
+      "forest_acres": 284639,
+      "land_acres": 596808,
+      "forest_cover_pct": 47.7
+    },
+    "Oconto": {
+      "forest_acres": 362061,
+      "land_acres": 622844,
+      "forest_cover_pct": 58.1
+    },
+    "Oneida": {
+      "forest_acres": 616522,
+      "land_acres": 752314,
+      "forest_cover_pct": 82.0
+    },
+    "Outagamie": {
+      "forest_acres": 67569,
+      "land_acres": 410710,
+      "forest_cover_pct": 16.5
+    },
+    "Ozaukee": {
+      "forest_acres": 26138,
+      "land_acres": 136290,
+      "forest_cover_pct": 19.2
+    },
+    "Pepin": {
+      "forest_acres": 63596,
+      "land_acres": 153993,
+      "forest_cover_pct": 41.3
+    },
+    "Pierce": {
+      "forest_acres": 118654,
+      "land_acres": 389934,
+      "forest_cover_pct": 30.4
+    },
+    "Polk": {
+      "forest_acres": 295828,
+      "land_acres": 630151,
+      "forest_cover_pct": 46.9
+    },
+    "Portage": {
+      "forest_acres": 172543,
+      "land_acres": 514461,
+      "forest_cover_pct": 33.5
+    },
+    "Price": {
+      "forest_acres": 631257,
+      "land_acres": 844621,
+      "forest_cover_pct": 74.7
+    },
+    "Racine": {
+      "forest_acres": 19121,
+      "land_acres": 214355,
+      "forest_cover_pct": 8.9
+    },
+    "Richland": {
+      "forest_acres": 164441,
+      "land_acres": 337077,
+      "forest_cover_pct": 48.8
+    },
+    "Rock": {
+      "forest_acres": 72975,
+      "land_acres": 465443,
+      "forest_cover_pct": 15.7
+    },
+    "Rusk": {
+      "forest_acres": 412400,
+      "land_acres": 571595,
+      "forest_cover_pct": 72.1
+    },
+    "St. Croix": {
+      "forest_acres": 143354,
+      "land_acres": 489501,
+      "forest_cover_pct": 29.3
+    },
+    "Sauk": {
+      "forest_acres": 190836,
+      "land_acres": 510450,
+      "forest_cover_pct": 37.4
+    },
+    "Sawyer": {
+      "forest_acres": 668427,
+      "land_acres": 810521,
+      "forest_cover_pct": 82.5
+    },
+    "Shawano": {
+      "forest_acres": 277476,
+      "land_acres": 561099,
+      "forest_cover_pct": 49.5
+    },
+    "Sheboygan": {
+      "forest_acres": 74456,
+      "land_acres": 317307,
+      "forest_cover_pct": 23.5
+    },
+    "Taylor": {
+      "forest_acres": 392093,
+      "land_acres": 651653,
+      "forest_cover_pct": 60.2
+    },
+    "Trempealeau": {
+      "forest_acres": 185597,
+      "land_acres": 490433,
+      "forest_cover_pct": 37.8
+    },
+    "Vernon": {
+      "forest_acres": 226407,
+      "land_acres": 504506,
+      "forest_cover_pct": 44.9
+    },
+    "Vilas": {
+      "forest_acres": 496534,
+      "land_acres": 577643,
+      "forest_cover_pct": 86.0
+    },
+    "Walworth": {
+      "forest_acres": 46560,
+      "land_acres": 365748,
+      "forest_cover_pct": 12.7
+    },
+    "Washburn": {
+      "forest_acres": 391508,
+      "land_acres": 528655,
+      "forest_cover_pct": 74.1
+    },
+    "Washington": {
+      "forest_acres": 53637,
+      "land_acres": 264781,
+      "forest_cover_pct": 20.3
+    },
+    "Waukesha": {
+      "forest_acres": 64279,
+      "land_acres": 377823,
+      "forest_cover_pct": 17.0
+    },
+    "Waupaca": {
+      "forest_acres": 218158,
+      "land_acres": 481182,
+      "forest_cover_pct": 45.3
+    },
+    "Waushara": {
+      "forest_acres": 158614,
+      "land_acres": 385088,
+      "forest_cover_pct": 41.2
+    },
+    "Winnebago": {
+      "forest_acres": 28736,
+      "land_acres": 290848,
+      "forest_cover_pct": 9.9
+    },
+    "Wood": {
+      "forest_acres": 245365,
+      "land_acres": 521209,
+      "forest_cover_pct": 47.1
+    }
+  }
+}

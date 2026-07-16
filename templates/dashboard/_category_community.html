@@ -36,7 +36,7 @@
                                     ~ '</ul>'
                                     ~ '<div class="formula-line">Each uses: (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
                                     ~ '<div class="formula-line">Overall = ' ~ "%.3f"|format(risk_data.utilities.overall) ~ '</div>'
-                                    ~ '<div class="data-source">Sources: Census Bureau, CDC SVI, WI PSC utility territory maps (proxy-based estimates)</div>'
+                                    ~ '<div class="data-source">Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (private-well reliance); Census CBP gasoline station density and ACS broadband subscriptions; CDC SVI; remaining inputs are CARA proxy-based estimates</div>'
                                     ) }}
                                     </h3>
                                     <span class="badge bg-{{ 'danger' if risk_data.utilities.overall > 0.6 else 'warning' if risk_data.utilities.overall > 0.3 else 'success' }}">
@@ -253,7 +253,7 @@
                     </div>
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: Census Bureau, CDC SVI, WI PSC utility territory maps (proxy-based estimates)
+                            Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (private-well reliance); Census CBP gasoline station density and ACS broadband subscriptions; CDC SVI; remaining inputs are CARA proxy-based estimates
                         </small>
                     </div>
                 </div>

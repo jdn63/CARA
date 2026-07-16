@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 from utils.svi_data import get_svi_data
 from utils.risk_calculation import calculate_residual_risk
+from utils.eagle_i_outages import get_outage_metrics
 
 # Get module logger (centralized config in core.py)
 logger = logging.getLogger(__name__)
@@ -45,15 +46,11 @@ COUNTY_UTILITY_MAP = {
     # Additional counties would be added here
 }
 
-# Mapping of Wisconsin counties to their water system types
-COUNTY_WATER_SYSTEM_MAP = {
-    "Milwaukee": {"municipal": 1, "community": 5, "private": 12},
-    "Dane": {"municipal": 3, "community": 7, "private": 18},
-    "Waukesha": {"municipal": 2, "community": 4, "private": 15},
-    "Brown": {"municipal": 1, "community": 3, "private": 10},
-    "Racine": {"municipal": 1, "community": 3, "private": 8},
-    # Additional counties would be added here
-}
+# NOTE (2026-07 data-source integrity audit): a previous version carried a
+# COUNTY_WATER_SYSTEM_MAP with per-county water-system counts that were not
+# drawn from any real inventory (EPA SDWIS was cited but never fetched).
+# The map has been removed; private-well reliance is now an urban/rural
+# heuristic, disclosed as such in the data_sources labels below.
 
 def calculate_electrical_outage_risk(county_name: str) -> Dict:
     """
@@ -80,8 +77,19 @@ def calculate_electrical_outage_risk(county_name: str) -> Dict:
         socioeconomic_svi = 0.5
         housing_svi = 0.5
     
-    # Calculate exposure component
-    exposure_score = _calculate_electrical_exposure(county_name)
+    # Exposure: prefer real DOE/ORNL EAGLE-I recorded outage history
+    # (seed artifact built by scripts/build_eagle_i_seed.py); fall back
+    # to the disclosed rule-based proxy only if the seed is missing.
+    eagle_metrics = get_outage_metrics(county_name)
+    if eagle_metrics and eagle_metrics.get("exposure_score") is not None:
+        exposure_score = eagle_metrics["exposure_score"]
+        exposure_source = "eagle_i"
+    else:
+        exposure_score = _calculate_electrical_exposure(county_name)
+        exposure_source = "proxy_fallback"
+        logger.warning(
+            "EAGLE-I outage data missing for %s; using proxy exposure",
+            county_name)
     
     # Calculate vulnerability component (incorporating SVI data)
     vulnerability_score = _calculate_electrical_vulnerability(county_name, socioeconomic_svi, housing_svi)
@@ -107,7 +115,21 @@ def calculate_electrical_outage_risk(county_name: str) -> Dict:
         resilience=resilience_score
     )
     
-    return {
+    if exposure_source == "eagle_i":
+        data_sources = [
+            "DOE/ORNL EAGLE-I recorded electricity outages 2014-2025 "
+            "(county level, 15-minute resolution; exposure component)",
+            "CARA rule-based county proxy model (vulnerability and "
+            "resilience components)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+    else:
+        data_sources = [
+            "CARA rule-based county proxy model (urban/rural grid heuristics; EAGLE-I seed unavailable)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+
+    result = {
         "overall_risk": residual_risk,  # Use the new residual risk as overall score
         "traditional_risk": traditional_risk,  # Keep the old calculation for reference
         "components": {
@@ -115,13 +137,19 @@ def calculate_electrical_outage_risk(county_name: str) -> Dict:
             "vulnerability": vulnerability_score,
             "resilience": resilience_score
         },
-        "data_sources": [
-            "Department of Energy Electric Disturbance Events",
-            "Public Service Commission of Wisconsin",
-            "FEMA Lifeline Data",
-            "CDC Social Vulnerability Index"
-        ]
+        "exposure_source": exposure_source,
+        "data_sources": data_sources
     }
+    if eagle_metrics:
+        result["outage_history"] = {
+            "hours_per_customer_per_year": eagle_metrics.get(
+                "hours_per_customer_per_year"),
+            "customer_hours_out_per_year": eagle_metrics.get(
+                "customer_hours_out_per_year"),
+            "peak_customers_out": eagle_metrics.get("peak_customers_out"),
+            "modeled_customers": eagle_metrics.get("modeled_customers"),
+        }
+    return result
 
 def _calculate_electrical_exposure(county_name: str) -> float:
     """
@@ -292,7 +320,25 @@ def calculate_utilities_disruption_risk(county_name: str) -> Dict:
         resilience=resilience_score
     )
     
-    return {
+    from utils.sdwis_water import get_water_system_metrics
+    sdwis = get_water_system_metrics(county_name)
+    if sdwis and sdwis.get("private_well_reliance") is not None:
+        data_sources = [
+            "EPA SDWIS public water systems (active system counts and "
+            "population served; private-well reliance estimate)",
+            "CARA rule-based county proxy model (communications and "
+            "infrastructure-age heuristics)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+        water_data_source = "epa_sdwis"
+    else:
+        data_sources = [
+            "CARA rule-based county proxy model (water/communications heuristics; SDWIS cache not yet warmed)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+        water_data_source = "proxy_fallback"
+
+    result = {
         "overall_risk": residual_risk,  # Use the new residual risk as overall score
         "traditional_risk": traditional_risk,  # Keep the old calculation for reference
         "components": {
@@ -300,14 +346,30 @@ def calculate_utilities_disruption_risk(county_name: str) -> Dict:
             "vulnerability": vulnerability_score,
             "resilience": resilience_score
         },
-        "data_sources": [
-            "EPA Safe Drinking Water Information System",
-            "Wisconsin DNR Water System Compliance Data",
-            "FCC Disaster Information Reporting System",
-            "FEMA Lifeline Data",
-            "CDC Social Vulnerability Index"
-        ]
+        "water_data_source": water_data_source,
+        "data_sources": data_sources
     }
+    if sdwis:
+        result["water_systems"] = {
+            "active_systems_total": sdwis.get("active_systems_total"),
+            "cws_count": sdwis.get("cws_count"),
+            "cws_population_served": sdwis.get("cws_population_served"),
+            "private_well_reliance": sdwis.get("private_well_reliance"),
+        }
+    return result
+
+def _comms_vulnerability(county_name: str) -> float:
+    """
+    Communications vulnerability input for utilities exposure. Prefers
+    the real ACS broadband subscription percentile (warmed by the
+    scheduler job refresh_all_acs_broadband); falls back to the
+    disclosed urban/rural rule when the cache is empty.
+    """
+    from utils.acs_broadband import get_broadband_metrics
+    bb = get_broadband_metrics(county_name)
+    if bb and bb.get("comms_vulnerability") is not None:
+        return bb["comms_vulnerability"]
+    return 0.8 if county_name not in ["Milwaukee", "Dane", "Waukesha", "Brown"] else 0.5
 
 def _calculate_utilities_exposure(county_name: str) -> float:
     """
@@ -322,16 +384,29 @@ def _calculate_utilities_exposure(county_name: str) -> float:
     Returns:
         Exposure score between 0-1
     """
-    # Get water system data for this county
-    water_systems = COUNTY_WATER_SYSTEM_MAP.get(county_name, {"municipal": 1, "community": 3, "private": 10})
+    # Private-well reliance: prefer the real EPA SDWIS-derived estimate
+    # (1 - CWS population served / county population, warmed by the
+    # scheduler job refresh_all_epa_sdwis). Fall back to the disclosed
+    # urban/rural rule only when the cache has no entry.
+    from utils.sdwis_water import get_water_system_metrics
+    sdwis = get_water_system_metrics(county_name)
+    if sdwis and sdwis.get("private_well_reliance") is not None:
+        private_well_reliance = sdwis["private_well_reliance"]
+    elif county_name in ["Milwaukee", "Racine", "Kenosha"]:
+        private_well_reliance = 0.4
+    elif county_name in ["Dane", "Waukesha", "Brown"]:
+        private_well_reliance = 0.5
+    else:
+        private_well_reliance = 0.6
     
     # Base exposure factors from known Wisconsin patterns
     base_factors = {
         # Water infrastructure age - older in established urban counties
         "water_infrastructure_age": 0.8 if county_name in ["Milwaukee", "Racine", "Kenosha"] else 0.6,
         
-        # Communications vulnerability - rural areas have less redundancy
-        "comms_vulnerability": 0.8 if county_name not in ["Milwaukee", "Dane", "Waukesha", "Brown"] else 0.5,
+        # Communications vulnerability - real ACS broadband subscription
+        # share when cached, otherwise the disclosed urban/rural rule
+        "comms_vulnerability": _comms_vulnerability(county_name),
         
         # Geographic risk factors (flooding impact on utilities)
         "geographic_vulnerability": 0.7 if county_name in ["Crawford", "Vernon", "La Crosse"] else 0.5,
@@ -341,7 +416,7 @@ def _calculate_utilities_exposure(county_name: str) -> float:
     }
     
     # Systems with more private wells have higher exposure (less regulation/monitoring)
-    private_systems_factor = min(1.0, water_systems.get("private", 0) / 20)
+    private_systems_factor = private_well_reliance
     
     # Calculate composite exposure score
     exposure_score = (
@@ -487,11 +562,8 @@ def calculate_supply_chain_risk(county_name: str) -> Dict:
             "resilience": resilience_score
         },
         "data_sources": [
-            "Wisconsin DOT Infrastructure Data",
-            "Census Bureau County Business Patterns",
-            "FEMA Community Lifelines Data",
-            "USDA Food Environment Atlas",
-            "CDC Social Vulnerability Index"
+            "CARA rule-based county proxy model (transportation/retail heuristics; no live infrastructure feed)",
+            "CDC Social Vulnerability Index (vulnerability component)"
         ]
     }
 
@@ -662,7 +734,25 @@ def calculate_fuel_shortage_risk(county_name: str) -> Dict:
         resilience=resilience_score
     )
     
-    return {
+    from utils.census_cbp_fuel import get_fuel_station_metrics
+    cbp = get_fuel_station_metrics(county_name)
+    if cbp and cbp.get("fuel_access_exposure") is not None:
+        fuel_data_source = "census_cbp"
+        fuel_data_sources = [
+            "Census County Business Patterns (gasoline station density, "
+            "NAICS 447)",
+            "CARA rule-based county proxy model (pipeline and storage "
+            "heuristics)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+    else:
+        fuel_data_source = "proxy_fallback"
+        fuel_data_sources = [
+            "CARA rule-based county proxy model (fuel distribution heuristics; CBP cache not yet warmed)",
+            "CDC Social Vulnerability Index (vulnerability component)"
+        ]
+
+    result = {
         "overall_risk": residual_risk,  # Use the new residual risk as overall score
         "traditional_risk": traditional_risk,  # Keep the old calculation for reference
         "components": {
@@ -670,14 +760,16 @@ def calculate_fuel_shortage_risk(county_name: str) -> Dict:
             "vulnerability": vulnerability_score,
             "resilience": resilience_score
         },
-        "data_sources": [
-            "U.S. Energy Information Administration",
-            "Wisconsin Office of Energy Innovation",
-            "Department of Transportation Fuel Distribution Network",
-            "Census Bureau Data",
-            "CDC Social Vulnerability Index"
-        ]
+        "fuel_data_source": fuel_data_source,
+        "data_sources": fuel_data_sources
     }
+    if cbp:
+        result["fuel_stations"] = {
+            "gas_stations": cbp.get("gas_stations"),
+            "stations_per_10k": cbp.get("stations_per_10k"),
+            "cbp_year": cbp.get("cbp_year"),
+        }
+    return result
 
 def _calculate_fuel_shortage_exposure(county_name: str) -> float:
     """
@@ -692,10 +784,21 @@ def _calculate_fuel_shortage_exposure(county_name: str) -> float:
     Returns:
         Exposure score between 0-1
     """
+    # Distribution isolation: prefer the real Census CBP gas-station
+    # density metric (NAICS 447 establishments per 10,000 residents,
+    # warmed by the scheduler job refresh_all_census_cbp_fuel). Fall
+    # back to the disclosed urban/rural rule when the cache is empty.
+    from utils.census_cbp_fuel import get_fuel_station_metrics
+    cbp = get_fuel_station_metrics(county_name)
+    if cbp and cbp.get("fuel_access_exposure") is not None:
+        distribution_isolation = cbp["fuel_access_exposure"]
+    else:
+        distribution_isolation = 0.8 if county_name not in ["Milwaukee", "Dane", "Waukesha", "Brown", "Racine"] else 0.4
+
     # Base exposure factors from known Wisconsin patterns
     base_factors = {
         # Distribution network access - more isolated counties have higher exposure
-        "distribution_isolation": 0.8 if county_name not in ["Milwaukee", "Dane", "Waukesha", "Brown", "Racine"] else 0.4,
+        "distribution_isolation": distribution_isolation,
         
         # Pipeline proximity - counties without direct pipeline access are more vulnerable
         "pipeline_access": 0.6 if county_name in ["Milwaukee", "Dane", "Rock", "Brown"] else 0.8,

@@ -1,0 +1,686 @@
+{
+ "counties": {
+  "Adams": {
+   "customer_hours_out_per_year": 43743.5,
+   "exposure_score": 0.477,
+   "fips": "55001",
+   "hours_per_customer_per_year": 2.104,
+   "modeled_customers": 20787,
+   "outage_interval_count_per_year": 5057.2,
+   "peak_customers_out": 9123
+  },
+  "Ashland": {
+   "customer_hours_out_per_year": 23917.5,
+   "exposure_score": 0.68,
+   "fips": "55003",
+   "hours_per_customer_per_year": 3.77,
+   "modeled_customers": 6345,
+   "outage_interval_count_per_year": 2000.7,
+   "peak_customers_out": 5052
+  },
+  "Barron": {
+   "customer_hours_out_per_year": 58698.3,
+   "exposure_score": 0.465,
+   "fips": "55005",
+   "hours_per_customer_per_year": 2.008,
+   "modeled_customers": 29231,
+   "outage_interval_count_per_year": 4574.7,
+   "peak_customers_out": 6923
+  },
+  "Bayfield": {
+   "customer_hours_out_per_year": 26067.1,
+   "exposure_score": 0.691,
+   "fips": "55007",
+   "hours_per_customer_per_year": 4.027,
+   "modeled_customers": 6473,
+   "outage_interval_count_per_year": 2032.0,
+   "peak_customers_out": 5170
+  },
+  "Brown": {
+   "customer_hours_out_per_year": 335921.5,
+   "exposure_score": 0.387,
+   "fips": "55009",
+   "hours_per_customer_per_year": 1.665,
+   "modeled_customers": 201743,
+   "outage_interval_count_per_year": 8698.8,
+   "peak_customers_out": 36455
+  },
+  "Buffalo": {
+   "customer_hours_out_per_year": 14555.0,
+   "exposure_score": 0.522,
+   "fips": "55011",
+   "hours_per_customer_per_year": 2.452,
+   "modeled_customers": 5936,
+   "outage_interval_count_per_year": 2277.8,
+   "peak_customers_out": 2326
+  },
+  "Burnett": {
+   "customer_hours_out_per_year": 12306.8,
+   "exposure_score": 0.296,
+   "fips": "55013",
+   "hours_per_customer_per_year": 1.308,
+   "modeled_customers": 9409,
+   "outage_interval_count_per_year": 2664.4,
+   "peak_customers_out": 5604
+  },
+  "Calumet": {
+   "customer_hours_out_per_year": 46284.0,
+   "exposure_score": 0.556,
+   "fips": "55015",
+   "hours_per_customer_per_year": 2.58,
+   "modeled_customers": 17941,
+   "outage_interval_count_per_year": 2432.3,
+   "peak_customers_out": 28485
+  },
+  "Chippewa": {
+   "customer_hours_out_per_year": 51294.0,
+   "exposure_score": 0.375,
+   "fips": "55017",
+   "hours_per_customer_per_year": 1.626,
+   "modeled_customers": 31538,
+   "outage_interval_count_per_year": 4011.5,
+   "peak_customers_out": 15629
+  },
+  "Clark": {
+   "customer_hours_out_per_year": 30750.3,
+   "exposure_score": 0.443,
+   "fips": "55019",
+   "hours_per_customer_per_year": 1.922,
+   "modeled_customers": 15996,
+   "outage_interval_count_per_year": 1842.9,
+   "peak_customers_out": 4358
+  },
+  "Columbia": {
+   "customer_hours_out_per_year": 54943.2,
+   "exposure_score": 0.229,
+   "fips": "55021",
+   "hours_per_customer_per_year": 1.022,
+   "modeled_customers": 53762,
+   "outage_interval_count_per_year": 5512.9,
+   "peak_customers_out": 8271
+  },
+  "Crawford": {
+   "customer_hours_out_per_year": 9603.0,
+   "exposure_score": 0.398,
+   "fips": "55023",
+   "hours_per_customer_per_year": 1.704,
+   "modeled_customers": 5637,
+   "outage_interval_count_per_year": 1172.6,
+   "peak_customers_out": 8996
+  },
+  "Dane": {
+   "customer_hours_out_per_year": 283938.3,
+   "exposure_score": 0.195,
+   "fips": "55025",
+   "hours_per_customer_per_year": 0.961,
+   "modeled_customers": 295516,
+   "outage_interval_count_per_year": 14188.8,
+   "peak_customers_out": 46973
+  },
+  "Dodge": {
+   "customer_hours_out_per_year": 77676.6,
+   "exposure_score": 0.578,
+   "fips": "55027",
+   "hours_per_customer_per_year": 2.61,
+   "modeled_customers": 29757,
+   "outage_interval_count_per_year": 6290.1,
+   "peak_customers_out": 9532
+  },
+  "Door": {
+   "customer_hours_out_per_year": 159981.6,
+   "exposure_score": 0.815,
+   "fips": "55029",
+   "hours_per_customer_per_year": 6.029,
+   "modeled_customers": 26534,
+   "outage_interval_count_per_year": 3210.6,
+   "peak_customers_out": 16061
+  },
+  "Douglas": {
+   "customer_hours_out_per_year": 28637.5,
+   "exposure_score": 0.206,
+   "fips": "55031",
+   "hours_per_customer_per_year": 0.985,
+   "modeled_customers": 29088,
+   "outage_interval_count_per_year": 3940.2,
+   "peak_customers_out": 6682
+  },
+  "Dunn": {
+   "customer_hours_out_per_year": 35858.0,
+   "exposure_score": 0.33,
+   "fips": "55033",
+   "hours_per_customer_per_year": 1.441,
+   "modeled_customers": 24888,
+   "outage_interval_count_per_year": 3209.5,
+   "peak_customers_out": 6799
+  },
+  "Eau Claire": {
+   "customer_hours_out_per_year": 62673.7,
+   "exposure_score": 0.263,
+   "fips": "55035",
+   "hours_per_customer_per_year": 1.131,
+   "modeled_customers": 55392,
+   "outage_interval_count_per_year": 4597.4,
+   "peak_customers_out": 26746
+  },
+  "Florence": {
+   "customer_hours_out_per_year": 38237.6,
+   "exposure_score": 0.905,
+   "fips": "55037",
+   "hours_per_customer_per_year": 13.454,
+   "modeled_customers": 2842,
+   "outage_interval_count_per_year": 1818.5,
+   "peak_customers_out": 4280
+  },
+  "Fond du Lac": {
+   "customer_hours_out_per_year": 96689.7,
+   "exposure_score": 0.251,
+   "fips": "55039",
+   "hours_per_customer_per_year": 1.078,
+   "modeled_customers": 89727,
+   "outage_interval_count_per_year": 7852.7,
+   "peak_customers_out": 9591
+  },
+  "Forest": {
+   "customer_hours_out_per_year": 137294.7,
+   "exposure_score": 0.939,
+   "fips": "55041",
+   "hours_per_customer_per_year": 21.655,
+   "modeled_customers": 6340,
+   "outage_interval_count_per_year": 3468.4,
+   "peak_customers_out": 12168
+  },
+  "Grant": {
+   "customer_hours_out_per_year": 33207.2,
+   "exposure_score": 0.758,
+   "fips": "55043",
+   "hours_per_customer_per_year": 4.471,
+   "modeled_customers": 7428,
+   "outage_interval_count_per_year": 3295.8,
+   "peak_customers_out": 7417
+  },
+  "Green": {
+   "customer_hours_out_per_year": 26392.2,
+   "exposure_score": 0.454,
+   "fips": "55045",
+   "hours_per_customer_per_year": 1.986,
+   "modeled_customers": 13290,
+   "outage_interval_count_per_year": 4647.8,
+   "peak_customers_out": 4731
+  },
+  "Green Lake": {
+   "customer_hours_out_per_year": 36719.4,
+   "exposure_score": 0.488,
+   "fips": "55047",
+   "hours_per_customer_per_year": 2.226,
+   "modeled_customers": 16499,
+   "outage_interval_count_per_year": 3364.2,
+   "peak_customers_out": 6727
+  },
+  "Iowa": {
+   "customer_hours_out_per_year": 22832.0,
+   "exposure_score": 0.544,
+   "fips": "55049",
+   "hours_per_customer_per_year": 2.518,
+   "modeled_customers": 9067,
+   "outage_interval_count_per_year": 3217.1,
+   "peak_customers_out": 5293
+  },
+  "Iron": {
+   "customer_hours_out_per_year": 38065.3,
+   "exposure_score": 0.916,
+   "fips": "55051",
+   "hours_per_customer_per_year": 17.93,
+   "modeled_customers": 2123,
+   "outage_interval_count_per_year": 2210.0,
+   "peak_customers_out": 4110
+  },
+  "Jackson": {
+   "customer_hours_out_per_year": 4791.4,
+   "exposure_score": 0.15,
+   "fips": "55053",
+   "hours_per_customer_per_year": 0.32,
+   "modeled_customers": 14991,
+   "outage_interval_count_per_year": 927.2,
+   "peak_customers_out": 1265
+  },
+  "Jefferson": {
+   "customer_hours_out_per_year": 147202.6,
+   "exposure_score": 0.713,
+   "fips": "55055",
+   "hours_per_customer_per_year": 4.265,
+   "modeled_customers": 34512,
+   "outage_interval_count_per_year": 4524.2,
+   "peak_customers_out": 13807
+  },
+  "Juneau": {
+   "customer_hours_out_per_year": 17639.4,
+   "exposure_score": 0.274,
+   "fips": "55057",
+   "hours_per_customer_per_year": 1.142,
+   "modeled_customers": 15444,
+   "outage_interval_count_per_year": 2200.8,
+   "peak_customers_out": 3506
+  },
+  "Kenosha": {
+   "customer_hours_out_per_year": 244642.8,
+   "exposure_score": 0.499,
+   "fips": "55059",
+   "hours_per_customer_per_year": 2.327,
+   "modeled_customers": 105140,
+   "outage_interval_count_per_year": 7273.7,
+   "peak_customers_out": 13666
+  },
+  "Kewaunee": {
+   "customer_hours_out_per_year": 27495.0,
+   "exposure_score": 0.432,
+   "fips": "55061",
+   "hours_per_customer_per_year": 1.913,
+   "modeled_customers": 14371,
+   "outage_interval_count_per_year": 1813.7,
+   "peak_customers_out": 3691
+  },
+  "La Crosse": {
+   "customer_hours_out_per_year": 92699.9,
+   "exposure_score": 0.533,
+   "fips": "55063",
+   "hours_per_customer_per_year": 2.478,
+   "modeled_customers": 37410,
+   "outage_interval_count_per_year": 5536.1,
+   "peak_customers_out": 35824
+  },
+  "Lafayette": {
+   "customer_hours_out_per_year": 11191.2,
+   "exposure_score": 0.623,
+   "fips": "55065",
+   "hours_per_customer_per_year": 2.74,
+   "modeled_customers": 4085,
+   "outage_interval_count_per_year": 2540.3,
+   "peak_customers_out": 2569
+  },
+  "Langlade": {
+   "customer_hours_out_per_year": 145187.7,
+   "exposure_score": 0.86,
+   "fips": "55067",
+   "hours_per_customer_per_year": 10.325,
+   "modeled_customers": 14062,
+   "outage_interval_count_per_year": 3728.9,
+   "peak_customers_out": 13696
+  },
+  "Lincoln": {
+   "customer_hours_out_per_year": 164084.7,
+   "exposure_score": 0.871,
+   "fips": "55069",
+   "hours_per_customer_per_year": 10.387,
+   "modeled_customers": 15797,
+   "outage_interval_count_per_year": 3757.9,
+   "peak_customers_out": 10080
+  },
+  "Manitowoc": {
+   "customer_hours_out_per_year": 40948.4,
+   "exposure_score": 0.173,
+   "fips": "55071",
+   "hours_per_customer_per_year": 0.855,
+   "modeled_customers": 47882,
+   "outage_interval_count_per_year": 3097.2,
+   "peak_customers_out": 27135
+  },
+  "Marathon": {
+   "customer_hours_out_per_year": 208093.5,
+   "exposure_score": 0.567,
+   "fips": "55073",
+   "hours_per_customer_per_year": 2.582,
+   "modeled_customers": 80598,
+   "outage_interval_count_per_year": 7547.7,
+   "peak_customers_out": 12628
+  },
+  "Marinette": {
+   "customer_hours_out_per_year": 328019.5,
+   "exposure_score": 0.882,
+   "fips": "55075",
+   "hours_per_customer_per_year": 10.971,
+   "modeled_customers": 29899,
+   "outage_interval_count_per_year": 5913.0,
+   "peak_customers_out": 19800
+  },
+  "Marquette": {
+   "customer_hours_out_per_year": 39287.6,
+   "exposure_score": 0.747,
+   "fips": "55077",
+   "hours_per_customer_per_year": 4.441,
+   "modeled_customers": 8847,
+   "outage_interval_count_per_year": 3356.1,
+   "peak_customers_out": 5520
+  },
+  "Menominee": {
+   "customer_hours_out_per_year": 53004.6,
+   "exposure_score": 0.894,
+   "fips": "55078",
+   "hours_per_customer_per_year": 12.442,
+   "modeled_customers": 4260,
+   "outage_interval_count_per_year": 1766.6,
+   "peak_customers_out": 5444
+  },
+  "Milwaukee": {
+   "customer_hours_out_per_year": 1426796.3,
+   "exposure_score": 0.511,
+   "fips": "55079",
+   "hours_per_customer_per_year": 2.399,
+   "modeled_customers": 594641,
+   "outage_interval_count_per_year": 17919.9,
+   "peak_customers_out": 89708
+  },
+  "Monroe": {
+   "customer_hours_out_per_year": 25588.8,
+   "exposure_score": 0.319,
+   "fips": "55081",
+   "hours_per_customer_per_year": 1.419,
+   "modeled_customers": 18029,
+   "outage_interval_count_per_year": 2969.2,
+   "peak_customers_out": 7515
+  },
+  "Oconto": {
+   "customer_hours_out_per_year": 190498.9,
+   "exposure_score": 0.837,
+   "fips": "55083",
+   "hours_per_customer_per_year": 7.119,
+   "modeled_customers": 26761,
+   "outage_interval_count_per_year": 4184.5,
+   "peak_customers_out": 13455
+  },
+  "Oneida": {
+   "customer_hours_out_per_year": 401800.6,
+   "exposure_score": 0.927,
+   "fips": "55085",
+   "hours_per_customer_per_year": 18.052,
+   "modeled_customers": 22258,
+   "outage_interval_count_per_year": 6468.6,
+   "peak_customers_out": 16909
+  },
+  "Outagamie": {
+   "customer_hours_out_per_year": 421693.5,
+   "exposure_score": 0.849,
+   "fips": "55087",
+   "hours_per_customer_per_year": 7.207,
+   "modeled_customers": 58508,
+   "outage_interval_count_per_year": 6431.7,
+   "peak_customers_out": 42869
+  },
+  "Ozaukee": {
+   "customer_hours_out_per_year": 141800.6,
+   "exposure_score": 0.702,
+   "fips": "55089",
+   "hours_per_customer_per_year": 4.119,
+   "modeled_customers": 34422,
+   "outage_interval_count_per_year": 4056.8,
+   "peak_customers_out": 10592
+  },
+  "Pepin": {
+   "customer_hours_out_per_year": 6876.6,
+   "exposure_score": 0.409,
+   "fips": "55091",
+   "hours_per_customer_per_year": 1.755,
+   "modeled_customers": 3918,
+   "outage_interval_count_per_year": 958.0,
+   "peak_customers_out": 2025
+  },
+  "Pierce": {
+   "customer_hours_out_per_year": 19581.8,
+   "exposure_score": 0.285,
+   "fips": "55093",
+   "hours_per_customer_per_year": 1.167,
+   "modeled_customers": 16786,
+   "outage_interval_count_per_year": 3056.7,
+   "peak_customers_out": 4570
+  },
+  "Polk": {
+   "customer_hours_out_per_year": 90245.0,
+   "exposure_score": 0.601,
+   "fips": "55095",
+   "hours_per_customer_per_year": 2.705,
+   "modeled_customers": 33361,
+   "outage_interval_count_per_year": 5694.1,
+   "peak_customers_out": 10357
+  },
+  "Portage": {
+   "customer_hours_out_per_year": 174925.3,
+   "exposure_score": 0.826,
+   "fips": "55097",
+   "hours_per_customer_per_year": 6.437,
+   "modeled_customers": 27174,
+   "outage_interval_count_per_year": 5010.4,
+   "peak_customers_out": 18682
+  },
+  "Price": {
+   "customer_hours_out_per_year": 10270.5,
+   "exposure_score": 0.218,
+   "fips": "55099",
+   "hours_per_customer_per_year": 1.008,
+   "modeled_customers": 10185,
+   "outage_interval_count_per_year": 1206.1,
+   "peak_customers_out": 2970
+  },
+  "Racine": {
+   "customer_hours_out_per_year": 301341.6,
+   "exposure_score": 0.589,
+   "fips": "55101",
+   "hours_per_customer_per_year": 2.62,
+   "modeled_customers": 115015,
+   "outage_interval_count_per_year": 7848.2,
+   "peak_customers_out": 45310
+  },
+  "Richland": {
+   "customer_hours_out_per_year": 7297.5,
+   "exposure_score": 0.184,
+   "fips": "55103",
+   "hours_per_customer_per_year": 0.91,
+   "modeled_customers": 8020,
+   "outage_interval_count_per_year": 1392.2,
+   "peak_customers_out": 1531
+  },
+  "Rock": {
+   "customer_hours_out_per_year": 84290.4,
+   "exposure_score": 0.342,
+   "fips": "55105",
+   "hours_per_customer_per_year": 1.494,
+   "modeled_customers": 56401,
+   "outage_interval_count_per_year": 8798.7,
+   "peak_customers_out": 12673
+  },
+  "Rusk": {
+   "customer_hours_out_per_year": 28133.8,
+   "exposure_score": 0.612,
+   "fips": "55107",
+   "hours_per_customer_per_year": 2.72,
+   "modeled_customers": 10344,
+   "outage_interval_count_per_year": 1257.3,
+   "peak_customers_out": 4418
+  },
+  "Sauk": {
+   "customer_hours_out_per_year": 65142.3,
+   "exposure_score": 0.24,
+   "fips": "55111",
+   "hours_per_customer_per_year": 1.069,
+   "modeled_customers": 60955,
+   "outage_interval_count_per_year": 6018.3,
+   "peak_customers_out": 9935
+  },
+  "Sawyer": {
+   "customer_hours_out_per_year": 74660.0,
+   "exposure_score": 0.804,
+   "fips": "55113",
+   "hours_per_customer_per_year": 5.732,
+   "modeled_customers": 13024,
+   "outage_interval_count_per_year": 2387.1,
+   "peak_customers_out": 5902
+  },
+  "Shawano": {
+   "customer_hours_out_per_year": 96443.2,
+   "exposure_score": 0.657,
+   "fips": "55115",
+   "hours_per_customer_per_year": 3.07,
+   "modeled_customers": 31418,
+   "outage_interval_count_per_year": 4535.1,
+   "peak_customers_out": 7377
+  },
+  "Sheboygan": {
+   "customer_hours_out_per_year": 110687.1,
+   "exposure_score": 0.725,
+   "fips": "55117",
+   "hours_per_customer_per_year": 4.333,
+   "modeled_customers": 25546,
+   "outage_interval_count_per_year": 5960.0,
+   "peak_customers_out": 11918
+  },
+  "St. Croix": {
+   "customer_hours_out_per_year": 97707.1,
+   "exposure_score": 0.668,
+   "fips": "55109",
+   "hours_per_customer_per_year": 3.097,
+   "modeled_customers": 31550,
+   "outage_interval_count_per_year": 4383.3,
+   "peak_customers_out": 17765
+  },
+  "Taylor": {
+   "customer_hours_out_per_year": 8572.3,
+   "exposure_score": 0.161,
+   "fips": "55119",
+   "hours_per_customer_per_year": 0.683,
+   "modeled_customers": 12558,
+   "outage_interval_count_per_year": 887.9,
+   "peak_customers_out": 1908
+  },
+  "Trempealeau": {
+   "customer_hours_out_per_year": 19579.9,
+   "exposure_score": 0.308,
+   "fips": "55121",
+   "hours_per_customer_per_year": 1.322,
+   "modeled_customers": 14810,
+   "outage_interval_count_per_year": 2687.1,
+   "peak_customers_out": 2900
+  },
+  "Vernon": {
+   "customer_hours_out_per_year": 19919.1,
+   "exposure_score": 0.364,
+   "fips": "55123",
+   "hours_per_customer_per_year": 1.555,
+   "modeled_customers": 12813,
+   "outage_interval_count_per_year": 1991.7,
+   "peak_customers_out": 2056
+  },
+  "Vilas": {
+   "customer_hours_out_per_year": 415956.4,
+   "exposure_score": 0.95,
+   "fips": "55125",
+   "hours_per_customer_per_year": 44.804,
+   "modeled_customers": 9284,
+   "outage_interval_count_per_year": 7887.7,
+   "peak_customers_out": 19123
+  },
+  "Walworth": {
+   "customer_hours_out_per_year": 199339.2,
+   "exposure_score": 0.736,
+   "fips": "55127",
+   "hours_per_customer_per_year": 4.367,
+   "modeled_customers": 45649,
+   "outage_interval_count_per_year": 8732.4,
+   "peak_customers_out": 15076
+  },
+  "Washburn": {
+   "customer_hours_out_per_year": 25348.3,
+   "exposure_score": 0.646,
+   "fips": "55129",
+   "hours_per_customer_per_year": 3.014,
+   "modeled_customers": 8409,
+   "outage_interval_count_per_year": 2194.2,
+   "peak_customers_out": 3556
+  },
+  "Washington": {
+   "customer_hours_out_per_year": 189275.1,
+   "exposure_score": 0.781,
+   "fips": "55131",
+   "hours_per_customer_per_year": 5.518,
+   "modeled_customers": 34303,
+   "outage_interval_count_per_year": 6042.8,
+   "peak_customers_out": 15902
+  },
+  "Waukesha": {
+   "customer_hours_out_per_year": 747405.2,
+   "exposure_score": 0.77,
+   "fips": "55133",
+   "hours_per_customer_per_year": 5.22,
+   "modeled_customers": 143177,
+   "outage_interval_count_per_year": 12802.8,
+   "peak_customers_out": 45425
+  },
+  "Waupaca": {
+   "customer_hours_out_per_year": 131164.4,
+   "exposure_score": 0.792,
+   "fips": "55135",
+   "hours_per_customer_per_year": 5.553,
+   "modeled_customers": 23619,
+   "outage_interval_count_per_year": 4903.8,
+   "peak_customers_out": 13582
+  },
+  "Waushara": {
+   "customer_hours_out_per_year": 63066.1,
+   "exposure_score": 0.635,
+   "fips": "55137",
+   "hours_per_customer_per_year": 2.993,
+   "modeled_customers": 21071,
+   "outage_interval_count_per_year": 5724.3,
+   "peak_customers_out": 9809
+  },
+  "Winnebago": {
+   "customer_hours_out_per_year": 138872.1,
+   "exposure_score": 0.42,
+   "fips": "55139",
+   "hours_per_customer_per_year": 1.862,
+   "modeled_customers": 74573,
+   "outage_interval_count_per_year": 5422.3,
+   "peak_customers_out": 20041
+  },
+  "Wood": {
+   "customer_hours_out_per_year": 71584.3,
+   "exposure_score": 0.353,
+   "fips": "55141",
+   "hours_per_customer_per_year": 1.529,
+   "modeled_customers": 46818,
+   "outage_interval_count_per_year": 4872.9,
+   "peak_customers_out": 12925
+  }
+ },
+ "metadata": {
+  "annual_average_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "build_date": "2026-07-16",
+  "notes": "Wisconsin rows filtered from national files. hours_per_customer_per_year = mean annual customer-hours out divided by ORNL modeled customer count (MCC). exposure_score is the rank percentile among Wisconsin counties scaled to 0.15-0.95. EAGLE-I covers roughly 92 percent of US customers; small municipal or cooperative utilities may be under-represented in early years. The current partial calendar year is excluded from annual averages.",
+  "source": "DOE/ORNL EAGLE-I recorded electricity outages, county level, 15-minute resolution",
+  "source_doi": "https://doi.org/10.6084/m9.figshare.24237376",
+  "years_covered": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ]
+ }
+}

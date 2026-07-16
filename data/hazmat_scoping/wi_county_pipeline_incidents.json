@@ -1,0 +1,375 @@
+{
+  "_meta": {
+    "description": "Wisconsin per-county pipeline incident counts, trailing 20 years (2006 onward), from PHMSA Pipeline Safety Flagged Incident Files (gas distribution, gas transmission/gathering, hazardous liquid).",
+    "source": "PHMSA Pipeline Safety Flagged Incident Files",
+    "source_url": "https://www.phmsa.dot.gov/data-and-statistics/pipeline/distribution-transmission-gathering-lng-and-liquid-accident-and-incident-data",
+    "retrieved_via": "Internet Archive Wayback snapshot 20260508 (PHMSA host blocks automated access); dataset also cataloged at datahub.transportation.gov qdme-9bbm",
+    "period": "2006-2025 incident year (IYEAR)",
+    "geolocation": "Incident county = LOCATION_COUNTY_NAME (gas distribution) / ONSHORE_COUNTY_NAME (transmission, hazardous liquid) / ACCOUNTY (2004-2009 forms)",
+    "note": "Zero counts are real measurements (full WI extract), not missing data. One incident with blank county was excluded.",
+    "fetched": "2026-07-16",
+    "statewide_total": 96
+  },
+  "counties": {
+    "Adams": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Ashland": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Barron": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Bayfield": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Brown": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Buffalo": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Burnett": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Calumet": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Chippewa": {
+      "pipeline_incidents_20yr": 3,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Clark": {
+      "pipeline_incidents_20yr": 4,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Columbia": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Crawford": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Dane": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 1,
+      "pipeline_injuries_20yr": 1
+    },
+    "Dodge": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Door": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 2,
+      "pipeline_injuries_20yr": 4
+    },
+    "Douglas": {
+      "pipeline_incidents_20yr": 35,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Dunn": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Eau Claire": {
+      "pipeline_incidents_20yr": 3,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Florence": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Fond du Lac": {
+      "pipeline_incidents_20yr": 4,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Forest": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Grant": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Green": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Green Lake": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Iowa": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Iron": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Jackson": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Jefferson": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Juneau": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Kenosha": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Kewaunee": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "La Crosse": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Lafayette": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Langlade": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Lincoln": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Manitowoc": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Marathon": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Marinette": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Marquette": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Menominee": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Milwaukee": {
+      "pipeline_incidents_20yr": 6,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 2
+    },
+    "Monroe": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Oconto": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Oneida": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Outagamie": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Ozaukee": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Pepin": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Pierce": {
+      "pipeline_incidents_20yr": 3,
+      "pipeline_fatalities_20yr": 1,
+      "pipeline_injuries_20yr": 0
+    },
+    "Polk": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Portage": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Price": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Racine": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Richland": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Rock": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Rusk": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Sauk": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Sawyer": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Shawano": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Sheboygan": {
+      "pipeline_incidents_20yr": 3,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "St. Croix": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Taylor": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Trempealeau": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Vernon": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Vilas": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Walworth": {
+      "pipeline_incidents_20yr": 3,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Washburn": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Washington": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Waukesha": {
+      "pipeline_incidents_20yr": 2,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 1
+    },
+    "Waupaca": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Waushara": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Winnebago": {
+      "pipeline_incidents_20yr": 0,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    },
+    "Wood": {
+      "pipeline_incidents_20yr": 1,
+      "pipeline_fatalities_20yr": 0,
+      "pipeline_injuries_20yr": 0
+    }
+  }
+}

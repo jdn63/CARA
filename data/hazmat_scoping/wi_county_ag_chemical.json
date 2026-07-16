@@ -1,0 +1,598 @@
+{
+ "_meta": {
+  "source": "USDA NASS Census of Agriculture 2022, QuickStats API",
+  "retrieved": "2026-07-16",
+  "fields": {
+   "chemical_expense_usd": "CHEMICAL TOTALS - EXPENSE, MEASURED IN $ (domain TOTAL)",
+   "fertilizer_expense_usd": "FERTILIZER TOTALS, INCL LIME & SOIL CONDITIONERS - EXPENSE, MEASURED IN $ (domain TOTAL)",
+   "cropland_harvested_acres": "AG LAND, CROPLAND, HARVESTED - ACRES (domain TOTAL)",
+   "milk_cows_head": "CATTLE, COWS, MILK - INVENTORY (domain TOTAL)"
+  },
+  "nulls": "null = census disclosure-suppressed (D) or no census record; never fabricated",
+  "ag_chemical_intensity": "0-1 score: 0.5*(chem+fertilizer expense norm) + 0.25*cropland norm + 0.25*milk cows norm, each capped at the statewide 95th percentile; weights renormalized over available fields",
+  "normalizers_p95": {
+   "chemical_expense_usd": 19589000,
+   "fertilizer_expense_usd": 39888000,
+   "cropland_harvested_acres": 292452,
+   "milk_cows_head": 59158
+  }
+ },
+ "counties": {
+  "Adams": {
+   "chemical_expense_usd": 14912000,
+   "fertilizer_expense_usd": 28998000,
+   "cropland_harvested_acres": 78807,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.582,
+   "data_status": "partial_suppressed"
+  },
+  "Ashland": {
+   "chemical_expense_usd": 344000,
+   "fertilizer_expense_usd": 795000,
+   "cropland_harvested_acres": 23343,
+   "milk_cows_head": 2651,
+   "ag_chemical_intensity": 0.0407,
+   "data_status": "complete"
+  },
+  "Barron": {
+   "chemical_expense_usd": 8585000,
+   "fertilizer_expense_usd": 19134000,
+   "cropland_harvested_acres": 172150,
+   "milk_cows_head": 17310,
+   "ag_chemical_intensity": 0.4533,
+   "data_status": "complete"
+  },
+  "Bayfield": {
+   "chemical_expense_usd": 369000,
+   "fertilizer_expense_usd": 1216000,
+   "cropland_harvested_acres": 38423,
+   "milk_cows_head": 981,
+   "ag_chemical_intensity": 0.0503,
+   "data_status": "complete"
+  },
+  "Brown": {
+   "chemical_expense_usd": 6464000,
+   "fertilizer_expense_usd": 14500000,
+   "cropland_harvested_acres": 146988,
+   "milk_cows_head": 49509,
+   "ag_chemical_intensity": 0.5111,
+   "data_status": "complete"
+  },
+  "Buffalo": {
+   "chemical_expense_usd": 6421000,
+   "fertilizer_expense_usd": 17983000,
+   "cropland_harvested_acres": 155199,
+   "milk_cows_head": 20065,
+   "ag_chemical_intensity": 0.4226,
+   "data_status": "complete"
+  },
+  "Burnett": {
+   "chemical_expense_usd": 1818000,
+   "fertilizer_expense_usd": 3967000,
+   "cropland_harvested_acres": 38503,
+   "milk_cows_head": 3634,
+   "ag_chemical_intensity": 0.0969,
+   "data_status": "complete"
+  },
+  "Calumet": {
+   "chemical_expense_usd": 5944000,
+   "fertilizer_expense_usd": 12758000,
+   "cropland_harvested_acres": 114205,
+   "milk_cows_head": 35001,
+   "ag_chemical_intensity": 0.4028,
+   "data_status": "complete"
+  },
+  "Chippewa": {
+   "chemical_expense_usd": 8397000,
+   "fertilizer_expense_usd": 22659000,
+   "cropland_harvested_acres": 195681,
+   "milk_cows_head": 20608,
+   "ag_chemical_intensity": 0.5154,
+   "data_status": "complete"
+  },
+  "Clark": {
+   "chemical_expense_usd": 9790000,
+   "fertilizer_expense_usd": 28467000,
+   "cropland_harvested_acres": 273629,
+   "milk_cows_head": 66631,
+   "ag_chemical_intensity": 0.8055,
+   "data_status": "complete"
+  },
+  "Columbia": {
+   "chemical_expense_usd": 12511000,
+   "fertilizer_expense_usd": 34320000,
+   "cropland_harvested_acres": 211025,
+   "milk_cows_head": 19339,
+   "ag_chemical_intensity": 0.6558,
+   "data_status": "complete"
+  },
+  "Crawford": {
+   "chemical_expense_usd": 3373000,
+   "fertilizer_expense_usd": 8816000,
+   "cropland_harvested_acres": 76788,
+   "milk_cows_head": 4168,
+   "ag_chemical_intensity": 0.1857,
+   "data_status": "complete"
+  },
+  "Dane": {
+   "chemical_expense_usd": 25388000,
+   "fertilizer_expense_usd": 49227000,
+   "cropland_harvested_acres": 332557,
+   "milk_cows_head": 47413,
+   "ag_chemical_intensity": 0.9504,
+   "data_status": "complete"
+  },
+  "Dodge": {
+   "chemical_expense_usd": 16843000,
+   "fertilizer_expense_usd": 42733000,
+   "cropland_harvested_acres": 292452,
+   "milk_cows_head": 36178,
+   "ag_chemical_intensity": 0.9029,
+   "data_status": "complete"
+  },
+  "Door": {
+   "chemical_expense_usd": 3727000,
+   "fertilizer_expense_usd": 7951000,
+   "cropland_harvested_acres": 78326,
+   "milk_cows_head": 9396,
+   "ag_chemical_intensity": 0.2048,
+   "data_status": "complete"
+  },
+  "Douglas": {
+   "chemical_expense_usd": 148000,
+   "fertilizer_expense_usd": 243000,
+   "cropland_harvested_acres": 24308,
+   "milk_cows_head": 340,
+   "ag_chemical_intensity": 0.0255,
+   "data_status": "complete"
+  },
+  "Dunn": {
+   "chemical_expense_usd": 14219000,
+   "fertilizer_expense_usd": 32717000,
+   "cropland_harvested_acres": 244799,
+   "milk_cows_head": 25692,
+   "ag_chemical_intensity": 0.7124,
+   "data_status": "complete"
+  },
+  "Eau Claire": {
+   "chemical_expense_usd": 4017000,
+   "fertilizer_expense_usd": 11179000,
+   "cropland_harvested_acres": 96833,
+   "milk_cows_head": 7995,
+   "ag_chemical_intensity": 0.2443,
+   "data_status": "complete"
+  },
+  "Florence": {
+   "chemical_expense_usd": 50000,
+   "fertilizer_expense_usd": 91000,
+   "cropland_harvested_acres": 7649,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0103,
+   "data_status": "partial_suppressed"
+  },
+  "Fond du Lac": {
+   "chemical_expense_usd": 16216000,
+   "fertilizer_expense_usd": 34714000,
+   "cropland_harvested_acres": 241690,
+   "milk_cows_head": 59158,
+   "ag_chemical_intensity": 0.8848,
+   "data_status": "complete"
+  },
+  "Forest": {
+   "chemical_expense_usd": 115000,
+   "fertilizer_expense_usd": 504000,
+   "cropland_harvested_acres": 6974,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0149,
+   "data_status": "partial_suppressed"
+  },
+  "Grant": {
+   "chemical_expense_usd": 19589000,
+   "fertilizer_expense_usd": 39888000,
+   "cropland_harvested_acres": 328297,
+   "milk_cows_head": 41070,
+   "ag_chemical_intensity": 0.9236,
+   "data_status": "complete"
+  },
+  "Green": {
+   "chemical_expense_usd": 12658000,
+   "fertilizer_expense_usd": 28788000,
+   "cropland_harvested_acres": 204706,
+   "milk_cows_head": 28135,
+   "ag_chemical_intensity": 0.6423,
+   "data_status": "complete"
+  },
+  "Green Lake": {
+   "chemical_expense_usd": 5651000,
+   "fertilizer_expense_usd": 14936000,
+   "cropland_harvested_acres": 85577,
+   "milk_cows_head": 9362,
+   "ag_chemical_intensity": 0.2858,
+   "data_status": "complete"
+  },
+  "Iowa": {
+   "chemical_expense_usd": 12422000,
+   "fertilizer_expense_usd": 25933000,
+   "cropland_harvested_acres": 183690,
+   "milk_cows_head": 17779,
+   "ag_chemical_intensity": 0.5546,
+   "data_status": "complete"
+  },
+  "Iron": {
+   "chemical_expense_usd": 109000,
+   "fertilizer_expense_usd": 217000,
+   "cropland_harvested_acres": 4246,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0085,
+   "data_status": "partial_suppressed"
+  },
+  "Jackson": {
+   "chemical_expense_usd": 5569000,
+   "fertilizer_expense_usd": 13901000,
+   "cropland_harvested_acres": 115500,
+   "milk_cows_head": 11928,
+   "ag_chemical_intensity": 0.3128,
+   "data_status": "complete"
+  },
+  "Jefferson": {
+   "chemical_expense_usd": 10893000,
+   "fertilizer_expense_usd": 22543000,
+   "cropland_harvested_acres": 146218,
+   "milk_cows_head": 15295,
+   "ag_chemical_intensity": 0.4707,
+   "data_status": "complete"
+  },
+  "Juneau": {
+   "chemical_expense_usd": 6878000,
+   "fertilizer_expense_usd": 14914000,
+   "cropland_harvested_acres": 97372,
+   "milk_cows_head": 7191,
+   "ag_chemical_intensity": 0.2968,
+   "data_status": "complete"
+  },
+  "Kenosha": {
+   "chemical_expense_usd": 3277000,
+   "fertilizer_expense_usd": 7102000,
+   "cropland_harvested_acres": 53625,
+   "milk_cows_head": 3187,
+   "ag_chemical_intensity": 0.1466,
+   "data_status": "complete"
+  },
+  "Kewaunee": {
+   "chemical_expense_usd": 6500000,
+   "fertilizer_expense_usd": 14389000,
+   "cropland_harvested_acres": 136697,
+   "milk_cows_head": 53247,
+   "ag_chemical_intensity": 0.5175,
+   "data_status": "complete"
+  },
+  "La Crosse": {
+   "chemical_expense_usd": 3804000,
+   "fertilizer_expense_usd": 8660000,
+   "cropland_harvested_acres": 70755,
+   "milk_cows_head": 5191,
+   "ag_chemical_intensity": 0.1872,
+   "data_status": "complete"
+  },
+  "Lafayette": {
+   "chemical_expense_usd": 15075000,
+   "fertilizer_expense_usd": 29125000,
+   "cropland_harvested_acres": 222412,
+   "milk_cows_head": 26337,
+   "ag_chemical_intensity": 0.673,
+   "data_status": "complete"
+  },
+  "Langlade": {
+   "chemical_expense_usd": 5280000,
+   "fertilizer_expense_usd": 12652000,
+   "cropland_harvested_acres": 60070,
+   "milk_cows_head": 8159,
+   "ag_chemical_intensity": 0.2366,
+   "data_status": "complete"
+  },
+  "Lincoln": {
+   "chemical_expense_usd": 928000,
+   "fertilizer_expense_usd": 3088000,
+   "cropland_harvested_acres": 41223,
+   "milk_cows_head": 3063,
+   "ag_chemical_intensity": 0.0819,
+   "data_status": "complete"
+  },
+  "Manitowoc": {
+   "chemical_expense_usd": 8784000,
+   "fertilizer_expense_usd": 20998000,
+   "cropland_harvested_acres": 177988,
+   "milk_cows_head": 59200,
+   "ag_chemical_intensity": 0.6525,
+   "data_status": "complete"
+  },
+  "Marathon": {
+   "chemical_expense_usd": 14331000,
+   "fertilizer_expense_usd": 35818000,
+   "cropland_harvested_acres": 304708,
+   "milk_cows_head": 65598,
+   "ag_chemical_intensity": 0.9216,
+   "data_status": "complete"
+  },
+  "Marinette": {
+   "chemical_expense_usd": 3579000,
+   "fertilizer_expense_usd": 9249000,
+   "cropland_harvested_acres": 81494,
+   "milk_cows_head": 18811,
+   "ag_chemical_intensity": 0.257,
+   "data_status": "complete"
+  },
+  "Marquette": {
+   "chemical_expense_usd": 4531000,
+   "fertilizer_expense_usd": 11384000,
+   "cropland_harvested_acres": 71750,
+   "milk_cows_head": 4519,
+   "ag_chemical_intensity": 0.2142,
+   "data_status": "complete"
+  },
+  "Menominee": {
+   "chemical_expense_usd": null,
+   "fertilizer_expense_usd": null,
+   "cropland_harvested_acres": null,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0,
+   "data_status": "no_census_record"
+  },
+  "Milwaukee": {
+   "chemical_expense_usd": 169000,
+   "fertilizer_expense_usd": 380000,
+   "cropland_harvested_acres": null,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0092,
+   "data_status": "partial_suppressed"
+  },
+  "Monroe": {
+   "chemical_expense_usd": 6278000,
+   "fertilizer_expense_usd": 16727000,
+   "cropland_harvested_acres": 129572,
+   "milk_cows_head": 20358,
+   "ag_chemical_intensity": 0.3902,
+   "data_status": "complete"
+  },
+  "Oconto": {
+   "chemical_expense_usd": 5132000,
+   "fertilizer_expense_usd": 15895000,
+   "cropland_harvested_acres": 127173,
+   "milk_cows_head": 23081,
+   "ag_chemical_intensity": 0.383,
+   "data_status": "complete"
+  },
+  "Oneida": {
+   "chemical_expense_usd": 1714000,
+   "fertilizer_expense_usd": 1217000,
+   "cropland_harvested_acres": 11344,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0458,
+   "data_status": "partial_suppressed"
+  },
+  "Outagamie": {
+   "chemical_expense_usd": 9661000,
+   "fertilizer_expense_usd": 25169000,
+   "cropland_harvested_acres": 190230,
+   "milk_cows_head": 35422,
+   "ag_chemical_intensity": 0.6051,
+   "data_status": "complete"
+  },
+  "Ozaukee": {
+   "chemical_expense_usd": 2320000,
+   "fertilizer_expense_usd": 4779000,
+   "cropland_harvested_acres": 38981,
+   "milk_cows_head": 8184,
+   "ag_chemical_intensity": 0.1276,
+   "data_status": "complete"
+  },
+  "Pepin": {
+   "chemical_expense_usd": 2693000,
+   "fertilizer_expense_usd": 9368000,
+   "cropland_harvested_acres": 66596,
+   "milk_cows_head": 8309,
+   "ag_chemical_intensity": 0.1934,
+   "data_status": "complete"
+  },
+  "Pierce": {
+   "chemical_expense_usd": 6851000,
+   "fertilizer_expense_usd": 19070000,
+   "cropland_harvested_acres": 144692,
+   "milk_cows_head": 11323,
+   "ag_chemical_intensity": 0.3894,
+   "data_status": "complete"
+  },
+  "Polk": {
+   "chemical_expense_usd": 6411000,
+   "fertilizer_expense_usd": 17561000,
+   "cropland_harvested_acres": 139042,
+   "milk_cows_head": 13056,
+   "ag_chemical_intensity": 0.3756,
+   "data_status": "complete"
+  },
+  "Portage": {
+   "chemical_expense_usd": 27671000,
+   "fertilizer_expense_usd": 59715000,
+   "cropland_harvested_acres": 180193,
+   "milk_cows_head": 11155,
+   "ag_chemical_intensity": 0.7012,
+   "data_status": "complete"
+  },
+  "Price": {
+   "chemical_expense_usd": 280000,
+   "fertilizer_expense_usd": 1091000,
+   "cropland_harvested_acres": 23137,
+   "milk_cows_head": 3759,
+   "ag_chemical_intensity": 0.0472,
+   "data_status": "complete"
+  },
+  "Racine": {
+   "chemical_expense_usd": 4761000,
+   "fertilizer_expense_usd": 11301000,
+   "cropland_harvested_acres": 85036,
+   "milk_cows_head": 2901,
+   "ag_chemical_intensity": 0.22,
+   "data_status": "complete"
+  },
+  "Richland": {
+   "chemical_expense_usd": 5238000,
+   "fertilizer_expense_usd": 12662000,
+   "cropland_harvested_acres": 107550,
+   "milk_cows_head": 14705,
+   "ag_chemical_intensity": 0.3046,
+   "data_status": "complete"
+  },
+  "Rock": {
+   "chemical_expense_usd": 20136000,
+   "fertilizer_expense_usd": 36930000,
+   "cropland_harvested_acres": 240905,
+   "milk_cows_head": 14953,
+   "ag_chemical_intensity": 0.7489,
+   "data_status": "complete"
+  },
+  "Rusk": {
+   "chemical_expense_usd": 1907000,
+   "fertilizer_expense_usd": 5929000,
+   "cropland_harvested_acres": 63493,
+   "milk_cows_head": 10311,
+   "ag_chemical_intensity": 0.1637,
+   "data_status": "complete"
+  },
+  "Sauk": {
+   "chemical_expense_usd": 10429000,
+   "fertilizer_expense_usd": 24311000,
+   "cropland_harvested_acres": 179690,
+   "milk_cows_head": 16971,
+   "ag_chemical_intensity": 0.5174,
+   "data_status": "complete"
+  },
+  "Sawyer": {
+   "chemical_expense_usd": 520000,
+   "fertilizer_expense_usd": 1006000,
+   "cropland_harvested_acres": 18854,
+   "milk_cows_head": 1842,
+   "ag_chemical_intensity": 0.0367,
+   "data_status": "complete"
+  },
+  "Shawano": {
+   "chemical_expense_usd": 7096000,
+   "fertilizer_expense_usd": 19200000,
+   "cropland_harvested_acres": 177681,
+   "milk_cows_head": 40052,
+   "ag_chemical_intensity": 0.5422,
+   "data_status": "complete"
+  },
+  "Sheboygan": {
+   "chemical_expense_usd": 9468000,
+   "fertilizer_expense_usd": 18371000,
+   "cropland_harvested_acres": 162803,
+   "milk_cows_head": 29174,
+   "ag_chemical_intensity": 0.4965,
+   "data_status": "complete"
+  },
+  "St. Croix": {
+   "chemical_expense_usd": 8521000,
+   "fertilizer_expense_usd": 24298000,
+   "cropland_harvested_acres": 180282,
+   "milk_cows_head": 15340,
+   "ag_chemical_intensity": 0.4948,
+   "data_status": "complete"
+  },
+  "Taylor": {
+   "chemical_expense_usd": 4080000,
+   "fertilizer_expense_usd": 11055000,
+   "cropland_harvested_acres": 119819,
+   "milk_cows_head": 16174,
+   "ag_chemical_intensity": 0.298,
+   "data_status": "complete"
+  },
+  "Trempealeau": {
+   "chemical_expense_usd": 9497000,
+   "fertilizer_expense_usd": 23690000,
+   "cropland_harvested_acres": 177810,
+   "milk_cows_head": 19482,
+   "ag_chemical_intensity": 0.5133,
+   "data_status": "complete"
+  },
+  "Vernon": {
+   "chemical_expense_usd": 10120000,
+   "fertilizer_expense_usd": 20341000,
+   "cropland_harvested_acres": 172794,
+   "milk_cows_head": 24607,
+   "ag_chemical_intensity": 0.5078,
+   "data_status": "complete"
+  },
+  "Vilas": {
+   "chemical_expense_usd": 159000,
+   "fertilizer_expense_usd": 555000,
+   "cropland_harvested_acres": 1378,
+   "milk_cows_head": null,
+   "ag_chemical_intensity": 0.0096,
+   "data_status": "partial_suppressed"
+  },
+  "Walworth": {
+   "chemical_expense_usd": 9961000,
+   "fertilizer_expense_usd": 19236000,
+   "cropland_harvested_acres": 142918,
+   "milk_cows_head": 19233,
+   "ag_chemical_intensity": 0.4489,
+   "data_status": "complete"
+  },
+  "Washburn": {
+   "chemical_expense_usd": 1501000,
+   "fertilizer_expense_usd": 3468000,
+   "cropland_harvested_acres": 29954,
+   "milk_cows_head": 2373,
+   "ag_chemical_intensity": 0.0774,
+   "data_status": "complete"
+  },
+  "Washington": {
+   "chemical_expense_usd": 5125000,
+   "fertilizer_expense_usd": 11319000,
+   "cropland_harvested_acres": 86175,
+   "milk_cows_head": 15622,
+   "ag_chemical_intensity": 0.2779,
+   "data_status": "complete"
+  },
+  "Waukesha": {
+   "chemical_expense_usd": 2057000,
+   "fertilizer_expense_usd": 5196000,
+   "cropland_harvested_acres": 45349,
+   "milk_cows_head": 1806,
+   "ag_chemical_intensity": 0.1074,
+   "data_status": "complete"
+  },
+  "Waupaca": {
+   "chemical_expense_usd": 6334000,
+   "fertilizer_expense_usd": 16259000,
+   "cropland_harvested_acres": 140784,
+   "milk_cows_head": 29552,
+   "ag_chemical_intensity": 0.4352,
+   "data_status": "complete"
+  },
+  "Waushara": {
+   "chemical_expense_usd": 11031000,
+   "fertilizer_expense_usd": 29566000,
+   "cropland_harvested_acres": 104334,
+   "milk_cows_head": 5853,
+   "ag_chemical_intensity": 0.4552,
+   "data_status": "complete"
+  },
+  "Winnebago": {
+   "chemical_expense_usd": 6091000,
+   "fertilizer_expense_usd": 13035000,
+   "cropland_harvested_acres": 107466,
+   "milk_cows_head": 16864,
+   "ag_chemical_intensity": 0.3239,
+   "data_status": "complete"
+  },
+  "Wood": {
+   "chemical_expense_usd": 6286000,
+   "fertilizer_expense_usd": 15170000,
+   "cropland_harvested_acres": 124316,
+   "milk_cows_head": 16958,
+   "ag_chemical_intensity": 0.3583,
+   "data_status": "complete"
+  }
+ }
+}

@@ -455,8 +455,7 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
     data_sources = [
         'WI DHS EPHT Lyme Disease Surveillance (county-level incidence rates)' if using_real_data else 'Wisconsin DHS Tick-Borne Disease Surveillance Reports',
         'WI DHS Vectorborne Disease Program (WNV county case data)' if using_real_data else 'CDC ArboNET West Nile Virus Surveillance',
-        'USDA Forest Service NLCD 2021 Land Cover Data',
-        'Wisconsin DNR Deer Population Estimates',
+        'Forest-cover and deer-density scores: CARA static v1 seed informed by NLCD 2021 and WI DNR estimates (derivation not fully documented; pending re-derivation)',
         'CDC Social Vulnerability Index (SVI)',
         'U.S. Census Bureau ACS Demographics',
         'NOAA/WICCI Climate Projections'

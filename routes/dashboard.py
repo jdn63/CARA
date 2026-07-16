@@ -11,7 +11,7 @@ import logging
 import time
 import tempfile
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, send_file, flash
+from flask import Blueprint, render_template, redirect, url_for, send_file, flash, jsonify
 from utils.data_processor import process_risk_data, get_historical_risk_data
 from utils.predictive_analysis import RiskPredictor
 from utils.metadata_config import EXCLUDED_RISK_FIELDS
@@ -119,10 +119,13 @@ def dashboard(jurisdiction_id):
         # Discipline-aware cache key (v6, 2026-05-20). Phase 1 introduces the
         # global PH/EM toggle; the cached payload differs by discipline
         # because process_risk_data() applies different weights, so the
-        # key MUST include discipline. Bumped to v6 so v5 caches (which
-        # were discipline-blind) are invalidated cleanly at deploy.
+        # key MUST include discipline. Bumped to v7 when the EM composite
+        # gained the infectious_disease 5% wiring, and to v8 when the
+        # hazmat_industrial resilience signals changed (CHEMPACK removal,
+        # statute-only team list) so pre-fix cached composites are
+        # invalidated cleanly at deploy.
         discipline = get_active_discipline()
-        full_cache_key = f"dashboard_full_v6_{discipline}_{jurisdiction_id}"
+        full_cache_key = f"dashboard_full_v11_{discipline}_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
 
         if cached_context:
@@ -207,6 +210,7 @@ def dashboard(jurisdiction_id):
                     logger.error(f"Error generating temporal component for {hazard_type}: {str(e)}")
                     temporal_risk_data[hazard_type] = {
                         'composite_score': round(base_score, 3),
+                        'estimated_split': True,
                         'temporal_components': {
                             'baseline': round(base_score * 0.85, 3),
                             'seasonal': round(base_score * 0.10, 3),
@@ -245,10 +249,12 @@ def dashboard(jurisdiction_id):
                 logger.error(f"Error generating health/active shooter temporal components: {str(e)}")
                 temporal_risk_data['infectious_disease'] = {
                     'composite_score': round(health_score, 3),
+                    'estimated_split': True,
                     'temporal_components': {'baseline': round(health_score * 0.85, 3), 'seasonal': round(health_score * 0.10, 3), 'trend': 0.0, 'acute': round(health_score * 0.05, 3), 'trend_metadata': None}
                 }
                 temporal_risk_data['active_shooter'] = {
                     'composite_score': round(active_shooter_score, 3),
+                    'estimated_split': True,
                     'temporal_components': {'baseline': round(active_shooter_score * 0.85, 3), 'seasonal': round(active_shooter_score * 0.10, 3), 'trend': round(active_shooter_score * 0.05, 3), 'acute': 0.0}
                 }
         
@@ -515,24 +521,23 @@ def get_historical_data(jurisdiction_id):
             risk_data = sanitize_risk_data(risk_data)
         except Exception as e:
             logger.error(f"Error loading risk data for {jurisdiction_id}: {str(e)}")
-            risk_data = {
-                'total_risk_score': 0.0,
-                'natural_hazards_risk': 0.0,
-                'health_risk': 0.0,
-                'active_shooter_risk': 0.0
-            }
-        
+            return jsonify({
+                'error': 'Risk data unavailable for this jurisdiction.'
+            }), 503
+
         from datetime import datetime
         current_year = datetime.now().year
-        
+
+        # Real computed scores, unclamped and unfabricated. Missing
+        # domains are reported as null, never invented.
         data_point = {
             'year': current_year,
-            'total_risk_score': max(0.1, min(0.9, risk_data.get('total_risk_score', 0.45))),
-            'natural_hazards_risk': max(0.1, min(0.9, risk_data.get('natural_hazards_risk', 0.38))),
-            'health_risk': max(0.1, min(0.9, risk_data.get('health_risk', 0.42))),
-            'active_shooter_risk': max(0.1, min(0.9, risk_data.get('active_shooter_risk', 0.35)))
+            'total_risk_score': risk_data.get('total_risk_score'),
+            'natural_hazards_risk': risk_data.get('natural_hazards_risk'),
+            'health_risk': risk_data.get('health_risk'),
+            'active_shooter_risk': risk_data.get('active_shooter_risk'),
         }
-        
+
         return [data_point]
     except Exception as e:
         logger.error(f"Error getting risk data: {str(e)}")

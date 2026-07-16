@@ -1,0 +1,655 @@
+{
+  "counties": {
+    "adams": {
+      "acs_year": 2023,
+      "broadband_households": 7738,
+      "broadband_share": 0.8275,
+      "comms_vulnerability": 0.849,
+      "county": "Adams",
+      "retrieved_at": "2026-07-16T16:26:23.120008",
+      "total_households": 9351
+    },
+    "ashland": {
+      "acs_year": 2023,
+      "broadband_households": 5500,
+      "broadband_share": 0.8033,
+      "comms_vulnerability": 0.916,
+      "county": "Ashland",
+      "retrieved_at": "2026-07-16T16:26:23.120015",
+      "total_households": 6847
+    },
+    "barron": {
+      "acs_year": 2023,
+      "broadband_households": 16367,
+      "broadband_share": 0.8345,
+      "comms_vulnerability": 0.804,
+      "county": "Barron",
+      "retrieved_at": "2026-07-16T16:26:23.120016",
+      "total_households": 19613
+    },
+    "bayfield": {
+      "acs_year": 2023,
+      "broadband_households": 6588,
+      "broadband_share": 0.8829,
+      "comms_vulnerability": 0.432,
+      "county": "Bayfield",
+      "retrieved_at": "2026-07-16T16:26:23.120017",
+      "total_households": 7462
+    },
+    "brown": {
+      "acs_year": 2023,
+      "broadband_households": 100288,
+      "broadband_share": 0.9097,
+      "comms_vulnerability": 0.251,
+      "county": "Brown",
+      "retrieved_at": "2026-07-16T16:26:23.120018",
+      "total_households": 110248
+    },
+    "buffalo": {
+      "acs_year": 2023,
+      "broadband_households": 4905,
+      "broadband_share": 0.8617,
+      "comms_vulnerability": 0.612,
+      "county": "Buffalo",
+      "retrieved_at": "2026-07-16T16:26:23.120019",
+      "total_households": 5692
+    },
+    "burnett": {
+      "acs_year": 2023,
+      "broadband_households": 5889,
+      "broadband_share": 0.831,
+      "comms_vulnerability": 0.837,
+      "county": "Burnett",
+      "retrieved_at": "2026-07-16T16:26:23.120019",
+      "total_households": 7087
+    },
+    "calumet": {
+      "acs_year": 2023,
+      "broadband_households": 19253,
+      "broadband_share": 0.9179,
+      "comms_vulnerability": 0.206,
+      "county": "Calumet",
+      "retrieved_at": "2026-07-16T16:26:23.120020",
+      "total_households": 20975
+    },
+    "chippewa": {
+      "acs_year": 2023,
+      "broadband_households": 23649,
+      "broadband_share": 0.8902,
+      "comms_vulnerability": 0.353,
+      "county": "Chippewa",
+      "retrieved_at": "2026-07-16T16:26:23.120021",
+      "total_households": 26567
+    },
+    "clark": {
+      "acs_year": 2023,
+      "broadband_households": 9888,
+      "broadband_share": 0.7791,
+      "comms_vulnerability": 0.95,
+      "county": "Clark",
+      "retrieved_at": "2026-07-16T16:26:23.120021",
+      "total_households": 12692
+    },
+    "columbia": {
+      "acs_year": 2023,
+      "broadband_households": 21258,
+      "broadband_share": 0.8773,
+      "comms_vulnerability": 0.488,
+      "county": "Columbia",
+      "retrieved_at": "2026-07-16T16:26:23.120022",
+      "total_households": 24231
+    },
+    "crawford": {
+      "acs_year": 2023,
+      "broadband_households": 5460,
+      "broadband_share": 0.8192,
+      "comms_vulnerability": 0.882,
+      "county": "Crawford",
+      "retrieved_at": "2026-07-16T16:26:23.120023",
+      "total_households": 6665
+    },
+    "dane": {
+      "acs_year": 2023,
+      "broadband_households": 227595,
+      "broadband_share": 0.9262,
+      "comms_vulnerability": 0.173,
+      "county": "Dane",
+      "retrieved_at": "2026-07-16T16:26:23.120024",
+      "total_households": 245736
+    },
+    "dodge": {
+      "acs_year": 2023,
+      "broadband_households": 31739,
+      "broadband_share": 0.8885,
+      "comms_vulnerability": 0.364,
+      "county": "Dodge",
+      "retrieved_at": "2026-07-16T16:26:23.120025",
+      "total_households": 35723
+    },
+    "door": {
+      "acs_year": 2023,
+      "broadband_households": 12724,
+      "broadband_share": 0.885,
+      "comms_vulnerability": 0.409,
+      "county": "Door",
+      "retrieved_at": "2026-07-16T16:26:23.120026",
+      "total_households": 14377
+    },
+    "douglas": {
+      "acs_year": 2023,
+      "broadband_households": 16493,
+      "broadband_share": 0.8705,
+      "comms_vulnerability": 0.556,
+      "county": "Douglas",
+      "retrieved_at": "2026-07-16T16:26:23.120027",
+      "total_households": 18947
+    },
+    "dunn": {
+      "acs_year": 2023,
+      "broadband_households": 15322,
+      "broadband_share": 0.8821,
+      "comms_vulnerability": 0.454,
+      "county": "Dunn",
+      "retrieved_at": "2026-07-16T16:26:23.120028",
+      "total_households": 17369
+    },
+    "eau claire": {
+      "acs_year": 2023,
+      "broadband_households": 39026,
+      "broadband_share": 0.9021,
+      "comms_vulnerability": 0.285,
+      "county": "Eau Claire",
+      "retrieved_at": "2026-07-16T16:26:23.120028",
+      "total_households": 43261
+    },
+    "florence": {
+      "acs_year": 2023,
+      "broadband_households": 1808,
+      "broadband_share": 0.8569,
+      "comms_vulnerability": 0.668,
+      "county": "Florence",
+      "retrieved_at": "2026-07-16T16:26:23.120030",
+      "total_households": 2110
+    },
+    "fond du lac": {
+      "acs_year": 2023,
+      "broadband_households": 38323,
+      "broadband_share": 0.8909,
+      "comms_vulnerability": 0.342,
+      "county": "Fond du Lac",
+      "retrieved_at": "2026-07-16T16:26:23.120030",
+      "total_households": 43016
+    },
+    "forest": {
+      "acs_year": 2023,
+      "broadband_households": 3297,
+      "broadband_share": 0.8343,
+      "comms_vulnerability": 0.815,
+      "county": "Forest",
+      "retrieved_at": "2026-07-16T16:26:23.120031",
+      "total_households": 3952
+    },
+    "grant": {
+      "acs_year": 2023,
+      "broadband_households": 16824,
+      "broadband_share": 0.8449,
+      "comms_vulnerability": 0.725,
+      "county": "Grant",
+      "retrieved_at": "2026-07-16T16:26:23.120032",
+      "total_households": 19913
+    },
+    "green": {
+      "acs_year": 2023,
+      "broadband_households": 13580,
+      "broadband_share": 0.87,
+      "comms_vulnerability": 0.578,
+      "county": "Green",
+      "retrieved_at": "2026-07-16T16:26:23.120033",
+      "total_households": 15609
+    },
+    "green lake": {
+      "acs_year": 2023,
+      "broadband_households": 6768,
+      "broadband_share": 0.8311,
+      "comms_vulnerability": 0.826,
+      "county": "Green Lake",
+      "retrieved_at": "2026-07-16T16:26:23.120034",
+      "total_households": 8143
+    },
+    "iowa": {
+      "acs_year": 2023,
+      "broadband_households": 8795,
+      "broadband_share": 0.8838,
+      "comms_vulnerability": 0.42,
+      "county": "Iowa",
+      "retrieved_at": "2026-07-16T16:26:23.120035",
+      "total_households": 9951
+    },
+    "iron": {
+      "acs_year": 2023,
+      "broadband_households": 2554,
+      "broadband_share": 0.8661,
+      "comms_vulnerability": 0.601,
+      "county": "Iron",
+      "retrieved_at": "2026-07-16T16:26:23.120035",
+      "total_households": 2949
+    },
+    "jackson": {
+      "acs_year": 2023,
+      "broadband_households": 6899,
+      "broadband_share": 0.8415,
+      "comms_vulnerability": 0.747,
+      "county": "Jackson",
+      "retrieved_at": "2026-07-16T16:26:23.120036",
+      "total_households": 8198
+    },
+    "jefferson": {
+      "acs_year": 2023,
+      "broadband_households": 30862,
+      "broadband_share": 0.8957,
+      "comms_vulnerability": 0.319,
+      "county": "Jefferson",
+      "retrieved_at": "2026-07-16T16:26:23.120037",
+      "total_households": 34455
+    },
+    "juneau": {
+      "acs_year": 2023,
+      "broadband_households": 8892,
+      "broadband_share": 0.8239,
+      "comms_vulnerability": 0.86,
+      "county": "Juneau",
+      "retrieved_at": "2026-07-16T16:26:23.120037",
+      "total_households": 10793
+    },
+    "kenosha": {
+      "acs_year": 2023,
+      "broadband_households": 62052,
+      "broadband_share": 0.9175,
+      "comms_vulnerability": 0.229,
+      "county": "Kenosha",
+      "retrieved_at": "2026-07-16T16:26:23.120038",
+      "total_households": 67631
+    },
+    "kewaunee": {
+      "acs_year": 2023,
+      "broadband_households": 7105,
+      "broadband_share": 0.8561,
+      "comms_vulnerability": 0.68,
+      "county": "Kewaunee",
+      "retrieved_at": "2026-07-16T16:26:23.120039",
+      "total_households": 8299
+    },
+    "la crosse": {
+      "acs_year": 2023,
+      "broadband_households": 44896,
+      "broadband_share": 0.8883,
+      "comms_vulnerability": 0.375,
+      "county": "La Crosse",
+      "retrieved_at": "2026-07-16T16:26:23.120040",
+      "total_households": 50543
+    },
+    "lafayette": {
+      "acs_year": 2023,
+      "broadband_households": 5385,
+      "broadband_share": 0.8057,
+      "comms_vulnerability": 0.905,
+      "county": "Lafayette",
+      "retrieved_at": "2026-07-16T16:26:23.120040",
+      "total_households": 6684
+    },
+    "langlade": {
+      "acs_year": 2023,
+      "broadband_households": 7487,
+      "broadband_share": 0.87,
+      "comms_vulnerability": 0.567,
+      "county": "Langlade",
+      "retrieved_at": "2026-07-16T16:26:23.120041",
+      "total_households": 8606
+    },
+    "lincoln": {
+      "acs_year": 2023,
+      "broadband_households": 10571,
+      "broadband_share": 0.8404,
+      "comms_vulnerability": 0.758,
+      "county": "Lincoln",
+      "retrieved_at": "2026-07-16T16:26:23.120042",
+      "total_households": 12578
+    },
+    "manitowoc": {
+      "acs_year": 2023,
+      "broadband_households": 30720,
+      "broadband_share": 0.8769,
+      "comms_vulnerability": 0.499,
+      "county": "Manitowoc",
+      "retrieved_at": "2026-07-16T16:26:23.120042",
+      "total_households": 35033
+    },
+    "marathon": {
+      "acs_year": 2023,
+      "broadband_households": 50489,
+      "broadband_share": 0.8877,
+      "comms_vulnerability": 0.387,
+      "county": "Marathon",
+      "retrieved_at": "2026-07-16T16:26:23.120043",
+      "total_households": 56873
+    },
+    "marinette": {
+      "acs_year": 2023,
+      "broadband_households": 15984,
+      "broadband_share": 0.8575,
+      "comms_vulnerability": 0.657,
+      "county": "Marinette",
+      "retrieved_at": "2026-07-16T16:26:23.120044",
+      "total_households": 18640
+    },
+    "marquette": {
+      "acs_year": 2023,
+      "broadband_households": 6019,
+      "broadband_share": 0.8747,
+      "comms_vulnerability": 0.533,
+      "county": "Marquette",
+      "retrieved_at": "2026-07-16T16:26:23.120044",
+      "total_households": 6881
+    },
+    "menominee": {
+      "acs_year": 2023,
+      "broadband_households": 1167,
+      "broadband_share": 0.8735,
+      "comms_vulnerability": 0.544,
+      "county": "Menominee",
+      "retrieved_at": "2026-07-16T16:26:23.120045",
+      "total_households": 1336
+    },
+    "milwaukee": {
+      "acs_year": 2023,
+      "broadband_households": 340489,
+      "broadband_share": 0.8752,
+      "comms_vulnerability": 0.522,
+      "county": "Milwaukee",
+      "retrieved_at": "2026-07-16T16:26:23.120046",
+      "total_households": 389046
+    },
+    "monroe": {
+      "acs_year": 2023,
+      "broadband_households": 15548,
+      "broadband_share": 0.8506,
+      "comms_vulnerability": 0.702,
+      "county": "Monroe",
+      "retrieved_at": "2026-07-16T16:26:23.120046",
+      "total_households": 18279
+    },
+    "oconto": {
+      "acs_year": 2023,
+      "broadband_households": 14590,
+      "broadband_share": 0.878,
+      "comms_vulnerability": 0.477,
+      "county": "Oconto",
+      "retrieved_at": "2026-07-16T16:26:23.120047",
+      "total_households": 16618
+    },
+    "oneida": {
+      "acs_year": 2023,
+      "broadband_households": 14729,
+      "broadband_share": 0.8782,
+      "comms_vulnerability": 0.465,
+      "county": "Oneida",
+      "retrieved_at": "2026-07-16T16:26:23.120048",
+      "total_households": 16772
+    },
+    "outagamie": {
+      "acs_year": 2023,
+      "broadband_households": 71095,
+      "broadband_share": 0.9205,
+      "comms_vulnerability": 0.195,
+      "county": "Outagamie",
+      "retrieved_at": "2026-07-16T16:26:23.120049",
+      "total_households": 77239
+    },
+    "ozaukee": {
+      "acs_year": 2023,
+      "broadband_households": 35105,
+      "broadband_share": 0.9295,
+      "comms_vulnerability": 0.161,
+      "county": "Ozaukee",
+      "retrieved_at": "2026-07-16T16:26:23.120049",
+      "total_households": 37766
+    },
+    "pepin": {
+      "acs_year": 2023,
+      "broadband_households": 2625,
+      "broadband_share": 0.8607,
+      "comms_vulnerability": 0.635,
+      "county": "Pepin",
+      "retrieved_at": "2026-07-16T16:26:23.120050",
+      "total_households": 3050
+    },
+    "pierce": {
+      "acs_year": 2023,
+      "broadband_households": 14340,
+      "broadband_share": 0.9096,
+      "comms_vulnerability": 0.263,
+      "county": "Pierce",
+      "retrieved_at": "2026-07-16T16:26:23.120051",
+      "total_households": 15765
+    },
+    "polk": {
+      "acs_year": 2023,
+      "broadband_households": 16307,
+      "broadband_share": 0.8661,
+      "comms_vulnerability": 0.589,
+      "county": "Polk",
+      "retrieved_at": "2026-07-16T16:26:23.120051",
+      "total_households": 18829
+    },
+    "portage": {
+      "acs_year": 2023,
+      "broadband_households": 27191,
+      "broadband_share": 0.9175,
+      "comms_vulnerability": 0.218,
+      "county": "Portage",
+      "retrieved_at": "2026-07-16T16:26:23.120052",
+      "total_households": 29636
+    },
+    "price": {
+      "acs_year": 2023,
+      "broadband_households": 5406,
+      "broadband_share": 0.8232,
+      "comms_vulnerability": 0.871,
+      "county": "Price",
+      "retrieved_at": "2026-07-16T16:26:23.120053",
+      "total_households": 6567
+    },
+    "racine": {
+      "acs_year": 2023,
+      "broadband_households": 71176,
+      "broadband_share": 0.8997,
+      "comms_vulnerability": 0.296,
+      "county": "Racine",
+      "retrieved_at": "2026-07-16T16:26:23.120053",
+      "total_households": 79109
+    },
+    "richland": {
+      "acs_year": 2023,
+      "broadband_households": 5647,
+      "broadband_share": 0.7932,
+      "comms_vulnerability": 0.927,
+      "county": "Richland",
+      "retrieved_at": "2026-07-16T16:26:23.120054",
+      "total_households": 7119
+    },
+    "rock": {
+      "acs_year": 2023,
+      "broadband_households": 59397,
+      "broadband_share": 0.8912,
+      "comms_vulnerability": 0.33,
+      "county": "Rock",
+      "retrieved_at": "2026-07-16T16:26:23.120055",
+      "total_households": 66652
+    },
+    "rusk": {
+      "acs_year": 2023,
+      "broadband_households": 5223,
+      "broadband_share": 0.8345,
+      "comms_vulnerability": 0.792,
+      "county": "Rusk",
+      "retrieved_at": "2026-07-16T16:26:23.120055",
+      "total_households": 6259
+    },
+    "sauk": {
+      "acs_year": 2023,
+      "broadband_households": 24199,
+      "broadband_share": 0.8824,
+      "comms_vulnerability": 0.443,
+      "county": "Sauk",
+      "retrieved_at": "2026-07-16T16:26:23.120057",
+      "total_households": 27425
+    },
+    "sawyer": {
+      "acs_year": 2023,
+      "broadband_households": 7160,
+      "broadband_share": 0.8402,
+      "comms_vulnerability": 0.77,
+      "county": "Sawyer",
+      "retrieved_at": "2026-07-16T16:26:23.120058",
+      "total_households": 8522
+    },
+    "shawano": {
+      "acs_year": 2023,
+      "broadband_households": 14304,
+      "broadband_share": 0.8473,
+      "comms_vulnerability": 0.713,
+      "county": "Shawano",
+      "retrieved_at": "2026-07-16T16:26:23.120058",
+      "total_households": 16881
+    },
+    "sheboygan": {
+      "acs_year": 2023,
+      "broadband_households": 44696,
+      "broadband_share": 0.9043,
+      "comms_vulnerability": 0.274,
+      "county": "Sheboygan",
+      "retrieved_at": "2026-07-16T16:26:23.120059",
+      "total_households": 49426
+    },
+    "st. croix": {
+      "acs_year": 2023,
+      "broadband_households": 33651,
+      "broadband_share": 0.9162,
+      "comms_vulnerability": 0.24,
+      "county": "St. Croix",
+      "retrieved_at": "2026-07-16T16:26:23.120056",
+      "total_households": 36729
+    },
+    "taylor": {
+      "acs_year": 2023,
+      "broadband_households": 6455,
+      "broadband_share": 0.8127,
+      "comms_vulnerability": 0.894,
+      "county": "Taylor",
+      "retrieved_at": "2026-07-16T16:26:23.120060",
+      "total_households": 7943
+    },
+    "trempealeau": {
+      "acs_year": 2023,
+      "broadband_households": 10602,
+      "broadband_share": 0.8517,
+      "comms_vulnerability": 0.691,
+      "county": "Trempealeau",
+      "retrieved_at": "2026-07-16T16:26:23.120060",
+      "total_households": 12448
+    },
+    "vernon": {
+      "acs_year": 2023,
+      "broadband_households": 9631,
+      "broadband_share": 0.7903,
+      "comms_vulnerability": 0.939,
+      "county": "Vernon",
+      "retrieved_at": "2026-07-16T16:26:23.120061",
+      "total_households": 12186
+    },
+    "vilas": {
+      "acs_year": 2023,
+      "broadband_households": 9362,
+      "broadband_share": 0.861,
+      "comms_vulnerability": 0.623,
+      "county": "Vilas",
+      "retrieved_at": "2026-07-16T16:26:23.120062",
+      "total_households": 10873
+    },
+    "walworth": {
+      "acs_year": 2023,
+      "broadband_households": 37148,
+      "broadband_share": 0.8756,
+      "comms_vulnerability": 0.511,
+      "county": "Walworth",
+      "retrieved_at": "2026-07-16T16:26:23.120062",
+      "total_households": 42425
+    },
+    "washburn": {
+      "acs_year": 2023,
+      "broadband_households": 6343,
+      "broadband_share": 0.8425,
+      "comms_vulnerability": 0.736,
+      "county": "Washburn",
+      "retrieved_at": "2026-07-16T16:26:23.120063",
+      "total_households": 7529
+    },
+    "washington": {
+      "acs_year": 2023,
+      "broadband_households": 52101,
+      "broadband_share": 0.9224,
+      "comms_vulnerability": 0.184,
+      "county": "Washington",
+      "retrieved_at": "2026-07-16T16:26:23.120064",
+      "total_households": 56482
+    },
+    "waukesha": {
+      "acs_year": 2023,
+      "broadband_households": 155628,
+      "broadband_share": 0.9331,
+      "comms_vulnerability": 0.15,
+      "county": "Waukesha",
+      "retrieved_at": "2026-07-16T16:26:23.120065",
+      "total_households": 166790
+    },
+    "waupaca": {
+      "acs_year": 2023,
+      "broadband_households": 19232,
+      "broadband_share": 0.8588,
+      "comms_vulnerability": 0.646,
+      "county": "Waupaca",
+      "retrieved_at": "2026-07-16T16:26:23.120065",
+      "total_households": 22394
+    },
+    "waushara": {
+      "acs_year": 2023,
+      "broadband_households": 8655,
+      "broadband_share": 0.8376,
+      "comms_vulnerability": 0.781,
+      "county": "Waushara",
+      "retrieved_at": "2026-07-16T16:26:23.120066",
+      "total_households": 10333
+    },
+    "winnebago": {
+      "acs_year": 2023,
+      "broadband_households": 64618,
+      "broadband_share": 0.898,
+      "comms_vulnerability": 0.308,
+      "county": "Winnebago",
+      "retrieved_at": "2026-07-16T16:26:23.120067",
+      "total_households": 71958
+    },
+    "wood": {
+      "acs_year": 2023,
+      "broadband_households": 28306,
+      "broadband_share": 0.8862,
+      "comms_vulnerability": 0.398,
+      "county": "Wood",
+      "retrieved_at": "2026-07-16T16:26:23.120068",
+      "total_households": 31942
+    }
+  },
+  "county_count": 72,
+  "generated_at": "2026-07-16T16:26:25.767908",
+  "source": "Census ACS 2023 5-year, table B28002"
+}

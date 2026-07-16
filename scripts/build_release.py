@@ -43,6 +43,7 @@ EXCLUDE_FILES = {
     'replit.md',
     'replit.nix',
     'uv.lock',
+    'UPGRADE_PLAN.md',
 }
 
 EXCLUDE_EXTENSIONS = {

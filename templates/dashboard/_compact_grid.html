@@ -4,11 +4,13 @@
    matching full-detail panel below it (the existing per-domain card),
    wired by the script at the bottom of this file.
 
-   All scores and weights are REAL values read straight from risk_data
-   using the same keys and fallbacks as the detail cards; no scoring,
-   weighting, or methodology logic lives here. Public Health and
-   Emergency Management share this view (only the Public Safety weight
-   label varies by discipline_label, exactly as the detail card does). #}
+   All scores are REAL values read straight from risk_data using the same
+   keys and fallbacks as the detail cards; no scoring, weighting, or
+   methodology logic lives here. The weight labels are the nominal design
+   weights from config/risk_weights.yaml and are discipline-aware: the
+   Public Health and Emergency Management weight sets differ and each
+   total 100%, so the per-tile and per-band labels switch on
+   discipline_label. #}
 
 {% macro rt(domain, title, score, weight='') %}
     {% set sc = score if score is number else 0 %}
@@ -50,6 +52,26 @@
 {% set s_cyber = risk_data.cybersecurity_risk if risk_data.cybersecurity_risk is number else 0.35 %}
 {% set s_util = risk_data.utilities.overall if (risk_data.utilities is mapping and risk_data.utilities.overall is defined and risk_data.utilities.overall is number) else 0.30 %}
 
+{# --- Discipline-aware REAL weight labels (nominal design weights from
+   config/risk_weights.yaml; the Public Health and Emergency Management
+   weight sets each total 100%). The Infectious Disease tile reflects the
+   acute infectious-disease composite; under EM that signal carries the
+   health_metrics weight (9%) plus the EM disease-awareness weight (5%),
+   shown combined as 14%, matching the WEM regional aggregator and the
+   published PH vs EM comparison. --- #}
+{% set is_em = (discipline_label|default('Public Health')) == 'Emergency Management' %}
+{% set w_infectious = '14%' if is_em else '16%' %}
+{% set w_vbd = '6%' if is_em else '7%' %}
+{% set band_disease = '20%' if is_em else '23%' %}
+{% set band_hazards = '28%' if is_em else '26%' %}
+{% set nh_part = 'Part of 28%' if is_em else 'Part of 26%' %}
+{% set w_air = '8%' if is_em else '11%' %}
+{% set w_heat = '11%' if is_em else '10%' %}
+{% set w_dam = '7%' %}
+{% set band_environmental = '26%' if is_em else '28%' %}
+{% set w_shooter = '11%' if is_em else '17%' %}
+{% set w_utilities = '9%' if is_em else 'Supplementary' %}
+
 <div class="compact-overview">
     <div class="compact-dash-controls">
         <p class="compact-dash-hint mb-0">
@@ -60,53 +82,53 @@
     </div>
 
     <div class="compact-band band-disease">
-        <div class="compact-band-header">Disease and Biological (24% combined weight)</div>
+        <div class="compact-band-header">Disease and Biological ({{ band_disease }} combined weight)</div>
         <div class="compact-tile-grid">
-            {{ rt('infectious', 'Infectious Disease', s_infectious, '17%') }}
-            {{ rt('vbd', 'Vector-Borne Disease', s_vbd, '7%') }}
+            {{ rt('infectious', 'Infectious Disease', s_infectious, w_infectious) }}
+            {{ rt('vbd', 'Vector-Borne Disease', s_vbd, w_vbd) }}
         </div>
     </div>
 
     <div class="compact-band band-hazards">
-        <div class="compact-band-header">Natural Hazards (28% combined weight)</div>
+        <div class="compact-band-header">Natural Hazards ({{ band_hazards }} combined weight)</div>
         <div class="compact-tile-grid">
-            {{ rt('tornado', 'Tornado', s_tornado, 'Part of 28%') }}
-            {{ rt('thunderstorm', 'Hail &amp; Lightning', s_thunder, 'Part of 28%') }}
-            {{ rt('straight_line_wind', 'Straight-Line Wind', s_slw, 'Part of 28%') }}
-            {{ rt('flood', 'Flood', s_flood, 'Part of 28%') }}
-            {{ rt('winter_storm', 'Winter Storm', s_winter, 'Part of 28%') }}
+            {{ rt('tornado', 'Tornado', s_tornado, nh_part) }}
+            {{ rt('thunderstorm', 'Hail &amp; Lightning', s_thunder, nh_part) }}
+            {{ rt('straight_line_wind', 'Straight-Line Wind', s_slw, nh_part) }}
+            {{ rt('flood', 'Flood', s_flood, nh_part) }}
+            {{ rt('winter_storm', 'Winter Storm', s_winter, nh_part) }}
         </div>
     </div>
 
     <div class="compact-band band-environmental">
-        <div class="compact-band-header">Environmental (30% combined weight)</div>
+        <div class="compact-band-header">Environmental ({{ band_environmental }} combined weight)</div>
         <div class="compact-tile-grid">
-            {{ rt('air_quality', 'Air Quality', s_air, '12%') }}
-            {{ rt('extreme_heat', 'Extreme Heat', s_heat, '11%') }}
-            {{ rt('dam_failure', 'Dam Failure', s_dam, '7%') }}
+            {{ rt('air_quality', 'Air Quality', s_air, w_air) }}
+            {{ rt('extreme_heat', 'Extreme Heat', s_heat, w_heat) }}
+            {{ rt('dam_failure', 'Dam Failure', s_dam, w_dam) }}
         </div>
     </div>
 
     <div class="compact-band band-hazmat">
         <div class="compact-band-header">Hazardous Materials (6% combined weight)</div>
         <div class="compact-tile-grid">
-            {{ rt('hazmat_industrial', 'Hazmat &mdash; Industrial', s_hz_ind, 'Fixed-Site') }}
-            {{ rt('hazmat_agricultural', 'Hazmat &mdash; Agricultural', s_hz_ag, 'Rural / Farm') }}
+            {{ rt('hazmat_industrial', 'Hazmat &mdash; Industrial', s_hz_ind, '3%') }}
+            {{ rt('hazmat_agricultural', 'Hazmat &mdash; Agricultural', s_hz_ag, '3%') }}
         </div>
     </div>
 
     <div class="compact-band band-safety">
-        <div class="compact-band-header">Public Safety (18% {{ discipline_label|default('Public Health') }} weight + supplementary)</div>
+        <div class="compact-band-header">Public Safety ({{ w_shooter }} {{ discipline_label|default('Public Health') }} weight + supplementary)</div>
         <div class="compact-tile-grid">
-            {{ rt('active_shooter', 'Active Shooter', s_shooter, '18%') }}
+            {{ rt('active_shooter', 'Active Shooter', s_shooter, w_shooter) }}
             {{ rt('cybersecurity', 'Cybersecurity', s_cyber, 'Supplementary') }}
         </div>
     </div>
 
     <div class="compact-band band-community">
-        <div class="compact-band-header">Community Resources and Utilities (supplementary)</div>
+        <div class="compact-band-header">{% if is_em %}Community Resources and Utilities (9% Emergency Management weight){% else %}Community Resources and Utilities (supplementary){% endif %}</div>
         <div class="compact-tile-grid">
-            {{ rt('utilities', 'Utilities and Infrastructure', s_util, 'Supplementary') }}
+            {{ rt('utilities', 'Utilities and Infrastructure', s_util, w_utilities) }}
         </div>
     </div>
 </div>

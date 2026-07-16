@@ -281,7 +281,14 @@ def load_nri_data():
         return {'_neutral_fallback': _NEUTRAL}
 
 def load_prison_data() -> Dict[str, Dict]:
-    """Load correctional facility data from OpenFEMA and WI DOC"""
+    """
+    Return a static, hand-maintained correctional facility list.
+
+    PROVENANCE: this is a hardcoded seed compiled from publicly known
+    Wisconsin facility names. It is NOT fetched from OpenFEMA or the WI
+    DOC at runtime (an earlier docstring incorrectly claimed it was).
+    Coverage is partial: only a handful of counties have entries.
+    """
     try:
         # For tribal jurisdictions, directly use hard-coded data to avoid API calls that may fail
         # This ensures the dashboard will always work for tribal areas
@@ -396,8 +403,10 @@ def calculate_jurisdiction_risk(county_name: str) -> dict:
     # risk scores for jurisdictions whose county name wasn't found in the NRI CSV.
     _neutral = {'flood_risk': 0.33, 'tornado_risk': 0.35, 'winter_storm_risk': 0.40}
     county_risk = nri_data.get(county_name)
+    nri_neutral_fallback = False
     if county_risk is None:
         county_risk = nri_data.get('_neutral_fallback', _neutral)
+        nri_neutral_fallback = True
         logger.warning(
             f"NRI data not found for county '{county_name}'; "
             f"using neutral Wisconsin-average scores. "
@@ -478,7 +487,8 @@ def calculate_jurisdiction_risk(county_name: str) -> dict:
         'tornado': float(adjusted_tornado_risk),
         'winter_storm': float(winter_storm_risk),
         'thunderstorm': float(thunderstorm_risk),
-        'straight_line_wind': float(straight_line_wind_risk)
+        'straight_line_wind': float(straight_line_wind_risk),
+        'nri_neutral_fallback': nri_neutral_fallback
     }
     
     logger.info(f"Calculated risk scores for {county_name} (facility multiplier={facility_multiplier:.2f}): {natural_hazards}")
@@ -1203,6 +1213,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     numeric_hazards = {}
     for key, value in natural_hazards.items():
         if isinstance(value, (float, int)) and key not in [
+            'nri_neutral_fallback',
             'tribal_status',
             'tribal_counties',
             'tribal_primary_county',
@@ -1513,6 +1524,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'utilities': utilities_category_score,
             'dam_failure': dam_failure_risk,
             'vector_borne_disease': vbd_risk,
+            # EM disease-awareness weight (v28): fed from the same acute
+            # infectious-disease composite signal as health_risk, exactly
+            # as utils/wem_risk_aggregator.py does for regional scores.
+            # Without this key the 5% weight was silently excluded and
+            # renormalized away on every EM county dashboard.
+            'infectious_disease': health_metrics_score,
             'hazmat_industrial': hazmat_industrial_score,
             'hazmat_agricultural': hazmat_agricultural_score,
         }
@@ -1744,6 +1761,15 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'data_sources': ['CDC NSSP Emergency Department Visits (weekly, vutn-jzwm)', 'WI DHS WIR County Immunization (annual)', 'County Health Rankings BRFSS (annual)', 'CDC PLACES (annual)'],
                 'aggregation': 'Composite from disease surveillance + vaccination rates'
             },
+            *([{
+                'name': 'Infectious Disease (EM Disease Awareness)',
+                'weight': weights.get('infectious_disease', 0.05),
+                'final_score': round(float(health_metrics_score), 4),
+                'weighted_contribution': round(weights.get('infectious_disease', 0.05) * (float(health_metrics_score) ** p), 4),
+                'svi_adjustment': 'None (same directly sourced signal as Health Metrics)',
+                'data_sources': ['Same acute infectious-disease composite as Health Metrics (health_risk)'],
+                'aggregation': 'EM-specific 5% disease-awareness weight (mass-care screening, shelter ops) applied to the same acute infectious-disease composite as Health Metrics, mirroring the WEM regional aggregator'
+            }] if discipline == 'em' else []),
             {
                 'name': 'Active Shooter',
                 'weight': weights['active_shooter'],
