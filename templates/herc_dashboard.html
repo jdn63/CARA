@@ -53,7 +53,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Counties in Region ({{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties; {{ risk_data.jurisdiction_count }} jurisdictions)</h6>
+                            <h6>Counties in Region</h6>
                             <ul>
                                 {% for county in risk_data.counties %}
                                 <li>{{ county }}</li>
@@ -62,7 +62,7 @@
                         </div>
                         <div class="col-md-6">
                             <h6>About This Dashboard</h6>
-                            <p>All scores shown are county-balanced regional averages: jurisdiction risks are averaged within each county first, then averaged across the {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties in this {{ region_kind }} region (two-stage mean across {{ risk_data.jurisdiction_count }} jurisdictions). This prevents counties with multiple local health departments from over-weighting the regional rollup. Domain scores use the same EVR methodology and data sources as individual jurisdiction dashboards.</p>
+                            <p>All scores shown are county-balanced regional averages: jurisdiction risks are averaged within each county first, then averaged across the counties in this {{ region_kind }} region.</p>
                             <p>For granular county-level detail, select an individual jurisdiction from the home page.</p>
                         </div>
                     </div>
