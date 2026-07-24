@@ -3,7 +3,9 @@ import logging
 import os
 from typing import Dict, Any, Optional
 
-from utils.risk_calculation import calculate_residual_risk, get_health_impact_factor
+from utils.risk_calculation import (calculate_residual_risk,
+                                    get_community_resilience,
+                                    get_health_impact_factor)
 from utils.svi_data import get_svi_data
 
 logger = logging.getLogger(__name__)
@@ -410,15 +412,12 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
             (census['elderly_factor'] * 0.10)
         ))
 
-        # EM dam-failure resilience: inverse SVI plus a real per-dam credit
-        # for Emergency Action Plans (NID 'has_eap' field).  The former
-        # EOC_COUNTIES +0.20 bonus and the +0.10 population-threshold bonus
-        # were removed because they created cliffs between adjacent counties
-        # and were not backed by a cited capacity dataset (matches the
-        # natural-hazards resilience cleanup).
-        resilience_raw = 0.45
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.10)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.15)
+        # EM dam-failure resilience: FEMA NRI Community Resilience (HVRI
+        # BRIC) plus a real per-dam credit for Emergency Action Plans (NID
+        # 'has_eap' field).  The former inverse-SVI base double-counted SVI
+        # themes already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
         if dam_data.get('has_eap', False):
             resilience_raw += 0.10
         resilience_raw = max(0.1, min(0.9, resilience_raw))
@@ -432,15 +431,12 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
             (svi['minority_status'] * 0.10)
         ))
 
-        # PH dam-failure resilience: inverse SVI plus a real per-dam credit
-        # for Emergency Action Plans (NID 'has_eap' field).  The former
-        # prepared_counties +0.15 / +0.10 bonuses were removed because they
-        # created cliffs between adjacent counties and were not backed by a
-        # cited capacity dataset (matches the natural-hazards resilience
-        # cleanup).
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
+        # PH dam-failure resilience: FEMA NRI Community Resilience (HVRI
+        # BRIC) plus a real per-dam credit for Emergency Action Plans (NID
+        # 'has_eap' field).  The former inverse-SVI base double-counted SVI
+        # themes already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
         if dam_data.get('has_eap', False):
             resilience_raw += 0.15
@@ -505,6 +501,7 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
         'USACE National Inventory of Dams (fallback)',
         'OpenFEMA NFIP Claims - Flood Zone Overlap Proxy',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
+        'FEMA NRI Community Resilience (HVRI BRIC index)',
         'U.S. Census Bureau ACS - Demographics',
         'Wisconsin Emergency Management - Dam Emergency Action Plans',
         'Brown & Graham (1988) / Graham (1999, USBR DSO-99-06) / USACE-RMC (2018) - empirical PAR medians by hazard class',

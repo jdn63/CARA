@@ -42,6 +42,7 @@ ARCHITECTURE.md).
 import logging
 from typing import Any, Dict, Optional
 
+from utils.risk_calculation import get_community_resilience
 from utils.wi_dhs_hvi import get_hvi_data
 
 logger = logging.getLogger(__name__)
@@ -182,7 +183,14 @@ def calculate_enhanced_extreme_heat_risk(
         vulnerability_unit = sum(vuln_components) / len(vuln_components)
     else:
         vulnerability_unit = score
-    resilience_unit = 1.0 - socio_unit if socio_unit is not None else 0.5
+    # Display-only resilience: FEMA NRI Community Resilience (HVRI BRIC),
+    # matching the resilience source used by the EVR domains. Previously
+    # this was 1.0 minus the HVI socioeconomic sub-index, which relabeled
+    # the same socioeconomic signal already inside the headline HVI score
+    # as "resilience" (external review finding, resolved). This value is
+    # informational only; the headline score remains the DHS HVI
+    # vulnerability_score and is NOT re-composited.
+    resilience_unit = get_community_resilience(county_name)
 
     rank = record.get("statewide_rank")
     total = record.get("statewide_county_count")
@@ -214,7 +222,7 @@ def calculate_enhanced_extreme_heat_risk(
         },
         "resilience": {
             "final_resilience": round(resilience_unit, 3),
-            "source": "Inverse of HVI socioeconomic sub-index",
+            "source": "FEMA NRI Community Resilience (HVRI BRIC), informational only",
         },
         "wet_bulb_risk": {"final_wet_bulb_risk": None},
         "climate_trend_factor": {"final_trend_factor": None},

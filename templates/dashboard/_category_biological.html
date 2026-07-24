@@ -35,7 +35,7 @@
                             ~ '<li>Vaccination Coverage (20%): MMR (24-month) from WI DHS WIR county-immunization-data.csv; flu (all-ages seasonal) from County Health Rankings BRFSS. COVID-19 vaccination not included (no reliable county-level current data source).</li>'
                             ~ '</ul>'
                             ~ '<div class="formula-line">Score = ' ~ "%.3f"|format(risk_data.health_risk) ~ '</div>'
-                            ~ '<div class="data-source">Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, weekly); WI DHS WIR immunization data; County Health Rankings 2025</div>'
+                            ~ '<div class="data-source">Sources: CDC NSSP Emergency Department Visits (data.cdc.gov/resource/vutn-jzwm, weekly); WI DHS WIR immunization data (current published county CSV); County Health Rankings 2025</div>'
                             ) }}
                             </h3>
                             <span class="badge bg-{{ 'danger' if risk_data.health_risk > 0.6 else 'warning' if risk_data.health_risk > 0.3 else 'success' }}">
@@ -193,7 +193,7 @@
                             ~ '<li>Climate Multiplier: ' ~ "%.2f"|format(risk_data.vbd_components.climate_multiplier|default(1.0)) ~ '</li>'
                             ~ '<li>Seasonal Factor: ' ~ "%.2f"|format(risk_data.vbd_components.seasonal_factor|default(1.0)) ~ '</li>'
                             ~ '</ul>'
-                            ~ '<div class="data-source">Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates</div>'
+                            ~ '<div class="data-source">Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv, 2019-2024), CDC SVI 2022, NLCD 2021 county land cover estimates</div>'
                             ) }}
                             {% endif %}
                             </h3>
@@ -359,7 +359,7 @@
                     {% endcall %}
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv), CDC SVI, county land cover estimates
+                            Sources: WI DHS EPHT (lyme-county.csv, west-nile-data-county.csv, 2019-2024), CDC SVI 2022, NLCD 2021 county land cover estimates
                         </small>
                     </div>
                 </div>

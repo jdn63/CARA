@@ -73,9 +73,9 @@ sources:
   fema_hma_guide_v2_1:
     title: "Hazard Mitigation Assistance Program and Policy Guide, Version 2.1 (effective 2025-01-20)"
     org: "FEMA"
-    url: "https://www.fema.gov/grants/mitigation/hazard-mitigation-assistance-guide"
-    verified: "2026-05-20"
-    notes: "Primary policy document for FEMA's Hazard Mitigation Assistance programs (BRIC, FMA, HMGP). Version 2.1 removed standalone extreme-temperature project eligibility; heat mitigation activities must be integrated into multi-hazard projects to remain HMA-eligible."
+    url: "https://www.fema.gov/grants/mitigation/learn/hazard-mitigation-assistance-guidance"
+    verified: "2026-07-24"
+    notes: "Primary policy document for FEMA's Hazard Mitigation Assistance programs (BRIC, FMA, HMGP). Version 2.1 removed standalone extreme-temperature project eligibility; heat mitigation activities must be integrated into multi-hazard projects to remain HMA-eligible. FEMA moved the guide page under grants/mitigation/learn during a site reorganization."
 
   fema_hmp_guide:
     title: "Local Mitigation Planning Policy Guide and Hazard Mitigation Planning resources"
@@ -138,16 +138,16 @@ sources:
   cdc_nndss:
     title: "National Notifiable Diseases Surveillance System (NNDSS)"
     org: "CDC"
-    url: "https://www.cdc.gov/nndss/index.html"
-    verified: "2026-05-20"
-    notes: "National system for case-based reporting of notifiable conditions including vector-borne, vaccine-preventable, and emerging infectious diseases."
+    url: "https://www.cdc.gov/nndss/"
+    verified: "2026-07-24"
+    notes: "National system for case-based reporting of notifiable conditions including vector-borne, vaccine-preventable, and emerging infectious diseases. CDC retired /nndss/index.html during the 2024-2025 site reorganization; the section root now redirects to the current NNDSS landing page."
 
   cdc_han:
     title: "Health Alert Network (HAN)"
     org: "CDC"
-    url: "https://emergency.cdc.gov/han/"
-    verified: "2026-05-20"
-    notes: "CDC's primary method for sharing cleared, time-sensitive public health information with clinicians, local and state health departments, and partners."
+    url: "https://www.cdc.gov/han/php/about/index.html"
+    verified: "2026-07-24"
+    notes: "CDC's primary method for sharing cleared, time-sensitive public health information with clinicians, local and state health departments, and partners. Moved from emergency.cdc.gov/han/ to www.cdc.gov/han/ during the CDC site reorganization."
 
   cdc_cerc:
     title: "Crisis and Emergency Risk Communication (CERC)"
@@ -159,9 +159,9 @@ sources:
   mrc_program:
     title: "Medical Reserve Corps (MRC) Program"
     org: "HHS Administration for Strategic Preparedness and Response"
-    url: "https://aspr.hhs.gov/MRC/Pages/default.aspx"
-    verified: "2026-05-20"
-    notes: "National network of community-based volunteer units supporting local public health and emergency response surge needs."
+    url: "https://www.aspr.gov/readiness-response/response-operations/join-train-respond/mrc"
+    verified: "2026-07-24"
+    notes: "National network of community-based volunteer units supporting local public health and emergency response surge needs. ASPR retired the aspr.hhs.gov SharePoint pages in favor of aspr.gov."
 
   wi_dhs_preparedness:
     title: "Wisconsin Public Health Preparedness Program"
@@ -171,11 +171,11 @@ sources:
     notes: "State PHEP program hub including regional preparedness coordinators, healthcare coalition links, and Wisconsin-specific preparedness resources."
 
   wi_dhs_communicable:
-    title: "Communicable Diseases"
+    title: "Disease Reporting"
     org: "Wisconsin Department of Health Services"
-    url: "https://www.dhs.wisconsin.gov/disease/communicable.htm"
-    verified: "2026-05-20"
-    notes: "Wisconsin communicable disease reporting requirements, surveillance program landing page, and clinical guidance for reportable conditions."
+    url: "https://www.dhs.wisconsin.gov/disease/reporting.htm"
+    verified: "2026-07-24"
+    notes: "Wisconsin communicable disease reporting requirements, category I/II reportable condition lists, and clinical guidance for reportable conditions. The former communicable.htm landing page was retired by WI DHS and now serves a search-redirect stub; the Disease Reporting page is the current canonical entry point."
 
   wi_dhs_tickborne:
     title: "Tick-Borne Diseases"
@@ -215,9 +215,9 @@ sources:
   cdc_wildfire_smoke:
     title: "Wildfire Smoke and Your Health"
     org: "CDC"
-    url: "https://www.cdc.gov/wildfires/safety/wildfire-smoke-and-your-health.html"
-    verified: "2026-05-20"
-    notes: "CDC public-health guidance on wildfire-smoke exposure, sensitive groups, indoor air quality, and protective actions for community members."
+    url: "https://www.cdc.gov/wildfires/risk-factors/index.html"
+    verified: "2026-07-24"
+    notes: "CDC public-health guidance on wildfire-smoke exposure, sensitive groups, indoor air quality, and protective actions for community members. The former Wildfire Smoke and Your Health page was replaced by the How Wildfire Smoke Affects Your Body page in the reorganized CDC wildfires section."
 
   epa_airnow:
     title: "AirNow"
@@ -234,10 +234,10 @@ sources:
     notes: "Federal toolbox for state, local, and tribal agencies on wildfire-smoke communication, cleaner-air-space planning, indoor filtration, and protecting sensitive groups."
 
   cdc_carbon_monoxide:
-    title: "Carbon Monoxide Poisoning Prevention"
+    title: "Carbon Monoxide Poisoning Basics"
     org: "CDC"
-    url: "https://www.cdc.gov/carbon-monoxide/index.html"
-    verified: "2026-05-20"
+    url: "https://www.cdc.gov/carbon-monoxide/about/index.html"
+    verified: "2026-07-24"
     notes: "CDC clinical and public messaging on carbon monoxide poisoning risk during power outages, generator misuse, winter heating, and storm recovery."
 
   cdc_winter_weather:
@@ -276,11 +276,11 @@ sources:
     notes: "CDC public-health framework for primary prevention of community violence, including youth, intimate partner, and firearm violence."
 
   samhsa_mass_violence:
-    title: "Coping with Mass Violence and Community Trauma"
+    title: "Trauma and Violence"
     org: "SAMHSA"
-    url: "https://www.samhsa.gov/mental-health/mass-violence"
-    verified: "2026-05-20"
-    notes: "SAMHSA guidance and resources on community behavioral health response, trauma-informed care, and crisis counseling after mass violence events."
+    url: "https://www.samhsa.gov/mental-health/trauma-violence"
+    verified: "2026-07-24"
+    notes: "SAMHSA guidance and resources on community behavioral health response, trauma-informed care, and crisis counseling after mass violence events. The former Coping with Mass Violence page was folded into the Trauma and Violence topic page during a SAMHSA site reorganization."
 
   stop_the_bleed:
     title: "Stop The Bleed"
@@ -355,9 +355,9 @@ sources:
   fema_p_1000:
     title: "FEMA P-1000: Safer, Stronger, Smarter - A Guide to Improving School Natural Hazard Safety"
     org: "FEMA"
-    url: "https://www.fema.gov/emergency-managers/risk-management/earthquake/training/p-1000"
-    verified: "2026-05-20"
-    notes: "FEMA guide on integrating safety, security, and natural-hazard risk reduction into K-12 school facilities and emergency operations planning."
+    url: "https://www.fema.gov/emergency-managers/risk-management/earthquake/training/fema-p-1000"
+    verified: "2026-07-24"
+    notes: "FEMA guide on integrating safety, security, and natural-hazard risk reduction into K-12 school facilities and emergency operations planning. FEMA renamed the page slug from p-1000 to fema-p-1000."
 
   # ---- Emergency Management framework-wide ----------------------------
 
@@ -471,9 +471,9 @@ sources:
   cdc_chempack:
     title: "CHEMPACK Project"
     org: "HHS Administration for Strategic Preparedness and Response, Strategic National Stockpile"
-    url: "https://aspr.hhs.gov/CHEMPACK/Pages/default.aspx"
-    verified: "2026-05-20"
-    notes: "Federal program pre-positioning nerve agent antidotes and chemical exposure countermeasures in CHEMPACK containers within a one-hour response radius. Coordinated through state CHEMPACK coordinators and accessed by hospitals and EMS for chemical mass-casualty events. Transferred from CDC ORR to ASPR with the SNS program."
+    url: "https://www.aspr.gov/readiness-response/medical-countermeasures-biodefense/sns/stockpile-products/chempack"
+    verified: "2026-07-24"
+    notes: "Federal program pre-positioning nerve agent antidotes and chemical exposure countermeasures in CHEMPACK containers within a one-hour response radius. Coordinated through state CHEMPACK coordinators and accessed by hospitals and EMS for chemical mass-casualty events. Transferred from CDC ORR to ASPR with the SNS program; ASPR retired the aspr.hhs.gov SharePoint pages in favor of aspr.gov."
 
   cdc_sns:
     title: "Strategic National Stockpile"
@@ -581,8 +581,8 @@ sources:
     notes: "Volunteer storm-spotter program coordinated through local NWS Weather Forecast Offices; provides real-time ground-truth severe-weather reports used by warning forecasters during severe-thunderstorm and derecho events."
 
   fema_debris_management:
-    title: "Public Assistance Debris Management Guide (FEMA P-325)"
+    title: "Public Assistance Debris Management Guide (FEMA 325)"
     org: "Federal Emergency Management Agency"
-    url: "https://www.fema.gov/sites/default/files/documents/fema_325_public-assistance-debris-management-guide_06-30-2021.pdf"
-    verified: "2026-05-20"
-    notes: "FEMA Public Assistance program guide for debris management planning, contracting, monitoring, and reimbursement after declared disasters; the foundational reference for pre-staged debris-removal contracts and mutual-aid debris agreements."
+    url: "https://www.fema.gov/sites/default/files/2020-07/fema_325_public-assistance-debris-mgmt-plan_Guide_6-1-2007.pdf"
+    verified: "2026-07-24"
+    notes: "FEMA Public Assistance program guide for debris management planning, contracting, monitoring, and reimbursement after declared disasters; the foundational reference for pre-staged debris-removal contracts and mutual-aid debris agreements. FEMA removed the 2021-dated PDF path; this is the FEMA-hosted FEMA 325 guide (June 2007), whose policy content is carried forward in the current Public Assistance Program and Policy Guide."

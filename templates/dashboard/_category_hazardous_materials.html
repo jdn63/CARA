@@ -25,10 +25,10 @@
                           ~ '<ul class="component-list">'
                           ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' (real EPA TRI facility counts for all 72 counties, plus a capped PHMSA pipeline-incident bump)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ' (CDC SVI housing/transport + socioeconomic + Census urbanization)</li>'
-                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ' (statutory regional hazmat team per Wis. Stat. 323.13 + inverse SVI)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index + statutory regional hazmat team per Wis. Stat. 323.13)</li>'
                           ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</li>'
                           ~ '</ul>'
-                          ~ '<div class="data-source">Sources: EPA TRI; EPA EPCRA Tier II; Wisconsin Regional Hazmat Response System (Wis. Stat. 323.13); CDC SVI 2022; U.S. Census ACS</div>'
+                          ~ '<div class="data-source">Sources: EPA TRI (current facility inventory); EPA EPCRA Tier II; Wisconsin Regional Hazmat Response System (Wis. Stat. 323.13); PHMSA pipeline incidents (trailing 20 years); CDC SVI 2022; U.S. Census ACS 2022</div>'
                         ) }}
                         {% endif %}
                         </h3>
@@ -129,7 +129,7 @@
                           ~ '<ul class="component-list">'
                           ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' (real USDA Census of Agriculture 2022: chemical and fertilizer expense, harvested cropland, milk-cow inventory, normalized statewide)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ' (rural isolation + SVI minority/socioeconomic for farmworker households)</li>'
-                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ' (inverse SVI socioeconomic score)</li>'
+                          ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
                           ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</li>'
                           ~ '</ul>'
                           ~ '<div class="data-source">Sources: USDA NASS Census of Agriculture 2022; CDC NIOSH Agricultural Safety; EPA Worker Protection Standard; CDC SVI 2022. WI DATCP ACCP incident history is a documented barrier (no queryable per-county dataset) and is not a scoring input.</div>'

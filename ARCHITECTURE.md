@@ -687,8 +687,9 @@ WI), and climate trend from
 `data/climate/natural_hazard_climate_projections.json`
 (1.25 multiplier; 0.20 weight). Vulnerability is dominated by
 mobile-home stock (0.25) plus tree-fall exposure, distribution-grid
-vulnerability, and rural isolation. Resilience uses the inverse of
-SVI socioeconomic and housing-transportation themes.
+vulnerability, and rural isolation. Resilience uses the FEMA NRI
+Community Resilience county mean (HVRI BRIC index; see the
+"Resilience sourced from FEMA NRI Community Resilience" section).
 
 Weights. `config/risk_weights.yaml` natural_hazards_weights split
 the combined 0.25 share 60/40 by WI event-volume share: wind 0.15,
@@ -935,6 +936,15 @@ moves) or a state agency URL change; the fix is to update the URL in
 `_sources.yaml` and re-run the script until the failed list is empty.
 
 ## Heat SVI single-pass invariant (v28.9)
+
+Historical note: this section describes the v28.9 fix to the EVR heat
+composite. The EVR heat composite itself was later retired when the
+Extreme Heat domain moved to the WI DHS Heat Vulnerability Index
+headline score (see `utils/climate_adjusted_risk.py`; the methodology
+page documents the current HVI-based approach). The single-pass
+principle survives in the current design: HVI already contains a
+socioeconomic sub-index, so no separate SVI term is layered on top of
+the HVI score.
 
 Prior to v28.9, the extreme-heat domain applied CDC SVI in two distinct
 places:
@@ -1193,3 +1203,76 @@ the old guesses 0.68/0.52/0.42), and agricultural hazmat resilience
 dropped by 0.15 for the 17 previously boosted counties (raising their
 residual risk slightly). These are the honest results of removing
 unearned or fabricated signals.
+
+## Resilience sourced from FEMA NRI Community Resilience (v28.11, 2026-07)
+
+External review finding: every EVR-style domain derived its Resilience
+term from inverse CDC SVI themes (socioeconomic and/or
+housing-transportation) while the same SVI themes also raised the
+Vulnerability term. Because the formula is
+Risk = (E * V) * (2.0 - R) * HIF, one SVI signal amplified risk twice:
+once by raising V and again by lowering R (which raises the
+2.0 - R amplifier). High-SVI counties were double-penalized by
+construction.
+
+Fix: the Resilience term is now sourced from the FEMA National Risk
+Index Community Resilience score (University of South Carolina HVRI
+Baseline Resilience Indicators for Communities, BRIC), which already
+ships in the NRI census-tract table cached at
+`data/nri/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv`
+(RESL_SCORE column; 72 counties, no nulls). The shared helper is
+`utils/risk_calculation.get_community_resilience(county_name)`:
+
+  - aggregates tract scores to the county mean (0-100 national
+    percentile), then maps linearly onto [0.1, 0.9] via
+    R = 0.1 + 0.8 * (pct / 100);
+  - returns the 0.5 neutral midpoint if the county is missing
+    (defensive only; all 72 counties resolve);
+  - caches the county table at module level (file read once per
+    process; cache-only invariant unaffected because the CSV is a
+    local static file).
+
+Consumers switched in the same pass: all five natural-hazard
+calculators (flood, tornado, winter storm, thunderstorm, straight-line
+wind) including the EM-mode resilience path, dam failure, vector-borne
+disease, hazmat industrial, and hazmat agricultural. The extreme-heat
+domain shows the same value as an informational display row only (the
+heat headline remains the DHS HVI score and composites nothing on
+top).
+
+Rationale for BRIC over the alternatives considered:
+
+  - Inverse SVI (status quo): the double-count under review; rejected.
+  - Constant R = 0.5: removes county differentiation entirely and
+    wastes an available authoritative signal; rejected.
+  - CHR/hospital-capacity blend with CARA-authored weights: reintroduces
+    in-house weights exactly where the external review asked for cited
+    sources, and health-outcome measures are partially endogenous to
+    the vulnerability inputs; rejected.
+  - FEMA NRI Community Resilience (BRIC): externally authored,
+    published percentile, already in the cached NRI table, and it is
+    the same resilience construct FEMA itself pairs against social
+    vulnerability inside NRI. Chosen.
+
+Honest-limitation note (also stated on the methodology page): BRIC
+itself contains socioeconomic components by design. The fix removes
+the direct reuse of SVI on both sides of the EVR formula; it does not
+claim Resilience is now free of all demographic signal.
+
+Statute- and fact-backed additive credits are unchanged and stack on
+top of the BRIC base: dam failure retains the per-dam Emergency Action
+Plan credit (National Inventory of Dams), and hazmat industrial
+retains the La Crosse County regional-team credit (Wis. Stat. 323.13).
+The hard-coded "well-resourced county" and "surveillance-capacity
+county" lists inside vector-borne disease were removed in this pass
+(same class of unearned credit as the lists removed in v28.10).
+
+Score effects: R now spans roughly 0.19 (Menominee) to 0.90 (Ozaukee)
+instead of the former inverse-SVI band clustered near 0.5-0.8. Low-BRIC
+counties (for example Adams, whose amplifier is now about 1.81x) rise;
+high-BRIC suburban counties fall slightly. Rankings shift at the
+margin; this is the intended consequence of replacing a proxy that
+re-read vulnerability with an independent resilience measure. The
+full-dashboard cache key was bumped (`dashboard_full_v11` to
+`dashboard_full_v12`) so pre-fix cached composites are invalidated
+cleanly at deploy.

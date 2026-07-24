@@ -35,7 +35,7 @@
                                         ~ '<li>PM2.5 / AQI Baseline: EPA AirNow API (pre-cached weekly by scheduler)</li>'
                                         ~ '<li>SVI Adjustment: Housing/socioeconomic vulnerability (CDC SVI 2022)</li>'
                                         ~ '</ul>'
-                                        ~ '<div class="data-source">Sources: EPA AirNow API (scheduler-cached); NOAA/WICCI climate projections (local); CDC SVI 2022</div>'
+                                        ~ '<div class="data-source">Sources: EPA AirNow API (daily scheduler cache); NOAA/WICCI climate projections (static local file); CDC SVI 2022</div>'
                                         ) }}
                                     {% else %}
                                         0.30
@@ -72,7 +72,7 @@
                     
                     <div class="mt-2">
                         <small class="text-muted">
-                            Sources: EPA AirNow API, CDC Social Vulnerability Index
+                            Sources: EPA AirNow API (daily scheduler cache), CDC Social Vulnerability Index 2022
                         </small>
                     </div>
                     <div class="alert alert-warning p-2 mt-2 mb-0">
@@ -102,15 +102,15 @@
                             <h3>{{ "%.2f"|format(risk_data.extreme_heat_risk) }}
                             {% if risk_data.extreme_heat_components is defined %}
                             {{ show_work_btn('heat-info', 'Extreme Heat Risk Calculation',
-                            '<div class="formula-line">Risk = (0.7 x Exp + 0.3 x WetBulb) x Vuln x (2.0 - Resil) x min(1.6, 1.3 x ClimateTrend)</div>'
-                            ~ '<div class="formula-line">= Exp ' ~ "%.3f"|format(risk_data.extreme_heat_components.exposure) ~ ', Vuln ' ~ "%.3f"|format(risk_data.extreme_heat_components.vulnerability) ~ ', Resil ' ~ "%.3f"|format(risk_data.extreme_heat_components.resilience) ~ '</div>'
+                            '<div class="formula-line">Risk = WI DHS Heat Vulnerability Index (HVI) county score, 0-1</div>'
+                            ~ '<div class="formula-line">HVI composites environmental, health, population, and socioeconomic sub-indices at the block-group level</div>'
                             ~ '<ul class="component-list">'
-                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.extreme_heat_components.exposure) ~ ' (NOAA annual heat-day count, normalized and climate-adjusted)</li>'
-                            ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.extreme_heat_components.vulnerability) ~ ' (4 CDC SVI themes + Census aged 65+ %)</li>'
-                            ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.extreme_heat_components.resilience) ~ ' (inverse SVI socioeconomic + housing-transportation)</li>'
+                            ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.extreme_heat_components.exposure) ~ ' (HVI environmental sub-index)</li>'
+                            ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.extreme_heat_components.vulnerability) ~ ' (HVI health and population sub-indices, mean)</li>'
+                            ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.extreme_heat_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index; informational only, not composited into the score)</li>'
                             ~ '</ul>'
                             ~ '<div class="formula-line">Heat risk score = ' ~ "%.3f"|format(risk_data.extreme_heat_risk) ~ '</div>'
-                            ~ '<div class="data-source">Sources: NOAA climate normals, CDC SVI 2022, U.S. Census ACS</div>'
+                            ~ '<div class="data-source">Sources: WI DHS Heat Vulnerability Index (live ArcGIS layer, county-aggregated); FEMA NRI Community Resilience (tract table retrieved 2025)</div>'
                             ) }}
                             {% endif %}
                             </h3>
@@ -309,7 +309,7 @@
                             ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.dam_failure_components.resilience) ~ ' (emergency action plans, socioeconomic capacity)</li>'
                             ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.dam_failure_components.health_impact) ~ '</li>'
                             ~ '</ul>'
-                            ~ '<div class="data-source">Sources: WI DNR Dam Safety Database, USACE NID, OpenFEMA NFIP, CDC SVI, U.S. Census</div>'
+                            ~ '<div class="data-source">Sources: WI DNR Dam Safety Database (weekly cache), USACE NID, OpenFEMA NFIP (weekly cache), CDC SVI 2022, U.S. Census ACS 2022</div>'
                             ) }}
                             {% endif %}
                             </h3>
@@ -448,7 +448,7 @@
                     {% endcall %}
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: WI DNR Dam Safety Database, USACE NID, OpenFEMA NFIP, CDC SVI, U.S. Census
+                            Sources: WI DNR Dam Safety Database (weekly cache), USACE NID, OpenFEMA NFIP (weekly cache), CDC SVI 2022, U.S. Census ACS 2022
                         </small>
                     </div>
                 </div>

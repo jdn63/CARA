@@ -4,7 +4,9 @@ import os
 import time
 from typing import Dict, Any, Optional, Tuple
 
-from utils.risk_calculation import calculate_residual_risk, get_health_impact_factor
+from utils.risk_calculation import (calculate_residual_risk,
+                                    get_community_resilience,
+                                    get_health_impact_factor)
 from utils.svi_data import get_svi_data
 
 logger = logging.getLogger(__name__)
@@ -298,17 +300,14 @@ NORTHERN_TREE_COUNTIES = ['Bayfield', 'Ashland', 'Iron', 'Vilas', 'Forest',
 
 def _calculate_em_resilience(svi: Dict[str, float], census: Dict[str, float],
                              county_name: str) -> float:
-    # Resilience is derived purely from inverse SVI socioeconomic and housing
-    # scores, matching the published methodology.  Hard-coded county lists
-    # (formerly EOC_COUNTIES and a population-threshold bonus) were removed
-    # because they created abrupt cliffs between adjacent counties and were
-    # not backed by a cited dataset.  If a continuous capacity index (e.g.
-    # WI WEM staffing FTE per capita, hospital beds per capita) becomes
-    # available, reintroduce it here as a smooth term, not a list lookup.
-    resilience_raw = 0.45
-    resilience_raw += ((1.0 - svi['socioeconomic']) * 0.10)
-    resilience_raw += ((1.0 - svi['housing_transportation']) * 0.15)
-    return max(0.1, min(0.9, resilience_raw))
+    # Resilience is sourced from the FEMA NRI Community Resilience score
+    # (HVRI BRIC index), a published capacity measure distinct from SVI.
+    # Earlier versions derived this from inverse SVI socioeconomic and
+    # housing scores, but those same SVI themes also raise the
+    # Vulnerability term, so the one signal amplified risk twice in
+    # Risk = E x V x (2.0 - R) (external review finding, resolved).
+    # The svi and census arguments are retained for signature stability.
+    return get_community_resilience(county_name)
 
 
 def _resolve_tribal_county(county_name: str) -> str:
@@ -555,14 +554,11 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
             (census['elderly_factor'] * 0.05) +
             (rural_isolation * 0.15)
         ))
-        # Flood-specific EM resilience: pure inverse SVI, matching the
-        # published methodology.  Population-threshold bonus removed for the
-        # same reason as the other hard-coded resilience bonuses (creates
-        # cliffs between adjacent counties, no cited data source).
-        resilience_raw = 0.45
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.10)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.15)
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
     else:
         vulnerability_score = min(1.0, (
             (svi['housing_transportation'] * 0.30) +
@@ -573,15 +569,11 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
             (census['mobile_home_factor'] * 0.10)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.20)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
-
-        # Hard-coded stormwater-investment county list removed: it was author
-        # judgment without a cited capital-investment dataset and created
-        # cliffs between adjacent counties.  Resilience is now purely
-        # inverse SVI as the methodology documentation states.
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -625,6 +617,7 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
         'U.S. Census Bureau ACS - Housing & Demographics',
         'NOAA/WICCI Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
+        'FEMA NRI Community Resilience (HVRI BRIC index)',
         'NOAA NCEI Storm Events Database',
         'OpenFEMA NFIP Redacted Claims',
         'OpenFEMA Disaster Declarations Summaries'
@@ -730,14 +723,11 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
             (census['pop_density_factor'] * 0.05)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.20)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
-
-        # Hard-coded tornado prepared_counties / urban_counties adjustments
-        # removed: not backed by a cited dataset and produced abrupt cliffs.
-        # Resilience is now purely inverse SVI per the published methodology.
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -788,6 +778,7 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
         'U.S. Census Bureau ACS - Housing & Demographics',
         'NOAA/IPCC Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
+        'FEMA NRI Community Resilience (HVRI BRIC index)',
         'NOAA NCEI Storm Events Database',
         'OpenFEMA Disaster Declarations Summaries'
     ]
@@ -929,15 +920,11 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
             (rural_isolation * 0.10)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
-
-        # Hard-coded winter-storm prepared_counties / northern_counties
-        # adjustments removed: not backed by a cited dataset and produced
-        # cliffs between adjacent counties.  Resilience is now purely
-        # inverse SVI per the published methodology.
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -980,6 +967,7 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
         'U.S. Census Bureau ACS - Housing & Demographics',
         'NOAA/WICCI Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
+        'FEMA NRI Community Resilience (HVRI BRIC index)',
         'NOAA NCEI Storm Events Database'
     ]
 
@@ -1106,15 +1094,11 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
             (tree_coverage * 0.15)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
-
-        # Hard-coded thunderstorm high_/moderate_resilience_counties
-        # adjustments removed: not backed by a cited dataset and produced
-        # cliffs between adjacent counties.  Resilience is now purely
-        # inverse SVI per the published methodology.
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -1148,7 +1132,8 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics',
         'NOAA/WICCI Climate Projections (2030-2050)',
-        'FEMA NRI Health Impact Factor'
+        'FEMA NRI Health Impact Factor',
+        'FEMA NRI Community Resilience (HVRI BRIC index)'
     ]
 
     return {
@@ -1284,10 +1269,11 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
             (rural_isolation * 0.05)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
-        resilience_raw += ((1.0 - svi['housing_transportation']) * 0.10)
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI proxy that double-counted SVI themes
+        # already present in the Vulnerability term (external review
+        # finding, resolved). See get_community_resilience docstring.
+        resilience_raw = get_community_resilience(county_name)
 
     residual_risk = calculate_residual_risk(
         exposure=exposure_score,
@@ -1322,7 +1308,8 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics (mobile-home stock)',
         'NOAA/WICCI Climate Projections (2030-2050)',
-        'FEMA NRI Health Impact Factor'
+        'FEMA NRI Health Impact Factor',
+        'FEMA NRI Community Resilience (HVRI BRIC index)'
     ]
 
     return {

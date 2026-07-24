@@ -77,6 +77,25 @@ EXCLUDE_PATTERNS = {
     'pu_ssocs20_readme.txt',
 }
 
+# Exact relative paths that are one-time build inputs or intermediates with
+# no runtime, script, template, test, or doc references. Verified unused
+# 2026-07-24. The runtime tribal code reads only
+# wisconsin_tribal_boundaries_filtered.geojson and wisconsin_counties.geojson.
+EXCLUDE_PATHS = {
+    # Unfiltered intermediate; only the _filtered version is read.
+    'data/tribal/wisconsin_tribal_boundaries.geojson',
+    'data/tribal/wisconsin_tribal_areas.csv',
+    # Unreferenced legacy homepage images; index.html uses the
+    # static/images/regions/ maps and navigation uses CARAacronymonly.png.
+    'static/images/wisconsin_health_jurisdictions.png',
+    'static/images/wisconsin_health_jurisdictions_small.png',
+}
+
+# Raw national Census TIGER shapefile set (tl_2022_us_aiannh.*): the one-time
+# source used to derive the Wisconsin tribal geojson files. ~14.5 MB, never
+# read at runtime.
+EXCLUDE_NAME_PREFIXES = ('tl_2022_us_aiannh',)
+
 ALLOWED_HIDDEN_NAMES = {'.env.example', '.gitignore', '.gitattributes', '.github'}
 
 
@@ -96,6 +115,10 @@ def should_exclude(rel_path: Path) -> bool:
     if rel_path.suffix in EXCLUDE_EXTENSIONS:
         return True
     if name in EXCLUDE_PATTERNS:
+        return True
+    if rel_path.as_posix() in EXCLUDE_PATHS:
+        return True
+    if name.startswith(EXCLUDE_NAME_PREFIXES):
         return True
     # Per-region statistics JSON files (data/wem, data/herc) are empty
     # placeholders regenerated on demand at runtime; never ship them.

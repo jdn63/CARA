@@ -43,6 +43,15 @@ SOURCES_FILE = ACTION_PLANS_DIR / "_sources.yaml"
 STATUS_FILE = ACTION_PLANS_DIR / "_verifier_status.json"
 
 USER_AGENT = "CARA-WI-LinkChecker/1.0 (contact: github.com/jdn63)"
+# Several .gov sites (heat.gov, dhs.wisconsin.gov, some Akamai-fronted CDC
+# and FEMA paths) return 403 to non-browser user agents while serving the
+# page normally to browsers. On a 403 we retry once with a browser-style
+# UA and record the result as ok-with-bot-challenge rather than a dead
+# link, so the failure list only contains genuinely moved/retired URLs.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/150.0 Safari/537.36"
+)
 TIMEOUT_SECONDS = 15
 
 
@@ -64,16 +73,30 @@ def _collect_urls() -> Dict[str, str]:
 
 
 def _check_one(url: str) -> Dict[str, Any]:
-    """Try HEAD, fall back to GET on 405/501. Return {ok, status, error}."""
+    """Try HEAD, fall back to GET on 405/501, retry 403 with a browser UA.
+
+    Return {ok, status, error, bot_challenge}.
+    """
     headers = {"User-Agent": USER_AGENT}
     try:
         r = requests.head(url, headers=headers, timeout=TIMEOUT_SECONDS, allow_redirects=True)
         if r.status_code in (405, 501):
             r = requests.get(url, headers=headers, timeout=TIMEOUT_SECONDS, allow_redirects=True, stream=True)
             r.close()
-        return {"ok": 200 <= r.status_code < 400, "status": r.status_code, "error": None}
+        if r.status_code == 403:
+            rb = requests.get(
+                url,
+                headers={"User-Agent": BROWSER_USER_AGENT},
+                timeout=TIMEOUT_SECONDS,
+                allow_redirects=True,
+                stream=True,
+            )
+            rb.close()
+            if 200 <= rb.status_code < 400:
+                return {"ok": True, "status": rb.status_code, "error": None, "bot_challenge": True}
+        return {"ok": 200 <= r.status_code < 400, "status": r.status_code, "error": None, "bot_challenge": False}
     except requests.RequestException as exc:
-        return {"ok": False, "status": None, "error": str(exc)[:200]}
+        return {"ok": False, "status": None, "error": str(exc)[:200], "bot_challenge": False}
 
 
 def _load_status() -> Dict[str, Any]:
@@ -100,13 +123,18 @@ def main() -> int:
 
     logger.info("Checking %d action-plan source URLs...", len(urls))
     failed: List[Dict[str, Any]] = []
+    bot_challenged: List[str] = []
     ok_count = 0
 
     for sid, url in sorted(urls.items()):
         result = _check_one(url)
         if result["ok"]:
             ok_count += 1
-            logger.info("  ok    %-40s %s", sid, result["status"])
+            if result.get("bot_challenge"):
+                bot_challenged.append(sid)
+                logger.info("  ok    %-40s %s (bot challenge; verified with browser UA)", sid, result["status"])
+            else:
+                logger.info("  ok    %-40s %s", sid, result["status"])
         else:
             failed.append({
                 "id": sid,
@@ -122,6 +150,7 @@ def main() -> int:
         "total": len(urls),
         "ok_count": ok_count,
         "failed_count": len(failed),
+        "bot_challenged": bot_challenged,
         "link_failed": failed,
     }
     _save_status(status)

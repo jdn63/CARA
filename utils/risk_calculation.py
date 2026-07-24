@@ -12,6 +12,64 @@ logger = logging.getLogger(__name__)
 # NRI data cache to avoid repeated file reads
 _nri_health_data_cache = None
 
+# County-level FEMA NRI Community Resilience cache (HVRI BRIC index)
+_nri_community_resilience_cache = None
+
+
+def get_community_resilience(county_name: str) -> float:
+    """
+    Return the EVR Resilience term for a county, sourced from the FEMA
+    National Risk Index "Community Resilience" score (University of South
+    Carolina HVRI Baseline Resilience Indicators for Communities, BRIC).
+
+    METHODOLOGY NOTE (external review finding: SVI double-counting):
+    Earlier CARA versions derived Resilience from inverse SVI socioeconomic
+    and housing-transportation scores. Because those same SVI themes also
+    raise the Vulnerability term, the one signal amplified risk twice in
+    Risk = E x V x (2.0 - R). This helper replaces the inverse-SVI proxy
+    with FEMA's own published community-resilience measure, mirroring the
+    FEMA NRI pairing of social vulnerability (numerator) with community
+    resilience (denominator). BRIC includes some socioeconomic components
+    by design, but it is a distinct published index; the direct reuse of
+    the same SVI themes on both sides of the formula is eliminated.
+
+    The NRI CSV stores Community Resilience as a 0-100 national percentile
+    per census tract. We take the county mean and map it linearly onto the
+    EVR resilience range [0.1, 0.9]:
+
+        R = 0.1 + 0.8 * (county_mean_percentile / 100)
+
+    Returns 0.5 (neutral) if the county is not found or the file is
+    unavailable, so a data gap never silently inflates or deflates risk.
+    """
+    global _nri_community_resilience_cache
+
+    if _nri_community_resilience_cache is None:
+        try:
+            nri_path = 'data/nri/NRI_Table_CensusTracts_Wisconsin_FloodTornadoWinterOnly.csv'
+            if os.path.exists(nri_path):
+                nri_df = pd.read_csv(nri_path, usecols=['county', 'resilience'])
+                county_means = nri_df.groupby('county')['resilience'].mean()
+                _nri_community_resilience_cache = {
+                    county: max(0.1, min(0.9, 0.1 + 0.8 * (float(value) / 100.0)))
+                    for county, value in county_means.items()
+                }
+                logger.info(
+                    f"Loaded NRI Community Resilience for "
+                    f"{len(_nri_community_resilience_cache)} counties"
+                )
+            else:
+                logger.warning(
+                    f"NRI data file not found at {nri_path}; "
+                    f"community resilience defaults to neutral 0.5"
+                )
+                _nri_community_resilience_cache = {}
+        except Exception as e:
+            logger.error(f"Error loading NRI Community Resilience data: {str(e)}")
+            _nri_community_resilience_cache = {}
+
+    return _nri_community_resilience_cache.get(county_name, 0.5)
+
 def get_health_impact_factor(county_name: str, hazard_type: str) -> float:
     """
     Retrieves health impact factor from FEMA NRI data for a specific county and hazard type.

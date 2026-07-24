@@ -36,7 +36,7 @@
                                     ~ '</ul>'
                                     ~ '<div class="formula-line">Each uses: (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
                                     ~ '<div class="formula-line">Overall = ' ~ "%.3f"|format(risk_data.utilities.overall) ~ '</div>'
-                                    ~ '<div class="data-source">Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (private-well reliance); Census CBP gasoline station density and ACS broadband subscriptions; CDC SVI; remaining inputs are CARA proxy-based estimates</div>'
+                                    ~ '<div class="data-source">Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (current inventory; private-well reliance); Census CBP 2023 gasoline station density and ACS 2023 broadband subscriptions; CDC SVI 2022; remaining inputs are CARA proxy-based estimates</div>'
                                     ) }}
                                     </h3>
                                     <span class="badge bg-{{ 'danger' if risk_data.utilities.overall > 0.6 else 'warning' if risk_data.utilities.overall > 0.3 else 'success' }}">
@@ -46,6 +46,7 @@
                                     <h3>N/A</h3>
                                     <span class="badge bg-secondary">No Data</span>
                                 {% endif %}
+                                <p class="small text-muted mt-2 mb-0">Largely proxy-based: outage history (EAGLE-I) is real, but the score mainly reflects the population's socioeconomic vulnerability to prolonged outages, not real-time grid stability or utility operations data.</p>
                             </div>
                         </div>
                         
@@ -253,7 +254,7 @@
                     </div>
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (private-well reliance); Census CBP gasoline station density and ACS broadband subscriptions; CDC SVI; remaining inputs are CARA proxy-based estimates
+                            Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (current inventory; private-well reliance); Census CBP 2023 gasoline station density and ACS 2023 broadband subscriptions; CDC SVI 2022; remaining inputs are CARA proxy-based estimates
                         </small>
                     </div>
                 </div>

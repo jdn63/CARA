@@ -55,9 +55,13 @@ class TestExtensionListRemoved:
 
     def test_resilience_has_no_extension_bonus(self):
         from utils.hazmat_agricultural_risk import calculate_hazmat_agricultural_risk
+        from utils.risk_calculation import get_community_resilience
         result = calculate_hazmat_agricultural_risk("Dane")
-        # base 0.40 + socio_inverse*0.15 caps at 0.55; old bonus pushed to 0.70
-        assert result["resilience_factors"]["score"] <= 0.55 + 1e-9
+        # Resilience is the FEMA NRI Community Resilience (BRIC) county
+        # value with NO additive bonus on top; the old +0.15 Extension
+        # footprint credit must not reappear.
+        expected = get_community_resilience("Dane")
+        assert abs(result["resilience_factors"]["score"] - expected) <= 1e-9
 
 
 class TestUtilitiesHonestSources:

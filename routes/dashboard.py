@@ -125,7 +125,7 @@ def dashboard(jurisdiction_id):
         # statute-only team list) so pre-fix cached composites are
         # invalidated cleanly at deploy.
         discipline = get_active_discipline()
-        full_cache_key = f"dashboard_full_v11_{discipline}_{jurisdiction_id}"
+        full_cache_key = f"dashboard_full_v12_{discipline}_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
 
         if cached_context:

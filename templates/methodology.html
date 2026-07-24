@@ -386,7 +386,7 @@
             <ul>
                 <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and OpenFEMA NFIP claims. Climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code> are applied per hazard type. Each exposure component is held on its native 0-1 scale with a single layer of documented weights (no hidden pre-scaling). NOAA event counts and NFIP claim counts are normalized to events-per-year and percentile-ranked across all 72 Wisconsin counties so large urban counties do not dominate by area alone. For flood: NRI 30%, NOAA storm-events percentile 20%, NFIP claims percentile 10%, water body proximity 15%, flat terrain 5%, precipitation 5%, climate trend 5%. Tornado, winter storm, and thunderstorm exposures use the same single-weight-layer pattern, each with a NOAA storm-events percentile term (tornado 25%, winter storm 15%, thunderstorm 20%).</li>
                 <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (population aged 65+ (%), mobile home %, population density)</li>
-                <li><strong>Resilience:</strong> Inverse SVI socioeconomic and housing scores as proxies for community adaptive capacity, with no hard-coded county adjustments. The EVR formula uses a <code>(2.0 - Resilience)</code> amplifier rather than a simple divisor, so low resilience magnifies risk and high resilience attenuates it without eliminating it entirely. Earlier versions of CARA applied flat bonuses to short lists of "well-resourced" or "EOC-capable" counties; those lists have been removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. A continuous capacity index can be reintroduced in the future if a defensible data source (e.g. emergency-management staffing per capita, hospital beds per capita) becomes available.</li>
+                <li><strong>Resilience:</strong> FEMA National Risk Index Community Resilience score (University of South Carolina HVRI Baseline Resilience Indicators for Communities, BRIC), aggregated from census tracts to the county mean and mapped linearly onto the EVR range [0.1, 0.9]. The EVR formula uses a <code>(2.0 - Resilience)</code> amplifier rather than a simple divisor, so low resilience magnifies risk and high resilience attenuates it without eliminating it entirely. Earlier versions of CARA derived Resilience from inverse SVI socioeconomic and housing scores; because those same SVI themes also raise the Vulnerability term, one signal amplified risk twice (an external review finding). Adopting FEMA's own published community-resilience measure eliminates the direct reuse of SVI on both sides of the formula and mirrors the FEMA NRI pairing of social vulnerability with community resilience. Note that BRIC includes some socioeconomic components by design; the fix removes direct SVI reuse, it does not claim a purely non-demographic index. Hard-coded county bonus lists remain removed; the only remaining additive credits are citable per-entity facts (dam Emergency Action Plans from the National Inventory of Dams, and the statutory regional hazmat team under Wis. Stat. 323.13).</li>
             </ul>
             <div class="alert alert-secondary mb-0 mt-2">
                 <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. An additive +0.10 urban stormwater boost (capped at the 1.0 exposure ceiling) is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. When the NFIP cross-county cache is empty, the NFIP weight is dropped and the remaining flood weights renormalize so missing data does not silently lower every county's flood score.
@@ -635,44 +635,26 @@
             <h2 class="h5 mb-0">Extreme Heat Domain (11% of Overall)</h2>
         </div>
         <div class="card-body">
-            <p>Extreme heat risk combines the EVR residual risk calculation with wet bulb temperature and climate trend adjustments. As of the 2026-05-20 horizon reconciliation (review finding Q7), the calculator returns TWO horizons in the same payload and they are kept strictly separated downstream.</p>
+            <p>The Extreme Heat domain score is the <strong>Wisconsin DHS Heat Vulnerability Index (HVI)</strong> county score. HVI is a vetted, block-group-level composite published by the Wisconsin Department of Health Services that combines environmental, health, population, and socioeconomic indicators of heat vulnerability. CARA aggregates the 4,472 block-group HVI z-scores to a 72-county table (unweighted mean), normalizes to a 0-1 scale, and buckets to the DHS quintile categories. See the <a href="https://www.dhs.wisconsin.gov/climate/hvi.htm" target="_blank" rel="noopener">DHS HVI methodology page</a>.</p>
 
-            <div class="alert alert-warning">
-                <strong>Horizon separation (Q7 fix, 2026-05-20).</strong>
-                The PHRAT composite is labeled "Annual Strategic (12-month)" on
-                the dashboard. The prior implementation silently baked three
-                2050 mid-century multipliers (heat-day frequency &times;1.4,
-                wet-bulb humidity &times;1.2, NOAA WICCI warming &times;1.35)
-                into that 12-month score. Because the base heat HIF (1.3)
-                multiplied by the trend (1.35) exceeded the 1.6 cap, every
-                county silently received the maximum climate-trajectory HIF
-                regardless of present conditions. That horizon mismatch has
-                been corrected: the value composited into PHRAT now uses
-                present-day multipliers (1.0 across the board), and the 2050
-                trajectory is surfaced as a separate planning panel that is
-                NOT part of the composite.
-            </div>
-
-            <h6>Five Components</h6>
-            <ol>
-                <li><strong>Exposure:</strong> annual heat-day count per county normalized to [0, 0.95]. v28.9 source hierarchy: CDC Environmental Public Health Tracking measure 421 (days at or above 90F per county per year) as the canonical observed source, with the legacy NCEI Climate-at-a-Glance heuristic (cache-only) and the statewide constant as cascading fallbacks. The displayed dashboard caption ("Source: ...") reflects which level of the hierarchy was actually used. <em>Threshold reconciliation:</em> EPHT measure 421 counts days at or above 90F, while the legacy NCEI heuristic was anchored on a ~100F monthly-maximum proxy. The same [0, 20] normalization band is retained because the [0, 0.95] mapping was calibrated against typical EPHT 90F observed counts in Wisconsin (roughly 5 in the far north to 20 in southern urban counties); the 100F-anchored heuristic values fall inside the same band by construction, so cascading between the two sources does not distort the EVR exposure scale. The threshold mismatch is the explicit reason EPHT is now canonical and the 100F heuristic is a fallback. For the present-day 12-month score the frequency multiplier is 1.0; the 2050 trajectory applies the 1.4 multiplier.</li>
-                <li><strong>Vulnerability:</strong> Weighted CDC SVI 2022 themes (socioeconomic 30%, housing-transportation 20%, household-composition 15%, minority-status 10%) plus Census ACS population aged 65+ factor (25%). Same value for both horizons.</li>
-                <li><strong>Resilience:</strong> Inverse CDC SVI socioeconomic and housing-transportation themes from a 0.5 baseline, clamped to [0.1, 0.9]. Same value for both horizons.</li>
-                <li><strong>Wet Bulb Temperature:</strong> Statewide NOAA Great Lakes baseline of 0.60. Present-day horizon applies humidity factor 1.0; 2050 trajectory applies 1.2.</li>
-                <li><strong>Climate Trend:</strong> Present-day horizon uses 1.0 (no mid-century warming applied). 2050 trajectory uses the NOAA WICCI mid-century warming midpoint of 1.35.</li>
-            </ol>
             <div class="alert alert-info">
-                <p class="font-monospace mb-1"><strong>Present-day (PHRAT-composited) Heat Risk = (0.7 x Exposure + 0.3 x WetBulb) x Vulnerability x (2.0 - Resilience) x 1.3</strong></p>
-                <p class="font-monospace mb-1"><strong>Trajectory 2050 (planning panel only) Heat Risk = (0.7 x Exposure_2050 + 0.3 x WetBulb_2050) x V x (2.0 - R) x min(1.6, 1.3 x 1.35)</strong></p>
-                <p class="font-monospace mb-0 small">The trend multiplier is capped at 1.6 on the trajectory horizon to prevent runaway compounding.</p>
+                <p class="font-monospace mb-1"><strong>Extreme Heat Risk = WI DHS HVI county score (0-1)</strong></p>
+                <p class="mb-0 small">No additional CARA weighting, SVI layering, or climate multipliers are applied on top. HVI is already a comprehensive, externally vetted composite; socioeconomic vulnerability enters via the HVI socioeconomic sub-index, so no separate SVI term is layered on (which would double-count that signal).</p>
             </div>
-            <h6>Climate Adjustments (NOAA/IPCC) &mdash; applied ONLY to the 2050 trajectory panel</h6>
+
+            <h6>Informational Sub-Components (displayed, not re-composited)</h6>
             <ul>
-                <li><strong>40% increase</strong> in heat event frequency by 2050 (RCP4.5) applied as the NOAA frequency multiplier in the trajectory exposure component</li>
-                <li><strong>2&ndash;4&deg;F warming</strong> projected for Wisconsin by 2050 (NOAA WICCI midpoint 1.35 used as the trajectory climate-trend factor)</li>
-                <li><strong>20% wet-bulb humidity rise</strong> applied to a statewide NOAA Great Lakes baseline of 0.60 in the trajectory wet-bulb component</li>
+                <li><strong>Exposure:</strong> HVI environmental sub-index, mapped from z-score to 0-1</li>
+                <li><strong>Vulnerability:</strong> mean of the HVI health and population sub-indices, mapped from z-score to 0-1</li>
+                <li><strong>Resilience:</strong> FEMA NRI Community Resilience (HVRI BRIC index), county mean, shown for planning context only. An earlier display derived this from the inverse HVI socioeconomic sub-index, which relabeled a signal already inside the headline score; it now uses the independent FEMA measure. It is never composited into the heat score.</li>
             </ul>
-            <p class="small mb-0"><strong>Data Sources:</strong> CDC Environmental Public Health Tracking measure 421 (annual days at or above 90F per county; v28.9 canonical observed source, 12-24 month publication lag), NCEI Climate-at-a-Glance (legacy heuristic fallback), NOAA climate normals (long-term baseline), CDC SVI 2022, U.S. Census ACS, WICCI 2021 Assessment. Per-county wet-bulb grid and a continuous urban-heat-island signal are not yet integrated; both currently use statewide values.</p>
+
+            <h6>Annual Heat Days (contextual metric)</h6>
+            <p class="small">The dashboard also displays an observed annual heat-day count per county. Source hierarchy (v28.9): CDC Environmental Public Health Tracking measure 421 (days at or above 90F per county per year, 12-24 month publication lag) as the canonical observed source, with the legacy NCEI Climate-at-a-Glance heuristic (cache-only) and a statewide constant as cascading fallbacks. The displayed caption reflects which level of the hierarchy was actually used. This metric is contextual and does not enter the HVI-based score.</p>
+
+            <div class="alert alert-secondary mb-0">
+                <strong>History.</strong> Before v29 this domain used a CARA-specific EVR heat composite (heat-day exposure, wet-bulb baseline, SVI-derived vulnerability and resilience, climate-trend multipliers) with a separate 2050 trajectory panel added by the 2026-05-20 Q7 horizon-separation fix. That composite has been retired in favor of the DHS HVI: an externally authored, peer-reviewable index removes CARA-authored weights from this domain entirely. The 2050 trajectory panel was retired with it.
+            </div>
         </div>
     </div>
 

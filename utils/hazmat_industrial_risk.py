@@ -42,7 +42,9 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-from utils.risk_calculation import calculate_residual_risk, get_health_impact_factor
+from utils.risk_calculation import (calculate_residual_risk,
+                                    get_community_resilience,
+                                    get_health_impact_factor)
 from utils.svi_data import get_svi_data
 
 logger = logging.getLogger(__name__)
@@ -232,10 +234,12 @@ def _vulnerability_score(county_name: str, discipline: str) -> Dict[str, Any]:
 
 
 def _resilience_score(county_name: str) -> Dict[str, Any]:
-    svi = get_svi_data(county_name) or {}
-    socio_inverse = 1.0 - float(svi.get("socioeconomic", 0.5) or 0.5)
-
-    base = 0.40 + socio_inverse * 0.15
+    # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing the
+    # former inverse-SVI base that double-counted the socioeconomic SVI
+    # theme already present in the Vulnerability term (external review
+    # finding, resolved).  The citable statutory regional hazmat team
+    # credit (Wis. Stat. 323.13) is retained.
+    base = get_community_resilience(county_name)
     notes = []
     if county_name in STATUTORY_REGIONAL_HAZMAT_TEAM_COUNTIES:
         base += 0.20
@@ -307,6 +311,7 @@ def calculate_hazmat_industrial_risk(
             "(La Crosse County team statutorily mandated; full host roster "
             "not authoritatively published)",
             "CDC Social Vulnerability Index (SVI) 2022",
+            "FEMA NRI Community Resilience (HVRI BRIC index)",
             "U.S. Census Bureau ACS demographics",
         ],
     }

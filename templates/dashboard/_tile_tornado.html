@@ -18,10 +18,10 @@
 ~ '<ul class="component-list">'
 ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.tornado_components.exposure) ~ ' (FEMA NRI × ' ~ "%.2f"|format(risk_data.tornado_components.climate_multiplier) ~ ' climate adj.)</li>'
 ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.tornado_components.vulnerability) ~ ' (4 SVI themes + Census demographics)</li>'
-~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.tornado_components.resilience) ~ ' (inverse SVI socioeconomic + housing-transportation)</li>'
+~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.tornado_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
 ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.tornado_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
 ~ '</ul>'
-~ '<div class="data-source">Sources: FEMA NRI, NOAA Storm Events, OpenFEMA Declarations, CDC SVI, U.S. Census; plus CARA geographic heuristics (tornado-corridor and open-terrain county lists, 25% of exposure)</div>'
+~ '<div class="data-source">Sources: FEMA NRI (tract table retrieved 2025), NOAA Storm Events (trailing 20 years), OpenFEMA Declarations, CDC SVI 2022, U.S. Census ACS 2022; plus CARA geographic heuristics (tornado-corridor and open-terrain county lists, 25% of exposure)</div>'
 ) }}
 {% endif %}
 </h6>

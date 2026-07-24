@@ -296,6 +296,16 @@
   "failed_count": 34,
   "last_run_at": "2026-05-22T04:04:29.391139",
   "last_run_date": "2026-05-22",
+  "link_check": {
+    "bot_challenged": [
+      "heat_gov"
+    ],
+    "checked_at": "2026-07-24T03:25:26.271705+00:00",
+    "failed_count": 0,
+    "link_failed": [],
+    "ok_count": 81,
+    "total": 81
+  },
   "ok_count": 47,
   "total_sources": 81,
   "verified_dates_bumped": false

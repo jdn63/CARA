@@ -4,7 +4,9 @@ import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from utils.risk_calculation import calculate_residual_risk, get_health_impact_factor
+from utils.risk_calculation import (calculate_residual_risk,
+                                    get_community_resilience,
+                                    get_health_impact_factor)
 from utils.svi_data import get_svi_data
 
 logger = logging.getLogger(__name__)
@@ -342,18 +344,12 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
             (svi['minority_status'] * 0.10)
         ))
 
-        resilience_raw = 0.45
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.10)
-        resilience_raw += ((1.0 - census['rural_factor']) * 0.15)
-
-        surveillance_counties = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'La Crosse',
-                                 'Marathon', 'Eau Claire', 'Outagamie', 'Winnebago']
-        if county_name in surveillance_counties:
-            resilience_raw += 0.20
-        elif census['population'] > 50000:
-            resilience_raw += 0.10
-
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI / inverse-rural proxy that double-counted
+        # signals already present in the Vulnerability term, plus a
+        # hard-coded surveillance-county list not backed by a cited dataset
+        # (external review finding, resolved).
+        resilience_raw = get_community_resilience(county_name)
     else:
         vulnerability_score = min(1.0, (
             (outdoor_workforce_factor * 0.20) +
@@ -364,17 +360,12 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
             (svi['minority_status'] * 0.10)
         ))
 
-        resilience_raw = 0.5
-        resilience_raw += ((1.0 - svi['socioeconomic']) * 0.15)
-        resilience_raw += ((1.0 - census['rural_factor']) * 0.10)
-
-        well_resourced = ['Milwaukee', 'Dane', 'Brown', 'Waukesha', 'La Crosse']
-        if county_name in well_resourced:
-            resilience_raw += 0.20
-        elif county_name in ['Marathon', 'Eau Claire', 'Outagamie', 'Winnebago', 'Rock']:
-            resilience_raw += 0.10
-
-        resilience_raw = max(0.1, min(0.9, resilience_raw))
+        # Resilience: FEMA NRI Community Resilience (HVRI BRIC), replacing
+        # the former inverse-SVI / inverse-rural proxy that double-counted
+        # signals already present in the Vulnerability term, plus a
+        # hard-coded well-resourced-county list not backed by a cited
+        # dataset (external review finding, resolved).
+        resilience_raw = get_community_resilience(county_name)
 
     # Use the vector_borne_disease health-impact factor (1.2 default), NOT the
     # flood HIF that was used previously by mistake. VBD health consequences
@@ -457,6 +448,7 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
         'WI DHS Vectorborne Disease Program (WNV county case data)' if using_real_data else 'CDC ArboNET West Nile Virus Surveillance',
         'Forest-cover and deer-density scores: CARA static v1 seed informed by NLCD 2021 and WI DNR estimates (derivation not fully documented; pending re-derivation)',
         'CDC Social Vulnerability Index (SVI)',
+        'FEMA NRI Community Resilience (HVRI BRIC index)',
         'U.S. Census Bureau ACS Demographics',
         'NOAA/WICCI Climate Projections'
     ]
