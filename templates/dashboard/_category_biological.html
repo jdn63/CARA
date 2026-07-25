@@ -184,8 +184,8 @@
                             <h3>{{ "%.2f"|format(risk_data.vector_borne_disease_risk) }}
                             {% if risk_data.vbd_components is defined %}
                             {{ show_work_btn('vbd-info', 'Vector-Borne Disease Risk Calculation',
-                            '<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
-                            ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ')</div>'
+                            '<div class="formula-line">Risk = (Exp &times; Vuln) &times; (1.5 - Resil) &times; HIF</div>'
+                            ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ') &times; (1.5 - ' ~ "%.3f"|format(risk_data.vbd_components.resilience) ~ ')</div>'
                             ~ '<ul class="component-list">'
                             ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.vbd_components.exposure) ~ ' (Lyme/WNV incidence rates, land cover, climate trend)</li>'
                             ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.vbd_components.vulnerability) ~ ' (outdoor workforce, elderly, rural, SVI)</li>'

@@ -137,10 +137,10 @@ natural_hazards_weights:
 # rendered composite immediately; no code change required.
 
 # EVR Residual Risk Formula (for all natural hazards):
-# Risk = (Exposure × Vulnerability) × (2.0 - Resilience) × Health_Impact_Factor
+# Risk = (Exposure × Vulnerability) × (1.5 - Resilience) × Health_Impact_Factor
 # - Exposure and Vulnerability are multiplicative (not weighted averages)
-# - Resilience acts as adjustment: low resilience (0.1) → 1.9x amplifier,
-#   high resilience (0.9) → 1.1x amplifier
+# - Resilience acts as a centered modifier: low resilience (0.1) → 1.4x,
+#   average resilience (0.5) → 1.0x (neutral), high resilience (0.9) → 0.6x
 # - Health Impact Factor from FEMA NRI (typically 0.8-1.5)
 # See utils/risk_calculation.py calculate_residual_risk()
 

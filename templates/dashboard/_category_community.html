@@ -34,7 +34,7 @@
                                     ~ '<li>Supply Chain: ' ~ ("%.3f"|format(risk_data.utilities.supply_chain) if risk_data.utilities.supply_chain is defined else 'N/A') ~ '</li>'
                                     ~ '<li>Fuel Shortage: ' ~ ("%.3f"|format(risk_data.utilities.fuel_shortage) if risk_data.utilities.fuel_shortage is defined else 'N/A') ~ '</li>'
                                     ~ '</ul>'
-                                    ~ '<div class="formula-line">Each uses: (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
+                                    ~ '<div class="formula-line">Each uses: (Exp × Vuln) × (1.5 - Resil) × HIF</div>'
                                     ~ '<div class="formula-line">Overall = ' ~ "%.3f"|format(risk_data.utilities.overall) ~ '</div>'
                                     ~ '<div class="data-source">Sources: DOE/ORNL EAGLE-I recorded outages 2014-2025 (electrical exposure); EPA SDWIS public water systems (current inventory; private-well reliance); Census CBP 2023 gasoline station density and ACS 2023 broadband subscriptions; CDC SVI 2022; remaining inputs are CARA proxy-based estimates</div>'
                                     ) }}

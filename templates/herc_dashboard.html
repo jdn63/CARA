@@ -282,7 +282,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>{{ "%.2f"|format(risk_data.vector_borne_disease_risk|default(0)) }}
                         {{ show_work_btn('vbd-info', 'Vector-Borne Disease Risk (Regional Average)',
-                        '<div class="formula-line">Risk = (Exposure x Vulnerability) x (2.0 - Resilience) x HIF</div>'
+                        '<div class="formula-line">Risk = (Exposure x Vulnerability) x (1.5 - Resilience) x HIF</div>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.vector_borne_disease_risk|default(0)) ~ '</div>'
                         ~ '<ul class="component-list">'
                         ~ '<li>Exposure: Lyme/WNV incidence rates, land cover, climate trend</li>'
@@ -333,7 +333,7 @@
                         <div class="d-flex justify-content-between">
                             <h6>Regional Avg Score:
                             {{ show_work_btn(hazard_type ~ '-info', (hazard_type|format_risk_type) ~ ' Risk (Regional Average)',
-                            '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                            '<div class="formula-line">Risk = (Exp x Vuln) x (1.5 - Resil) x HIF</div>'
                             ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(score) ~ '</div>'
                             ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: FEMA NRI (tract table retrieved 2025), NOAA Storm Events (trailing 20 years), OpenFEMA Declarations, CDC SVI 2022, U.S. Census ACS 2022</div>'
                             ) }}
@@ -382,7 +382,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>{{ "%.2f"|format(risk_data.air_quality_risk|default(0)) }}
                         {{ show_work_btn('aq-info', 'Air Quality Risk (Regional Average)',
-                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (1.5 - Resil) x HIF</div>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.air_quality_risk|default(0)) ~ '</div>'
                         ~ '<ul class="component-list">'
                         ~ '<li>Exposure: AQI readings, PM2.5/ozone concentrations</li>'
@@ -460,7 +460,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>{{ "%.2f"|format(risk_data.dam_failure_risk|default(0)) }}
                         {{ show_work_btn('dam-info', 'Dam Failure Risk (Regional Average)',
-                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (1.5 - Resil) x HIF</div>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.dam_failure_risk|default(0)) ~ '</div>'
                         ~ '<ul class="component-list">'
                         ~ '<li>Exposure: downstream population, dam hazard class, NID condition rating</li>'
@@ -507,7 +507,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>{{ "%.2f"|format(risk_data.active_shooter_risk|default(0)) }}
                         {{ show_work_btn('shooter-info', 'Active Shooter Risk (Regional Average)',
-                        '<div class="formula-line">Risk = (Exp x Vuln) x (2.0 - Resil) x HIF</div>'
+                        '<div class="formula-line">Risk = (Exp x Vuln) x (1.5 - Resil) x HIF</div>'
                         ~ '<div class="formula-line">Regional Avg = ' ~ "%.3f"|format(risk_data.active_shooter_risk|default(0)) ~ '</div>'
                         ~ '<ul class="component-list">'
                         ~ '<li>Exposure: historical incidents, density of soft targets, population</li>'

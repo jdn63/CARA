@@ -115,10 +115,10 @@ All external data is pre-fetched by APScheduler jobs and stored in PostgreSQL ca
 Each sub-type (flood, tornado, winter storm, thunderstorm) uses an Exposure-Vulnerability-Resilience framework with health impact factor:
 
 ```
-Residual_Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
+Residual_Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * Health_Impact_Factor
 ```
 
-The `(2.0 - Resilience)` term is an amplifier, not a divisor. At low resilience (0.1) it multiplies risk by 1.9x; at high resilience (0.9) by 1.1x. Resilience attenuates risk without eliminating it.
+The `(1.5 - Resilience)` term is a bounded linear modifier centered at neutral, not a divisor. At low resilience (0.1) it multiplies risk by 1.4x; at average resilience (0.5) it is exactly 1.0x (no adjustment); at high resilience (0.9) it multiplies by 0.6x, genuinely attenuating risk below the Exposure * Vulnerability baseline. The term was recentered from `(2.0 - Resilience)` after a 2026-07 external methodology review found the earlier pure-amplifier form contradicted the documented neutral midpoint and shifted the score distribution upward against the absolute action-plan thresholds.
 
 **Exposure** incorporates:
 - NOAA Storm Events historical counts (event frequency by county)
@@ -132,7 +132,7 @@ For flood specifically, component weights are: FEMA NRI baseline 30%, NOAA storm
 - Flood (PH weights): housing/transportation (0.30), socioeconomic (0.20), household composition (0.15), elderly factor (0.15), minority status (0.10), mobile home factor (0.10). EM weights differ.
 - Tornado, winter storm, thunderstorm: similar SVI-based sub-weight structures with hazard-appropriate adjustments
 
-**Resilience** uses inverse SVI scores as proxies for community adaptive capacity, with no hard-coded county adjustments. Earlier versions of the natural-hazards pipeline applied flat bonuses to short lists of "well-resourced," "EOC-capable," or "prepared" counties (typically Milwaukee, Dane, Brown, Waukesha and a few others) for the four sub-hazards. Those lists were removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. A continuous capacity index (e.g. emergency-management staffing FTE per capita, hospital beds per capita, training-program participation) can be reintroduced as a smooth term in the future, but is not currently part of the pipeline.
+**Resilience** is sourced from the FEMA National Risk Index Community Resilience score (University of South Carolina HVRI BRIC index), aggregated to the county mean and mapped onto [0.1, 0.9], with no hard-coded county adjustments. Earlier versions of the natural-hazards pipeline applied flat bonuses to short lists of "well-resourced," "EOC-capable," or "prepared" counties (typically Milwaukee, Dane, Brown, Waukesha and a few others) for the four sub-hazards. Those lists were removed because they created abrupt cliffs between adjacent counties and were not backed by a cited capacity dataset. A continuous capacity index (e.g. emergency-management staffing FTE per capita, hospital beds per capita, training-program participation) can be reintroduced as a smooth term in the future, but is not currently part of the pipeline.
 
 **Health Impact Factor** scales risk by population health indicators (elderly percentage, poverty rate).
 

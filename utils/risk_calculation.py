@@ -26,7 +26,7 @@ def get_community_resilience(county_name: str) -> float:
     Earlier CARA versions derived Resilience from inverse SVI socioeconomic
     and housing-transportation scores. Because those same SVI themes also
     raise the Vulnerability term, the one signal amplified risk twice in
-    Risk = E x V x (2.0 - R). This helper replaces the inverse-SVI proxy
+    Risk = E x V x (1.5 - R). This helper replaces the inverse-SVI proxy
     with FEMA's own published community-resilience measure, mirroring the
     FEMA NRI pairing of social vulnerability (numerator) with community
     resilience (denominator). BRIC includes some socioeconomic components
@@ -189,9 +189,10 @@ def calculate_residual_risk(exposure: float, vulnerability: float, resilience: f
     Calculate residual risk using the CARA-specific Exposure-Vulnerability-
     Resilience (EVR) transform:
 
-        Residual Risk = (Exposure × Vulnerability) × (2.0 - Resilience) × HealthImpactFactor
+        Residual Risk = (Exposure × Vulnerability) × (1.5 - Resilience) × HealthImpactFactor
 
-    IMPORTANT METHODOLOGY NOTE (review finding H5):
+    IMPORTANT METHODOLOGY NOTE (review finding H5, updated by external
+    review 2026-07: recentered from (2.0 - R) to (1.5 - R)):
     This is NOT the FEMA National Risk Index (NRI) residual-risk formula.
     The FEMA NRI form is:
 
@@ -200,12 +201,18 @@ def calculate_residual_risk(exposure: float, vulnerability: float, resilience: f
     The two differ in two material ways and will produce different
     numbers even when given identical inputs:
 
-      1. CARA uses (2.0 - Resilience) as a MULTIPLICATIVE amplifier in
-         the numerator. With Resilience in [0.1, 0.9] this amplifier is
-         always in [1.1, 1.9], so resilience can never attenuate risk
-         BELOW the E*V baseline - it can only reduce the amount of
-         amplification. FEMA NRI's (1 + R) denominator can attenuate
-         risk below E*V because raising R divides the numerator down.
+      1. CARA uses (1.5 - Resilience) as a bounded linear modifier.
+         With Resilience in [0.1, 0.9] the modifier spans [0.6, 1.4]
+         and is exactly 1.0 (neutral) at Resilience = 0.5, so
+         below-average resilience amplifies risk and above-average
+         resilience genuinely attenuates it below the E*V baseline.
+         Earlier CARA versions used (2.0 - Resilience), a pure
+         amplifier in [1.1, 1.9] that could never attenuate below
+         E*V; an external methodology review found that form (a)
+         contradicted the documented "0.5 is neutral" design intent
+         and (b) shifted the whole score distribution upward against
+         the absolute action-plan thresholds. FEMA NRI's (1 + R)
+         denominator attenuates by division instead.
       2. CARA folds vulnerability (including SVI components) directly
          into the E*V product as a multiplicative term in [0, 1].
          FEMA NRI uses (1 + SVI) - a multiplier in [1, 2] - so a
@@ -221,8 +228,10 @@ def calculate_residual_risk(exposure: float, vulnerability: float, resilience: f
 
     Behaviour summary:
       - High vulnerability + low resilience -> high risk.
-      - Resilience acts as a 1.1x-1.9x amplifier reduction, not a
-        divisor.
+      - Resilience acts as a bounded 0.6x-1.4x linear modifier
+        centered at 1.0 for average (0.5) resilience, not a divisor.
+      - Above-average resilience attenuates risk below the E*V
+        baseline; below-average resilience amplifies it.
       - No artificial risk floor that masks real differences between
         jurisdictions.
 
@@ -248,12 +257,12 @@ def calculate_residual_risk(exposure: float, vulnerability: float, resilience: f
     # Calculate base risk from exposure and vulnerability
     base_risk = exposure * vulnerability
     
-    # Calculate resilience adjustment factor
-    # Low resilience (0.1) → 1.9x amplifier (high risk amplification)
-    # Medium resilience (0.5) → 1.5x amplifier (moderate amplification)
-    # High resilience (0.9) → 1.1x amplifier (minimal amplification)
-    # This ensures resilience never completely eliminates risk but low resilience significantly amplifies it
-    resilience_adjustment = 2.0 - resilience
+    # Calculate resilience adjustment factor (recentered per external
+    # methodology review so that average resilience is truly neutral):
+    # Low resilience (0.1) → 1.4x modifier (risk amplification)
+    # Medium resilience (0.5) → 1.0x modifier (neutral, no adjustment)
+    # High resilience (0.9) → 0.6x modifier (genuine risk attenuation)
+    resilience_adjustment = 1.5 - resilience
     
     # Apply the corrected formula: Base Risk × Resilience Adjustment × Health Impact
     residual_risk = base_risk * resilience_adjustment * health_impact_factor

@@ -39,7 +39,7 @@ This document provides a comprehensive reference for all data variables, risk me
 |----------|------|-------|------|-------------|
 | `flood_exposure` | Float | 0.0 - 1.0 | Normalized | NRI baseline (30%), NOAA storm-events percentile (20%), NFIP claims percentile (10%), water body proximity (15%), flat terrain (5%), precipitation patterns (5%), climate trend (5%); additive +0.10 urban stormwater boost (capped at 1.0) for Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington counties. NOAA and NFIP counts are normalized to events-per-year and percentile-ranked across all 72 Wisconsin counties before contributing. |
 | `flood_vulnerability` | Float | 0.0 - 1.0 | Normalized | SVI housing/transportation (30%), socioeconomic (20%), household composition (15%), elderly population (15%), minority status (10%), mobile home density (10%) |
-| `flood_resilience` | Float | 0.0 - 1.0 | Normalized | Inverse SVI socioeconomic and housing scores only; hard-coded county capacity adjustments have been removed to eliminate cliffs between adjacent counties |
+| `flood_resilience` | Float | 0.1 - 0.9 | Normalized | FEMA NRI Community Resilience score (HVRI BRIC index), county mean mapped onto [0.1, 0.9]; hard-coded county capacity adjustments have been removed to eliminate cliffs between adjacent counties |
 | `fema_flood_zone` | String | - | Categorical | A, AE, X, etc. (FEMA flood zone designations) |
 | `dam_count` | Integer | 0 - 50 | Count | Number of dams in jurisdiction |
 
@@ -58,7 +58,7 @@ This document provides a comprehensive reference for all data variables, risk me
 |----------|------|-------|------|-------------|
 | `heat_exposure` | Float | 0.0 - 0.95 | Normalized | Climate-adjusted heat exposure |
 | `heat_vulnerability` | Float | 0.0 - 1.0 | Normalized | Population vulnerability to extreme heat |
-| `heat_resilience` | Float | 0.1 - 0.9 | Normalized | Inverse CDC SVI socioeconomic and housing-transportation themes from a 0.5 baseline |
+| `heat_resilience` | Float | 0.1 - 0.9 | Normalized | FEMA NRI Community Resilience score (HVRI BRIC index), county mean mapped onto [0.1, 0.9], matching the resilience source used by the EVR domains |
 | `wet_bulb_risk` | Float | 0.0 - 1.0 | Normalized | Dangerous humidity-heat combinations |
 | `climate_trend_factor` | Float | 1.0 - 1.5 | Multiplier | Climate change amplification factor |
 | `heat_island_factor` | Float | 1.0 | Multiplier | Reserved for a continuous urban-heat-island signal (currently fixed at 1.0 until a cited per-county imperviousness or population-density source is integrated) |
@@ -193,12 +193,14 @@ Where:
 - p=2 (quadratic mean emphasizes higher-risk domains)
 
 Per-Domain (EVR Framework for natural hazards, dam failure, vector-borne disease, infectious disease):
-Residual Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
+Residual Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * Health_Impact_Factor
 
 Where:
-- (2.0 - Resilience) is a multiplicative amplifier, not a divisor.
-  At Resilience = 0.1 it multiplies risk by 1.9; at Resilience = 0.9 it multiplies by 1.1.
-  Resilience attenuates risk but never eliminates it.
+- (1.5 - Resilience) is a bounded linear modifier centered at neutral, not a divisor.
+  At Resilience = 0.1 it multiplies risk by 1.4; at Resilience = 0.5 it is exactly 1.0
+  (neutral); at Resilience = 0.9 it multiplies by 0.6, genuinely attenuating risk
+  below the Exposure * Vulnerability baseline. Recentered from (2.0 - Resilience)
+  after a 2026-07 external methodology review.
 - Health_Impact_Factor (typically 0.80-1.50) scales risk by domain-specific health
   consequence weighting (e.g., 1.5 for infectious disease).
 - Implementation: utils/risk_calculation.py calculate_residual_risk()

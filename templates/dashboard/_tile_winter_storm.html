@@ -12,8 +12,8 @@
                             <h6>Overall Risk Score:
 {% if risk_data.winter_storm_components is defined %}
 {{ show_work_btn('winter-storm-info', 'Winter Storm Risk Calculation',
-'<div class="formula-line">Risk = (Exp × Vuln) × (2.0 - Resil) × HIF</div>'
-~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.winter_storm_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.winter_storm_components.vulnerability) ~ ') × (2.0 - ' ~ "%.3f"|format(risk_data.winter_storm_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.winter_storm_components.health_impact) ~ '</div>'
+'<div class="formula-line">Risk = (Exp × Vuln) × (1.5 - Resil) × HIF</div>'
+~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.winter_storm_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.winter_storm_components.vulnerability) ~ ') × (1.5 - ' ~ "%.3f"|format(risk_data.winter_storm_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.winter_storm_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.winter_storm_risk) ~ '</div>'
 ~ '<ul class="component-list">'
 ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.winter_storm_components.exposure) ~ ' (FEMA NRI × ' ~ "%.2f"|format(risk_data.winter_storm_components.climate_multiplier) ~ ' climate adj.)</li>'

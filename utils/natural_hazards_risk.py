@@ -305,7 +305,7 @@ def _calculate_em_resilience(svi: Dict[str, float], census: Dict[str, float],
     # Earlier versions derived this from inverse SVI socioeconomic and
     # housing scores, but those same SVI themes also raise the
     # Vulnerability term, so the one signal amplified risk twice in
-    # Risk = E x V x (2.0 - R) (external review finding, resolved).
+    # Risk = E x V x (1.5 - R) (external review finding, resolved).
     # The svi and census arguments are retained for signature stability.
     return get_community_resilience(county_name)
 

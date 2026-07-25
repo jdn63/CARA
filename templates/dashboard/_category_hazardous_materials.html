@@ -20,8 +20,8 @@
                         <h3>{{ "%.2f"|format(risk_data.hazmat_industrial_risk) }}
                         {% if risk_data.hazmat_industrial_components %}
                         {{ show_work_btn('hazmat-ind-info', 'Hazmat (Industrial) Risk Calculation',
-                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
-                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</div>'
+                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (1.5 - Resilience) &times; HIF</div>'
+                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ') &times; (1.5 - ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.health_impact) ~ '</div>'
                           ~ '<ul class="component-list">'
                           ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.exposure) ~ ' (real EPA TRI facility counts for all 72 counties, plus a capped PHMSA pipeline-incident bump)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_industrial_components.vulnerability) ~ ' (CDC SVI housing/transport + socioeconomic + Census urbanization)</li>'
@@ -124,8 +124,8 @@
                         <h3>{{ "%.2f"|format(risk_data.hazmat_agricultural_risk) }}
                         {% if risk_data.hazmat_agricultural_components %}
                         {{ show_work_btn('hazmat-ag-info', 'Hazmat (Agricultural) Risk Calculation',
-                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (2.0 - Resilience) &times; HIF</div>'
-                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</div>'
+                          '<div class="formula-line">Risk = (Exposure &times; Vulnerability) &times; (1.5 - Resilience) &times; HIF</div>'
+                          ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ') &times; (1.5 - ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.health_impact) ~ '</div>'
                           ~ '<ul class="component-list">'
                           ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.exposure) ~ ' (real USDA Census of Agriculture 2022: chemical and fertilizer expense, harvested cropland, milk-cow inventory, normalized statewide)</li>'
                           ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.hazmat_agricultural_components.vulnerability) ~ ' (rural isolation + SVI minority/socioeconomic for farmworker households)</li>'

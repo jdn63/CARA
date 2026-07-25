@@ -12,8 +12,8 @@
                             <h6>Overall Risk Score:
 {% if risk_data.straight_line_wind_components is defined %}
 {{ show_work_btn('slw-info', 'Straight-Line Wind Risk Calculation',
-'<div class="formula-line">Risk = (Exp &times; Vuln) &times; (2.0 - Resil) &times; HIF</div>'
-~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ') &times; (2.0 - ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ '</div>'
+'<div class="formula-line">Risk = (Exp &times; Vuln) &times; (1.5 - Resil) &times; HIF</div>'
+~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ') &times; (1.5 - ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.straight_line_wind_risk) ~ '</div>'
 ~ '<ul class="component-list">'
 ~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' (NOAA Storm Events wind bucket &times; ' ~ "%.2f"|format(risk_data.straight_line_wind_components.climate_multiplier) ~ ' climate adj.)</li>'

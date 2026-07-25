@@ -5,7 +5,7 @@ exposure (TRI facilities, EPCRA Tier II reportable chemical storage,
 fixed-site chemical release potential) using the standard CARA EVR
 formula:
 
-    Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * HIF
+    Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * HIF
 
 This is a sibling to ``utils.hazmat_agricultural_risk`` and is wired
 into the PHRAT composite at 3% (PH) / 3% (EM); the agricultural

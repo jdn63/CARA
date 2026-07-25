@@ -5,7 +5,7 @@ exposure (anhydrous ammonia release, pesticide drift, agricultural
 chemical fires, manure-pit hydrogen sulfide) using the standard CARA
 EVR formula:
 
-    Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * HIF
+    Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * HIF
 
 Sibling to ``utils.hazmat_industrial_risk``; both are wired into the
 PHRAT composite at 3% on the PH and EM sides for a combined 6%

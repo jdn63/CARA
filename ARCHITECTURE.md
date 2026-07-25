@@ -73,7 +73,7 @@ Sections:
 ### Risk Methodologies
 
 - Natural Hazard EVR: CARA-specific Exposure-Vulnerability-Resilience
-  transform `Risk = E * V * (2.0 - R) * HIF` with a health impact factor,
+  transform `Risk = E * V * (1.5 - R) * HIF` with a health impact factor,
   using real NOAA Storm Events counts and OpenFEMA claims/declarations.
   Review finding H5 (2026-05-20): this is NOT the FEMA NRI
   `(1+SVI)/(1+R)` denominator residual-risk formula and will produce
@@ -750,7 +750,7 @@ force.
 CARA's natural-hazard sub-domains use an Exposure-Vulnerability-Resilience
 (EVR) formulation:
 
-    Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * Health_Impact_Factor
+    Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * Health_Impact_Factor
 
 FEMA's National Risk Index (NRI), by contrast, divides by a community
 resilience term:
@@ -760,18 +760,29 @@ resilience term:
 The two formulations diverge intentionally and the divergence is
 documented here so it is not flagged as a bug on every code review.
 
-Why CARA uses (2.0 - Resilience) as a multiplier rather than 1/Resilience
-as a divisor:
+HISTORY (external review, 2026-07): the term was originally
+(2.0 - Resilience), a pure amplifier in [1.1, 1.9] over the practical
+resilience range [0.1, 0.9]. An external methodology review found that
+form (a) contradicted the documented "0.5 is the neutral midpoint"
+design intent (0.5 actually produced a 1.5x penalty) and (b) shifted
+the entire score distribution upward against the absolute action-plan
+trigger thresholds, over-triggering high-tier plans. The term was
+recentered to (1.5 - Resilience) so that average resilience is truly
+neutral and above-average resilience genuinely attenuates risk below
+the E * V baseline. Do not "fix" this back to (2.0 - R).
+
+Why CARA uses (1.5 - Resilience) as a bounded linear modifier rather
+than 1/Resilience as a divisor:
 
 1. CARA Resilience is bounded on [0, 1] with 0.5 as the neutral midpoint
-   (no net amplification or dampening). The (2.0 - Resilience) form
-   maps that range onto a multiplier of [1.0, 2.0] with 1.5 at neutral,
-   so a fully-resilient community (Resilience = 1.0) amplifies its risk
-   by 1.0x (no change) and a zero-resilience community amplifies by
-   2.0x. The shape is linear and bounded, which is easier to reason
-   about than 1/Resilience (which blows up as Resilience approaches 0
-   and asymptotically approaches but never reaches 0 amplification as
-   Resilience approaches 1).
+   (no net amplification or dampening). The (1.5 - Resilience) form
+   maps the practical range [0.1, 0.9] onto a modifier of [0.6, 1.4]
+   with exactly 1.0 at neutral, so a highly resilient community
+   attenuates its risk below the E * V baseline and a low-resilience
+   community amplifies it. The shape is linear and bounded, which is
+   easier to reason about than 1/Resilience (which blows up as
+   Resilience approaches 0 and asymptotically approaches but never
+   reaches 0 amplification as Resilience approaches 1).
 
 2. NRI's divisor form is appropriate for an expected-annual-loss
    denominated in dollars where the community-resilience term is itself
@@ -786,7 +797,7 @@ as a divisor:
    that then feeds an outer weighted RMS over the six PHRAT domains.
    Using a divisor on Resilience inside an outer RMS would create a
    discontinuity at Resilience = 0 that an emergency planner cannot
-   reason about; the linear (2.0 - Resilience) form preserves
+   reason about; the linear (1.5 - Resilience) form preserves
    monotonicity, has a closed-form interpretation at every input
    value, and matches the math used in the EM-discipline weight
    block already validated against state HMP rubrics.
@@ -1054,7 +1065,7 @@ difference in framing (action-plan voice and vulnerability weighting),
 not a difference in weight. Both scores use the standard CARA EVR
 residual-risk formula:
 
-    Risk = (Exposure * Vulnerability) * (2.0 - Resilience) * HIF
+    Risk = (Exposure * Vulnerability) * (1.5 - Resilience) * HIF
 
 Both calculators are cache-only safe: they perform no live HTTP. Inputs
 come from local JSON seed files or from already-cached SVI and Census
@@ -1210,7 +1221,9 @@ External review finding: every EVR-style domain derived its Resilience
 term from inverse CDC SVI themes (socioeconomic and/or
 housing-transportation) while the same SVI themes also raised the
 Vulnerability term. Because the formula is
-Risk = (E * V) * (2.0 - R) * HIF, one SVI signal amplified risk twice:
+Risk = (E * V) * (2.0 - R) * HIF (the operator at the time; since
+recentered to 1.5 - R, see the EVR section), one SVI signal amplified
+risk twice:
 once by raising V and again by lowering R (which raises the
 2.0 - R amplifier). High-SVI counties were double-penalized by
 construction.
