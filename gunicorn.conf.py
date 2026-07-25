@@ -20,6 +20,16 @@ threads = 4
 # per-worker startup DB connections
 preload_app = True
 
+# Worker recycling: proactively restart each worker after it has served
+# this many requests (plus a random jitter so the two workers never
+# restart at the same moment). Prevents gradual memory buildup from
+# turning into surprise out-of-memory worker crashes on Render's
+# memory-tight instances. Gunicorn finishes in-flight requests before
+# recycling, and the other worker keeps serving, so restarts are
+# zero-downtime.
+max_requests = 500
+max_requests_jitter = 100
+
 # Disable reload in production (enabled via CLI --reload flag for development)
 reload = False
 
