@@ -60,8 +60,8 @@ logger = logging.getLogger(__name__)
 # safe choice for ratios, scores, and percentages.
 _SUM_FIELDS = {
     # Flood
-    'historical_flood_events', 'historical_flood_claims',
-    'federal_flood_declarations', 'nfip_claims_total', 'mitigation_projects',
+    'historical_flood_events',
+    'federal_flood_declarations', 'mitigation_projects',
     # Tornado
     'historical_tornado_events', 'tornado_injuries', 'tornado_fatalities',
     'federal_tornado_declarations',
@@ -326,7 +326,7 @@ _DOMAIN_META = {
     ),
     'dam_failure': (
         'Dam Failure',
-        ['WI DNR Dam Safety', 'USACE NID', 'OpenFEMA NFIP', 'CDC SVI'],
+        ['WI DNR Dam Safety', 'USACE NID', 'OpenFEMA Disaster Declarations', 'CDC SVI'],
     ),
     'vector_borne_disease': (
         'Vector-Borne Disease',

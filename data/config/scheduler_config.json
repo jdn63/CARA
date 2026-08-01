@@ -42,12 +42,6 @@
       "module": "utils.data_source_refresher",
       "function": "refresh_all_openfema_declarations"
     },
-    "fema_nfip": {
-      "description": "NFIP flood insurance claims per county (weekly refresh)",
-      "refresh_interval_hours": 168,
-      "module": "utils.data_source_refresher",
-      "function": "refresh_all_openfema_nfip"
-    },
     "fema_hma": {
       "description": "Hazard mitigation project awards per county (weekly refresh)",
       "refresh_interval_hours": 168,
@@ -133,19 +127,19 @@
       "function": "refresh_action_plan_source_verifier"
     },
     "epa_sdwis": {
-      "description": "EPA SDWIS public water systems per county (annual)",
+      "description": "Per-county water system counts and private-well reliance (annual)",
       "refresh_interval_hours": 8760,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_epa_sdwis"
     },
     "census_cbp_fuel": {
-      "description": "Census CBP gasoline station density per county (annual)",
+      "description": "Per-county gasoline station density, NAICS 447 (annual)",
       "refresh_interval_hours": 8760,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_census_cbp_fuel"
     },
     "acs_broadband": {
-      "description": "Census ACS broadband subscription share per county (annual)",
+      "description": "Per-county household broadband subscription share, table B28002 (annual)",
       "refresh_interval_hours": 8760,
       "module": "utils.data_source_refresher",
       "function": "refresh_all_acs_broadband"

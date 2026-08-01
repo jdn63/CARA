@@ -160,9 +160,18 @@ accepted by the admin refresh endpoint live in
   behind `calculate_heat_acute_risk()` consumed by
   `utils/temporal_risk.py` acute heat path.
 - FEMA APIs: natural hazard risk indices.
-- OpenFEMA APIs: Disaster Declarations Summaries v2, NFIP Redacted Claims
-  v2, Hazard Mitigation Assistance Projects v4.
-- NOAA NCEI Storm Events Database: bulk CSV downloads of WI storm events.
+- OpenFEMA APIs: Disaster Declarations Summaries v2, Hazard Mitigation
+  Assistance Projects v4. (NFIP Redacted Claims v2 removed August 2026 -
+  see the "NFIP retirement and observed-climate replacement" decision-log
+  entry.)
+- NOAA NCEI Storm Events Database: bulk CSV downloads of WI storm events
+  (event counts and property damage).
+- NOAA nClimDiv / Climate at a Glance county series: baked snapshot of
+  observed county precipitation and temperature trends at
+  `data/climate/nclimdiv_county_climate_trends.json` (recent 15-year means
+  vs 1951-2000 county baselines), built offline by
+  `scripts/build_nclimdiv_snapshot.py` and loaded by
+  `utils/climate_trends.py`.
 - WI DNR Dam Safety Database (primary): Wisconsin Repository of Dams
   ArcGIS FeatureServer.
 - USACE NID ArcGIS FeatureServer (fallback): National Inventory of Dams.
@@ -1278,3 +1287,67 @@ re-read vulnerability with an independent resilience measure. The
 full-dashboard cache key was bumped (`dashboard_full_v11` to
 `dashboard_full_v12`) so pre-fix cached composites are invalidated
 cleanly at deploy.
+
+## NFIP retirement and observed-climate replacement (v30.0, 2026-08)
+
+Two input families were retired in one release because both created
+score differences that no county-level measurement supported.
+
+NFIP flood-insurance claims. Claim counts measure insurance
+participation, not flood hazard. Per the Wisconsin Policy Forum (Aug
+2025), participation spans 60.3 policies per 10,000 residents (Door)
+to 6.5 (Taylor) to zero (Menominee) - a county with no policies can
+never register a claim regardless of flooding, and the least-insured
+counties (inland, rural, lower-income; the repeatedly flooded
+Driftless area) are precisely where the gap is worst. Changes:
+- Flood exposure 10% slice: NFIP claims-per-year percentile replaced
+  by a NOAA Storm Events flood property-damage percentile
+  (`_build_storm_damage_rate_cache` in `utils/natural_hazards_risk.py`;
+  damage dollars per year, percentile-ranked across all 72 counties;
+  NWS damage figures are estimates, so they are used only ordinally).
+- Dam-failure flood proxy: `_get_nfip_flood_proxy` replaced by
+  `_get_flood_declaration_factor` (OpenFEMA Disaster Declarations,
+  'Flood' + 'Dam/Levee Break' incident types; 0.05 + 0.05 per
+  declaration capped at 0.45; neutral 0.15 without cache context).
+  Metric renamed `flood_zone_overlap` -> `flood_history_factor`, with
+  a static-path migration that recomputes the stored dam score.
+- Flood trend: NOAA-only; the NFIP blend was removed from
+  `utils/real_trend_calculator.py`.
+- KP HVA flood property floor: the ">50 NFIP claims" trigger became
+  ">=2 federal flood declarations" (county and HERC paths in
+  `utils/kp_hva_export.py`).
+- The NFIP fetcher, `fema_nfip` scheduler source, source-registry
+  spec, and regional `nfip_claims_total` rollup were deleted.
+- Action plans gained Wisconsin Flood Resilience Scorecard (P-03396)
+  and WI DHS RAFT mapping-tool activities (planning-process tools by
+  design, not scoreable datasets).
+
+Static climate-projection multipliers. The three-zone RCP4.5 exposure
+multipliers applied one literature constant per zone, so every county
+in a zone moved identically and the term added no local signal (the
+straight-line wind version added the same capped boost to all 72
+counties). All five hazard multiplier blocks plus
+`county_climate_zones` were removed from
+`data/climate/natural_hazard_climate_projections.json`, which now
+holds only metadata and `wisconsin_thunderstorm_severity` (measured
+NOAA-derived climatology, not a projection). The replacement is
+observed NOAA nClimDiv county trends (`utils/climate_trends.py` plus
+the baked snapshot; recent 15-year means vs each county's 1951-2000
+baseline):
+- Flood: new 5% `precip_trend_observed` percentile term.
+- Extreme heat trend: 0.5 + 0.15 per degF of observed warming,
+  clamped to 0.35-0.85.
+- Vector-borne: amplifier 1.0 + 0.05 per degF, capped 1.20, neutral
+  1.0 when the snapshot is unavailable.
+- Tornado / winter storm / thunderstorm / straight-line wind: no
+  climate term; the freed weight moved onto each hazard's NOAA
+  storm-events percentile (tornado .25 -> .35, winter .15 -> .30 with
+  the ice-storm boost deleted, thunderstorm .20 -> .40, wind NOAA
+  .55 -> .70 and derecho .25 -> .30).
+
+Missing-data semantics are unchanged: absent cross-county inputs drop
+their term and the remaining weights renormalize (never 0.0-coerced).
+Cache invalidation: `dashboard_full_v18` -> `dashboard_full_v19` at
+all warm/read sites plus `HERC_METHODOLOGY_VERSION` 7 -> 8. The
+methodology page climate section carries the user-facing retirement
+disclosure, including the NFIP participation numbers.

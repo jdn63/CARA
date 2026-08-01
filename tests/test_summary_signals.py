@@ -26,7 +26,6 @@ class TestDriverDerivation:
         rd = {
             "flood_metrics": {
                 "historical_flood_events": 19,
-                "nfip_claims_total": 2431,
                 "federal_flood_declarations": 3,
                 "data_period": "2006-2026",
             }
@@ -35,8 +34,10 @@ class TestDriverDerivation:
         joined = " ".join(out["drivers"])
         assert "19 recorded flood events" in joined
         assert "since 2006-2026" in joined
-        assert "2,431 flood-insurance claims" in joined
         assert "3 federal flood disaster declarations" in joined
+        # NFIP claims driver retired 2026-08 (insurance participation, not
+        # hazard); it must never resurface.
+        assert "flood-insurance claims" not in joined
 
     def test_dam_failure_drivers(self):
         rd = {
@@ -146,7 +147,7 @@ class TestGuards:
         rd = {
             "flood_metrics": {
                 "historical_flood_events": True,   # not a real count
-                "nfip_claims_total": None,
+                "storm_damage_percentile": None,
                 "federal_flood_declarations": 0,   # zero -> skip
             }
         }
@@ -171,7 +172,7 @@ class TestGuards:
 _LOCAL_SIGNAL_RE = re.compile(
     r"(recorded (flood|tornado|severe winter|severe thunderstorm|damaging wind) "
     r"|dams nearby|Lyme cases per|EPA-tracked|residents modeled|"
-    r"flood-insurance claims|federal .* declarations|forest cover|"
+    r"federal .* declarations|forest cover|"
     r"Heat Vulnerability Index rated|coverage gap of about)"
 )
 

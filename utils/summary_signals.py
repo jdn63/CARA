@@ -115,9 +115,8 @@ def _driver_builders():
         ev = _num(rd, "flood_metrics", "historical_flood_events")
         if ev and ev > 0:
             out.append(f"{_i(ev)} recorded flood events{period(rd, 'flood')}")
-        cl = _num(rd, "flood_metrics", "nfip_claims_total")
-        if cl and cl > 0:
-            out.append(f"{_i(cl)} flood-insurance claims on record")
+        # NFIP claims driver removed 2026-08: claim counts track insurance
+        # participation, not flood hazard, so they misled as a risk driver.
         decl = _num(rd, "flood_metrics", "federal_flood_declarations")
         if decl and decl > 0:
             out.append(f"{_i(decl)} federal flood disaster declarations")

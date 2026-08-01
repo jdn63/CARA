@@ -1,0 +1,1314 @@
+{
+  "counties": {
+    "Adams": {
+      "pcp": {
+        "baseline_mean": 31.87,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.5,
+        "ratio": 1.145,
+        "recent_mean": 36.49
+      },
+      "tavg": {
+        "baseline_mean": 43.68,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.0,
+        "ratio": 1.05,
+        "recent_mean": 45.87
+      }
+    },
+    "Ashland": {
+      "pcp": {
+        "baseline_mean": 33.07,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.5,
+        "ratio": 1.0348,
+        "recent_mean": 34.22
+      },
+      "tavg": {
+        "baseline_mean": 39.37,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.9,
+        "ratio": 1.0388,
+        "recent_mean": 40.9
+      }
+    },
+    "Barron": {
+      "pcp": {
+        "baseline_mean": 32.32,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 2.1,
+        "ratio": 1.0213,
+        "recent_mean": 33.01
+      },
+      "tavg": {
+        "baseline_mean": 41.26,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.0438,
+        "recent_mean": 43.07
+      }
+    },
+    "Bayfield": {
+      "pcp": {
+        "baseline_mean": 31.67,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 1.8,
+        "ratio": 1.0176,
+        "recent_mean": 32.23
+      },
+      "tavg": {
+        "baseline_mean": 39.46,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.6,
+        "ratio": 1.0457,
+        "recent_mean": 41.27
+      }
+    },
+    "Brown": {
+      "pcp": {
+        "baseline_mean": 29.9,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 18.0,
+        "ratio": 1.1801,
+        "recent_mean": 35.29
+      },
+      "tavg": {
+        "baseline_mean": 43.23,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.9,
+        "ratio": 1.059,
+        "recent_mean": 45.79
+      }
+    },
+    "Buffalo": {
+      "pcp": {
+        "baseline_mean": 31.89,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.3,
+        "ratio": 1.1234,
+        "recent_mean": 35.83
+      },
+      "tavg": {
+        "baseline_mean": 44.15,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.5,
+        "ratio": 1.0454,
+        "recent_mean": 46.15
+      }
+    },
+    "Burnett": {
+      "pcp": {
+        "baseline_mean": 31.09,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 2.0,
+        "ratio": 1.0204,
+        "recent_mean": 31.73
+      },
+      "tavg": {
+        "baseline_mean": 41.01,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.9,
+        "ratio": 1.0488,
+        "recent_mean": 43.01
+      }
+    },
+    "Calumet": {
+      "pcp": {
+        "baseline_mean": 30.19,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 21.1,
+        "ratio": 1.2114,
+        "recent_mean": 36.58
+      },
+      "tavg": {
+        "baseline_mean": 43.79,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.4,
+        "ratio": 1.0539,
+        "recent_mean": 46.15
+      }
+    },
+    "Chippewa": {
+      "pcp": {
+        "baseline_mean": 32.44,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 2.8,
+        "ratio": 1.0278,
+        "recent_mean": 33.34
+      },
+      "tavg": {
+        "baseline_mean": 42.02,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0429,
+        "recent_mean": 43.82
+      }
+    },
+    "Clark": {
+      "pcp": {
+        "baseline_mean": 31.71,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 10.1,
+        "ratio": 1.1005,
+        "recent_mean": 34.89
+      },
+      "tavg": {
+        "baseline_mean": 41.69,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.4,
+        "ratio": 1.0543,
+        "recent_mean": 43.95
+      }
+    },
+    "Columbia": {
+      "pcp": {
+        "baseline_mean": 31.72,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.1,
+        "ratio": 1.1411,
+        "recent_mean": 36.19
+      },
+      "tavg": {
+        "baseline_mean": 44.83,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.0,
+        "ratio": 1.0503,
+        "recent_mean": 47.09
+      }
+    },
+    "Crawford": {
+      "pcp": {
+        "baseline_mean": 32.97,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.8,
+        "ratio": 1.1483,
+        "recent_mean": 37.85
+      },
+      "tavg": {
+        "baseline_mean": 45.48,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.0,
+        "ratio": 1.0403,
+        "recent_mean": 47.31
+      }
+    },
+    "Dane": {
+      "pcp": {
+        "baseline_mean": 32.98,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.1,
+        "ratio": 1.1409,
+        "recent_mean": 37.62
+      },
+      "tavg": {
+        "baseline_mean": 45.65,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.0444,
+        "recent_mean": 47.68
+      }
+    },
+    "Dodge": {
+      "pcp": {
+        "baseline_mean": 31.52,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 15.6,
+        "ratio": 1.1558,
+        "recent_mean": 36.44
+      },
+      "tavg": {
+        "baseline_mean": 45.04,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.4,
+        "ratio": 1.0335,
+        "recent_mean": 46.55
+      }
+    },
+    "Door": {
+      "pcp": {
+        "baseline_mean": 30.32,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 8.8,
+        "ratio": 1.0876,
+        "recent_mean": 32.97
+      },
+      "tavg": {
+        "baseline_mean": 42.98,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.5,
+        "ratio": 1.0353,
+        "recent_mean": 44.5
+      }
+    },
+    "Douglas": {
+      "pcp": {
+        "baseline_mean": 31.15,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 0.7,
+        "ratio": 1.0066,
+        "recent_mean": 31.35
+      },
+      "tavg": {
+        "baseline_mean": 39.55,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.6,
+        "ratio": 1.0455,
+        "recent_mean": 41.35
+      }
+    },
+    "Dunn": {
+      "pcp": {
+        "baseline_mean": 31.58,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 7.1,
+        "ratio": 1.0707,
+        "recent_mean": 33.81
+      },
+      "tavg": {
+        "baseline_mean": 42.86,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0431,
+        "recent_mean": 44.71
+      }
+    },
+    "Eau Claire": {
+      "pcp": {
+        "baseline_mean": 32.01,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 10.0,
+        "ratio": 1.1002,
+        "recent_mean": 35.22
+      },
+      "tavg": {
+        "baseline_mean": 42.61,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.3,
+        "ratio": 1.0532,
+        "recent_mean": 44.87
+      }
+    },
+    "Florence": {
+      "pcp": {
+        "baseline_mean": 30.59,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 0.3,
+        "ratio": 1.0027,
+        "recent_mean": 30.67
+      },
+      "tavg": {
+        "baseline_mean": 39.26,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.0,
+        "ratio": 1.05,
+        "recent_mean": 41.23
+      }
+    },
+    "Fond du Lac": {
+      "pcp": {
+        "baseline_mean": 30.71,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 15.0,
+        "ratio": 1.15,
+        "recent_mean": 35.32
+      },
+      "tavg": {
+        "baseline_mean": 44.35,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.0435,
+        "recent_mean": 46.28
+      }
+    },
+    "Forest": {
+      "pcp": {
+        "baseline_mean": 31.37,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 8.7,
+        "ratio": 1.0874,
+        "recent_mean": 34.11
+      },
+      "tavg": {
+        "baseline_mean": 39.12,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.8,
+        "ratio": 1.0377,
+        "recent_mean": 40.59
+      }
+    },
+    "Grant": {
+      "pcp": {
+        "baseline_mean": 33.4,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.5,
+        "ratio": 1.1254,
+        "recent_mean": 37.59
+      },
+      "tavg": {
+        "baseline_mean": 46.11,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.4,
+        "ratio": 1.0343,
+        "recent_mean": 47.69
+      }
+    },
+    "Green": {
+      "pcp": {
+        "baseline_mean": 34.29,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 9.9,
+        "ratio": 1.0985,
+        "recent_mean": 37.67
+      },
+      "tavg": {
+        "baseline_mean": 46.33,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.8,
+        "ratio": 1.0384,
+        "recent_mean": 48.11
+      }
+    },
+    "Green Lake": {
+      "pcp": {
+        "baseline_mean": 31.05,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 13.8,
+        "ratio": 1.1377,
+        "recent_mean": 35.32
+      },
+      "tavg": {
+        "baseline_mean": 44.53,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.5,
+        "ratio": 1.0447,
+        "recent_mean": 46.53
+      }
+    },
+    "Iowa": {
+      "pcp": {
+        "baseline_mean": 33.57,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 9.2,
+        "ratio": 1.0924,
+        "recent_mean": 36.67
+      },
+      "tavg": {
+        "baseline_mean": 45.35,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0434,
+        "recent_mean": 47.32
+      }
+    },
+    "Iron": {
+      "pcp": {
+        "baseline_mean": 34.2,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.8,
+        "ratio": 1.0584,
+        "recent_mean": 36.2
+      },
+      "tavg": {
+        "baseline_mean": 38.78,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.3,
+        "ratio": 1.0331,
+        "recent_mean": 40.06
+      }
+    },
+    "Jackson": {
+      "pcp": {
+        "baseline_mean": 32.38,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 13.1,
+        "ratio": 1.1313,
+        "recent_mean": 36.63
+      },
+      "tavg": {
+        "baseline_mean": 42.92,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.7,
+        "ratio": 1.057,
+        "recent_mean": 45.37
+      }
+    },
+    "Jefferson": {
+      "pcp": {
+        "baseline_mean": 32.64,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 10.8,
+        "ratio": 1.1082,
+        "recent_mean": 36.17
+      },
+      "tavg": {
+        "baseline_mean": 46.19,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.5,
+        "ratio": 1.0353,
+        "recent_mean": 47.82
+      }
+    },
+    "Juneau": {
+      "pcp": {
+        "baseline_mean": 32.3,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.8,
+        "ratio": 1.1484,
+        "recent_mean": 37.1
+      },
+      "tavg": {
+        "baseline_mean": 43.73,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.6,
+        "ratio": 1.0463,
+        "recent_mean": 45.76
+      }
+    },
+    "Kenosha": {
+      "pcp": {
+        "baseline_mean": 33.57,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 6.6,
+        "ratio": 1.0663,
+        "recent_mean": 35.8
+      },
+      "tavg": {
+        "baseline_mean": 47.19,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.6,
+        "ratio": 1.0359,
+        "recent_mean": 48.89
+      }
+    },
+    "Kewaunee": {
+      "pcp": {
+        "baseline_mean": 30.18,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.2,
+        "ratio": 1.1125,
+        "recent_mean": 33.57
+      },
+      "tavg": {
+        "baseline_mean": 43.15,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.7,
+        "ratio": 1.0472,
+        "recent_mean": 45.19
+      }
+    },
+    "La Crosse": {
+      "pcp": {
+        "baseline_mean": 32.5,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 16.8,
+        "ratio": 1.1683,
+        "recent_mean": 37.97
+      },
+      "tavg": {
+        "baseline_mean": 44.62,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.044,
+        "recent_mean": 46.58
+      }
+    },
+    "Lafayette": {
+      "pcp": {
+        "baseline_mean": 34.58,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 9.2,
+        "ratio": 1.0923,
+        "recent_mean": 37.77
+      },
+      "tavg": {
+        "baseline_mean": 46.03,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.5,
+        "ratio": 1.0352,
+        "recent_mean": 47.65
+      }
+    },
+    "Langlade": {
+      "pcp": {
+        "baseline_mean": 32.34,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 6.0,
+        "ratio": 1.0602,
+        "recent_mean": 34.29
+      },
+      "tavg": {
+        "baseline_mean": 39.92,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0434,
+        "recent_mean": 41.65
+      }
+    },
+    "Lincoln": {
+      "pcp": {
+        "baseline_mean": 31.73,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 8.1,
+        "ratio": 1.0812,
+        "recent_mean": 34.31
+      },
+      "tavg": {
+        "baseline_mean": 40.19,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.2,
+        "ratio": 1.0421,
+        "recent_mean": 41.89
+      }
+    },
+    "Manitowoc": {
+      "pcp": {
+        "baseline_mean": 30.0,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 16.1,
+        "ratio": 1.1615,
+        "recent_mean": 34.84
+      },
+      "tavg": {
+        "baseline_mean": 43.77,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.8,
+        "ratio": 1.0477,
+        "recent_mean": 45.86
+      }
+    },
+    "Marathon": {
+      "pcp": {
+        "baseline_mean": 31.84,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.1,
+        "ratio": 1.1205,
+        "recent_mean": 35.68
+      },
+      "tavg": {
+        "baseline_mean": 41.28,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.5,
+        "ratio": 1.055,
+        "recent_mean": 43.55
+      }
+    },
+    "Marinette": {
+      "pcp": {
+        "baseline_mean": 30.31,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 6.1,
+        "ratio": 1.0614,
+        "recent_mean": 32.17
+      },
+      "tavg": {
+        "baseline_mean": 41.62,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0427,
+        "recent_mean": 43.39
+      }
+    },
+    "Marquette": {
+      "pcp": {
+        "baseline_mean": 31.0,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.4,
+        "ratio": 1.1439,
+        "recent_mean": 35.46
+      },
+      "tavg": {
+        "baseline_mean": 44.42,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.9,
+        "ratio": 1.0485,
+        "recent_mean": 46.58
+      }
+    },
+    "Menominee": {
+      "pcp": {
+        "baseline_mean": 31.36,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 10.9,
+        "ratio": 1.1092,
+        "recent_mean": 34.79
+      },
+      "tavg": {
+        "baseline_mean": 41.6,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.1,
+        "ratio": 1.0514,
+        "recent_mean": 43.74
+      }
+    },
+    "Milwaukee": {
+      "pcp": {
+        "baseline_mean": 31.79,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.0,
+        "ratio": 1.1105,
+        "recent_mean": 35.3
+      },
+      "tavg": {
+        "baseline_mean": 46.41,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.044,
+        "recent_mean": 48.45
+      }
+    },
+    "Monroe": {
+      "pcp": {
+        "baseline_mean": 32.75,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.6,
+        "ratio": 1.1159,
+        "recent_mean": 36.55
+      },
+      "tavg": {
+        "baseline_mean": 43.5,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.9,
+        "ratio": 1.0391,
+        "recent_mean": 45.21
+      }
+    },
+    "Oconto": {
+      "pcp": {
+        "baseline_mean": 30.53,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.5,
+        "ratio": 1.1246,
+        "recent_mean": 34.34
+      },
+      "tavg": {
+        "baseline_mean": 42.2,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.5,
+        "ratio": 1.0454,
+        "recent_mean": 44.11
+      }
+    },
+    "Oneida": {
+      "pcp": {
+        "baseline_mean": 31.51,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.6,
+        "ratio": 1.1164,
+        "recent_mean": 35.18
+      },
+      "tavg": {
+        "baseline_mean": 39.38,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.0,
+        "ratio": 1.0298,
+        "recent_mean": 40.55
+      }
+    },
+    "Outagamie": {
+      "pcp": {
+        "baseline_mean": 30.27,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 18.8,
+        "ratio": 1.1878,
+        "recent_mean": 35.96
+      },
+      "tavg": {
+        "baseline_mean": 43.48,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.7,
+        "ratio": 1.0574,
+        "recent_mean": 45.98
+      }
+    },
+    "Ozaukee": {
+      "pcp": {
+        "baseline_mean": 30.82,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 8.3,
+        "ratio": 1.0834,
+        "recent_mean": 33.39
+      },
+      "tavg": {
+        "baseline_mean": 45.31,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.0,
+        "ratio": 1.0403,
+        "recent_mean": 47.14
+      }
+    },
+    "Pepin": {
+      "pcp": {
+        "baseline_mean": 31.31,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 10.9,
+        "ratio": 1.1091,
+        "recent_mean": 34.72
+      },
+      "tavg": {
+        "baseline_mean": 44.07,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.8,
+        "ratio": 1.0385,
+        "recent_mean": 45.77
+      }
+    },
+    "Pierce": {
+      "pcp": {
+        "baseline_mean": 31.47,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 9.3,
+        "ratio": 1.0932,
+        "recent_mean": 34.4
+      },
+      "tavg": {
+        "baseline_mean": 43.57,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.0,
+        "ratio": 1.03,
+        "recent_mean": 44.87
+      }
+    },
+    "Polk": {
+      "pcp": {
+        "baseline_mean": 31.66,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.7,
+        "ratio": 1.0375,
+        "recent_mean": 32.85
+      },
+      "tavg": {
+        "baseline_mean": 41.84,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.0443,
+        "recent_mean": 43.69
+      }
+    },
+    "Portage": {
+      "pcp": {
+        "baseline_mean": 31.31,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.6,
+        "ratio": 1.1456,
+        "recent_mean": 35.86
+      },
+      "tavg": {
+        "baseline_mean": 42.57,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.6,
+        "ratio": 1.0558,
+        "recent_mean": 44.95
+      }
+    },
+    "Price": {
+      "pcp": {
+        "baseline_mean": 32.78,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 0.4,
+        "ratio": 1.0043,
+        "recent_mean": 32.93
+      },
+      "tavg": {
+        "baseline_mean": 39.36,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.1,
+        "ratio": 1.0413,
+        "recent_mean": 40.99
+      }
+    },
+    "Racine": {
+      "pcp": {
+        "baseline_mean": 33.08,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 7.7,
+        "ratio": 1.0774,
+        "recent_mean": 35.65
+      },
+      "tavg": {
+        "baseline_mean": 46.78,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.6,
+        "ratio": 1.0356,
+        "recent_mean": 48.44
+      }
+    },
+    "Richland": {
+      "pcp": {
+        "baseline_mean": 32.77,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.1,
+        "ratio": 1.1109,
+        "recent_mean": 36.41
+      },
+      "tavg": {
+        "baseline_mean": 45.07,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.2,
+        "ratio": 1.0415,
+        "recent_mean": 46.95
+      }
+    },
+    "Rock": {
+      "pcp": {
+        "baseline_mean": 33.6,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.0,
+        "ratio": 1.1098,
+        "recent_mean": 37.29
+      },
+      "tavg": {
+        "baseline_mean": 46.74,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.5,
+        "ratio": 1.0351,
+        "recent_mean": 48.39
+      }
+    },
+    "Rusk": {
+      "pcp": {
+        "baseline_mean": 32.65,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 0.1,
+        "ratio": 1.0012,
+        "recent_mean": 32.69
+      },
+      "tavg": {
+        "baseline_mean": 40.89,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.8,
+        "ratio": 1.0379,
+        "recent_mean": 42.44
+      }
+    },
+    "Sauk": {
+      "pcp": {
+        "baseline_mean": 32.59,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.5,
+        "ratio": 1.1249,
+        "recent_mean": 36.67
+      },
+      "tavg": {
+        "baseline_mean": 44.76,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.7,
+        "ratio": 1.047,
+        "recent_mean": 46.87
+      }
+    },
+    "Sawyer": {
+      "pcp": {
+        "baseline_mean": 32.32,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.4,
+        "ratio": 1.0443,
+        "recent_mean": 33.75
+      },
+      "tavg": {
+        "baseline_mean": 39.39,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.0,
+        "ratio": 1.0496,
+        "recent_mean": 41.35
+      }
+    },
+    "Shawano": {
+      "pcp": {
+        "baseline_mean": 31.13,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 12.3,
+        "ratio": 1.1233,
+        "recent_mean": 34.97
+      },
+      "tavg": {
+        "baseline_mean": 42.18,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.7,
+        "ratio": 1.057,
+        "recent_mean": 44.58
+      }
+    },
+    "Sheboygan": {
+      "pcp": {
+        "baseline_mean": 30.82,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 9.6,
+        "ratio": 1.0965,
+        "recent_mean": 33.79
+      },
+      "tavg": {
+        "baseline_mean": 44.36,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.5,
+        "ratio": 1.0447,
+        "recent_mean": 46.35
+      }
+    },
+    "St. Croix": {
+      "pcp": {
+        "baseline_mean": 31.28,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 7.7,
+        "ratio": 1.0766,
+        "recent_mean": 33.68
+      },
+      "tavg": {
+        "baseline_mean": 42.86,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.9,
+        "ratio": 1.0393,
+        "recent_mean": 44.55
+      }
+    },
+    "Taylor": {
+      "pcp": {
+        "baseline_mean": 32.13,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 6.4,
+        "ratio": 1.0644,
+        "recent_mean": 34.2
+      },
+      "tavg": {
+        "baseline_mean": 40.53,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.3,
+        "ratio": 1.0428,
+        "recent_mean": 42.26
+      }
+    },
+    "Trempealeau": {
+      "pcp": {
+        "baseline_mean": 32.43,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 13.8,
+        "ratio": 1.1381,
+        "recent_mean": 36.91
+      },
+      "tavg": {
+        "baseline_mean": 43.77,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.2,
+        "ratio": 1.0516,
+        "recent_mean": 46.03
+      }
+    },
+    "Vernon": {
+      "pcp": {
+        "baseline_mean": 33.11,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.2,
+        "ratio": 1.1421,
+        "recent_mean": 37.82
+      },
+      "tavg": {
+        "baseline_mean": 44.35,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.7,
+        "ratio": 1.0373,
+        "recent_mean": 46.01
+      }
+    },
+    "Vilas": {
+      "pcp": {
+        "baseline_mean": 32.76,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 7.9,
+        "ratio": 1.0787,
+        "recent_mean": 35.34
+      },
+      "tavg": {
+        "baseline_mean": 38.64,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 2.9,
+        "ratio": 1.0294,
+        "recent_mean": 39.77
+      }
+    },
+    "Walworth": {
+      "pcp": {
+        "baseline_mean": 34.6,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 8.5,
+        "ratio": 1.0849,
+        "recent_mean": 37.53
+      },
+      "tavg": {
+        "baseline_mean": 46.57,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.0,
+        "ratio": 1.0296,
+        "recent_mean": 47.95
+      }
+    },
+    "Washburn": {
+      "pcp": {
+        "baseline_mean": 31.79,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.3,
+        "ratio": 1.0329,
+        "recent_mean": 32.83
+      },
+      "tavg": {
+        "baseline_mean": 40.22,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.6,
+        "ratio": 1.0457,
+        "recent_mean": 42.06
+      }
+    },
+    "Washington": {
+      "pcp": {
+        "baseline_mean": 31.54,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.1,
+        "ratio": 1.1114,
+        "recent_mean": 35.05
+      },
+      "tavg": {
+        "baseline_mean": 44.69,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 3.6,
+        "ratio": 1.0361,
+        "recent_mean": 46.31
+      }
+    },
+    "Waukesha": {
+      "pcp": {
+        "baseline_mean": 32.53,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.5,
+        "ratio": 1.1152,
+        "recent_mean": 36.28
+      },
+      "tavg": {
+        "baseline_mean": 45.77,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.0,
+        "ratio": 1.0398,
+        "recent_mean": 47.59
+      }
+    },
+    "Waupaca": {
+      "pcp": {
+        "baseline_mean": 30.9,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 13.3,
+        "ratio": 1.1335,
+        "recent_mean": 35.02
+      },
+      "tavg": {
+        "baseline_mean": 43.26,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.5,
+        "ratio": 1.0551,
+        "recent_mean": 45.64
+      }
+    },
+    "Waushara": {
+      "pcp": {
+        "baseline_mean": 31.1,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 11.9,
+        "ratio": 1.119,
+        "recent_mean": 34.8
+      },
+      "tavg": {
+        "baseline_mean": 43.66,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.2,
+        "ratio": 1.0517,
+        "recent_mean": 45.92
+      }
+    },
+    "Winnebago": {
+      "pcp": {
+        "baseline_mean": 30.24,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 18.2,
+        "ratio": 1.1822,
+        "recent_mean": 35.75
+      },
+      "tavg": {
+        "baseline_mean": 44.35,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 4.9,
+        "ratio": 1.049,
+        "recent_mean": 46.53
+      }
+    },
+    "Wood": {
+      "pcp": {
+        "baseline_mean": 31.32,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 14.4,
+        "ratio": 1.1441,
+        "recent_mean": 35.84
+      },
+      "tavg": {
+        "baseline_mean": 42.65,
+        "n_baseline_years": 50,
+        "n_recent_years": 15,
+        "pct_change": 5.1,
+        "ratio": 1.0509,
+        "recent_mean": 44.82
+      }
+    }
+  },
+  "metadata": {
+    "baseline_period": "1951-2000",
+    "counties": 72,
+    "dataset_reference": "NOAA Monthly U.S. Climate Divisional Database (nClimDiv), county aggregation",
+    "generated": "2026-08-01",
+    "method": "Observed annual county values. Trend = mean of 2011-2025 divided by mean of 1951-2000. No modeling, no projection: these are measured values from the same dataset WICCI uses for its published Wisconsin trend maps.",
+    "recent_period": "2011-2025",
+    "source": "NOAA NCEI nClimDiv county time series (Climate at a Glance county tool)",
+    "source_url": "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/county/time-series/WI-<fips>/<var>/12/12/1951-2025.json",
+    "variables": {
+      "pcp": "precipitation (inches)",
+      "tavg": "average temperature (deg F)"
+    }
+  }
+}

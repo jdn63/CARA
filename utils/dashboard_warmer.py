@@ -1,7 +1,7 @@
 """Dashboard cache warmer.
 
 Background daemon that pre-builds the per-jurisdiction dashboard
-context cache (`dashboard_full_v18_<discipline>_<jid>`) so the first
+context cache (`dashboard_full_v19_<discipline>_<jid>`) so the first
 user click on /dashboard/<jid> or /em-dashboard/<slug> hits a warm
 cache instead of paying the 1-15 second cold-compute cost.
 
@@ -64,7 +64,7 @@ def _prioritized_county_order(counties: List[dict]) -> List[dict]:
 def _is_already_warm(jurisdiction_id: str, discipline: str) -> bool:
     """Mirror the dashboard view's cache lookup so we skip work that
     a previous warmer pass (or a real user hit) already did."""
-    key = f"dashboard_full_v18_{discipline}_{jurisdiction_id}"
+    key = f"dashboard_full_v19_{discipline}_{jurisdiction_id}"
     try:
         return get_from_persistent_cache(key, max_age_days=1) is not None
     except Exception:

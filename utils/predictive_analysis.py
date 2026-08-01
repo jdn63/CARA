@@ -2,9 +2,9 @@
 
 This module replaces the previous synthetic placeholder predictor. Forward
 projections are now built from real cached trend signals computed by
-utils.real_trend_calculator (NOAA Storm Events counts, OpenFEMA NFIP claims
-and disaster declarations, EPA AirNow history, ACS demographic change, and
-NOAA climate projections), so every projection is anchored in real data.
+utils.real_trend_calculator (NOAA Storm Events counts, NOAA nClimDiv
+observed county climate trends, EPA AirNow history, and ACS demographic
+change), so every projection is anchored in real data.
 
 Outputs are clearly labeled as "model projections" rather than forecasts:
 they extrapolate observed direction and magnitude from the historical record

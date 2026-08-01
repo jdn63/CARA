@@ -45,7 +45,7 @@ _herc_cache_ttl = 3600  # 1 hour in seconds
 # to 2 when the infectious-disease portfolio was trimmed, lowering the
 # strategic-baseline floor that feeds the regional health_metrics domain
 # (parallels the dashboard_full version-key bump in utils/dashboard_warmer.py).
-HERC_METHODOLOGY_VERSION = 7
+HERC_METHODOLOGY_VERSION = 8
 
 # Cache for individual jurisdiction risk data (TTL: 30 minutes)
 _jurisdiction_cache: Dict[str, Dict[str, Any]] = {}

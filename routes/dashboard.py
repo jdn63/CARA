@@ -128,7 +128,7 @@ def dashboard(jurisdiction_id):
         # strategic-baseline floor for counties sitting on it (kept in
         # lockstep with utils/dashboard_warmer.py and routes/em.py).
         discipline = get_active_discipline()
-        full_cache_key = f"dashboard_full_v18_{discipline}_{jurisdiction_id}"
+        full_cache_key = f"dashboard_full_v19_{discipline}_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
 
         if cached_context:

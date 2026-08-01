@@ -1,9 +1,134 @@
 CARA - Comprehensive Automated Risk Assessment
-Version: 2.8
-Release date: 2026-05-21
-Push: v28.9
+Version: 3.0
+Release date: 2026-08-01
+Push: v30.0
 
 Changelog summary:
+- v30.0: NFIP retirement and observed-climate replacement. Two input
+  families retired in one release because both created score
+  differences no county-level measurement supported.
+
+  NFIP flood-insurance claims removed from all scoring. Claim counts
+  measure insurance participation, not flood hazard (WI Policy Forum,
+  Aug 2025: Door County 60.3 policies per 10k residents, Taylor 6.5,
+  Menominee zero - a county with no policies can never register a
+  claim regardless of flooding). The flood score's 10 percent claims
+  slice is now a NOAA storm-event flood property-damage percentile;
+  the dam-failure flood proxy now counts OpenFEMA flood and
+  dam/levee-break declarations (metric renamed flood_zone_overlap to
+  flood_history_factor with a stored-score migration); the flood trend
+  is NOAA-only; the KP HVA flood property floor triggers on 2 or more
+  federal flood declarations. The NFIP fetcher, scheduler source,
+  source-registry spec, and regional rollup are deleted. Flood action
+  plans add the WI DHS Flood Resilience Scorecard (P-03396) and the
+  DHS RAFT mapping tool, both link-verified.
+
+  Static climate-projection multipliers retired for all five natural
+  hazards. They applied one literature constant per three-county zone,
+  so every county in a zone moved identically; the straight-line wind
+  term added the same capped boost to all 72 counties. Replacement is
+  observed NOAA nClimDiv county trends via a baked, versioned snapshot
+  (recent 15-year means vs each county's own 1951-2000 baseline):
+  flood gains a 5 percent observed precipitation-trend percentile, and
+  the extreme-heat trend and vector-borne climate amplifier now use
+  each county's measured warming. Tornado, winter storm, thunderstorm,
+  and straight-line wind carry no climate term; the freed weight moved
+  onto each hazard's measured NOAA event-history percentile. The
+  projections JSON retains only the measured thunderstorm severity
+  index. Missing-data semantics unchanged: absent inputs drop their
+  term and weights renormalize, never zero-coerced.
+
+  Also fixed in this release: the hazard trend calculator now reads
+  per-category NOAA data (previously every hazard silently used the
+  all-hazards event trend), and rare-for-a-county hazards go neutral
+  instead of inheriting the county-wide trend. The methodology page
+  documents both retirements with the participation stats. Cache keys
+  bumped (dashboard_full_v19, HERC methodology version 8). Test suite:
+  261 passed (35 new v30 regression tests).
+
+- v29.0: Data honesty audit. A full pass over every displayed number and
+  citation in the tool with one rule: every figure must trace to a real,
+  named source or be explicitly labeled as a CARA estimate. Four
+  workstreams:
+
+  Surveillance feed cleanup. Removed the dead H5N1 and mpox surveillance
+  modules (utils/h5n1_surveillance.py, utils/mpox_surveillance.py) and
+  their scheduler, source-registry, and risk-weight wiring. Their
+  upstream endpoints had stopped returning data, so the dashboard could
+  have presented stale values as current surveillance. The biological
+  panel now lists only feeds that actually refresh.
+
+  Citation corrections. Fixed the remaining overstated source
+  citations: the vector-borne deer-density provenance, the extreme-heat
+  Heat Vulnerability Index attribution (now the real WI DHS HVI
+  dataset), and the OpenFEMA NFIP module docstring. Deleted roughly 320
+  lines of legacy synthetic-weather generation in
+  utils/weather_alerts.py that could present simulated conditions as
+  observations.
+
+  Cybersecurity domain retirement. The proxy-modeled cyber score is
+  retired. County baselines were hand-set constants, the tile metrics
+  were derived arithmetically from the score itself rather than from
+  any feed, and the citation list could not be verified. The Cyber
+  Preparedness panel remains as an unscored checklist with
+  authoritative links; the score is excluded from composites, regional
+  aggregators, exports, and provenance. Export residual-risk resilience
+  now uses FEMA NRI Community Resilience instead of the retired score.
+  The action-plan cyber guidance is intentionally kept (preparedness
+  advice, not a score).
+
+  Active Shooter domain overhaul. (1) Incident history: replaced the
+  truncated Gun Violence Archive file (a national reports-page export
+  covering only Sep-Dec 2023, containing one Wisconsin incident) with a
+  complete Wisconsin query-tool export covering 2016-2026: 71 unique
+  incidents (mass shootings plus mass murders), deduplicated by GVA
+  incident ID, with county attribution fixes (Hartland, Rothschild,
+  Clinton) and coverage plus provenance metadata baked into
+  data/gva_reports/gva_data_wisconsin.json. The manual refresh
+  procedure is documented in utils/gva_data_processor.py. GVA records
+  firearm incidents only; the 2021 Waukesha parade attack is therefore
+  absent, and this scope limit is disclosed on the tile and methodology
+  page. Data staleness is now measured from the newest incident date.
+  (2) Real populations: per-capita incident rates now use Census 2020
+  county populations; previously 68 of 72 counties defaulted to an
+  assumed 80,000 residents. (3) Zero-incident counties now score 0 on
+  the incident-history component, disclosed on the dashboard tile,
+  replacing a 0.25 statewide-average placeholder that outranked nearly
+  every county with actual recorded history. (4) The show-my-work panel
+  now describes the real calculation, tanh(cumulative incidents per
+  100k / 20); it previously described a weighted blend the code never
+  computed and rendered zeros from nonexistent metric keys. (5) Lethal
+  means access: removed invented firearm ownership and storage metrics;
+  the component now uses a disclosed rurality adjustment from a bundled
+  USDA Rural-Urban Continuum Codes 2023 snapshot
+  (data/usda_rucc/wi_rucc_2023.json). (6) School vulnerability: the
+  NCES SSOCS public-use ceiling (national urbanicity-class averages
+  only; no state or county identifiers exist in the public file) is
+  documented as a permanent limit. Citations updated across dashboard
+  tiles, both methodology pages, and the HERC dashboard. Full-dashboard
+  cache key advanced v15 to v18 and HERC methodology version 5 to 7
+  across the pass; regression coverage added in
+  tests/test_gva_wisconsin_data.py and tests/test_lethal_means_rucc.py
+  (226 tests passing).
+
+- v28.11 (2026-07): Resilience term sourced from FEMA NRI Community
+  Resilience (BRIC), with the EVR resilience multiplier recentered to
+  (1.5 - Resilience) following external review. Multi-county health
+  department fix: HERC and WEM county rollups now credit every county
+  served by a combined LHD, matching official WEM region composition.
+  Full detail in ARCHITECTURE.md.
+
+- v28.10 (2026-07): Data-source integrity audit: real NCES SSOCS
+  microdata replaces hardcoded school-safety tier guesses (national
+  urbanicity-class averages with a disclosed assignment heuristic), a
+  fabricated 17-county UW Extension ag-safety resilience bonus removed,
+  utilities domain relabeled as the CARA rule-based proxy model it is,
+  correctional facility loader labeled a static seed, and heuristic
+  disclosures added (tornado corridor and open-terrain lists, winter
+  storm lists, RAND firearm-law translation, vector-borne seed scores).
+  County-level EM infectious-disease weight wiring fix. Full detail in
+  ARCHITECTURE.md.
+
 - v28.9: Methodology audit fixes + WCAG 2.1 AA accessibility pass.
   Methodology: (M1) Wired CDC EPHT measure 421 into the heat-exposure
   scoring formula in `utils/climate_adjusted_risk.py`. Prior to v28.9

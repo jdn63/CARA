@@ -241,15 +241,6 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         legacy_aliases=('openfema_declarations', 'openfema_disaster_declarations',
                         'open_fema_declarations'),
     ),
-    'fema_nfip': SourceSpec(
-        display_name='OpenFEMA NFIP Claims',
-        description='NFIP flood insurance claims per county (weekly refresh)',
-        module='utils.data_source_refresher',
-        function='refresh_all_openfema_nfip',
-        refresh_interval_hours=168,
-        freshness_max_age_days=30,
-        legacy_aliases=('openfema_nfip', 'openfema_nfip_claims', 'open_fema_nfip'),
-    ),
     'fema_hma': SourceSpec(
         display_name='OpenFEMA Hazard Mitigation Assistance',
         description='Hazard mitigation project awards per county (weekly refresh)',

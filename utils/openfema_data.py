@@ -1,17 +1,19 @@
 """
 OpenFEMA Data Integration Module
 
-Fetches real data from three free, keyless OpenFEMA APIs:
+Fetches real data from two free, keyless OpenFEMA APIs:
 1. DisasterDeclarationsSummaries v2 - Historical federal disaster declarations per county
-2. FimaNfipClaims v2 - NFIP flood insurance claims per county
-3. HazardMitigationAssistanceProjects v4 - Mitigation projects per county
+2. HazardMitigationAssistanceProjects v4 - Mitigation projects per county
+
+(FimaNfipClaims v2 was removed in August 2026: NFIP claim counts track
+flood-insurance participation, not flood hazard, and are no longer used
+anywhere in CARA scoring. See the methodology page climate section.)
 
 All data is pre-fetched by scheduler jobs and stored in PostgreSQL cache.
 No external API calls occur during user assessments.
 
 Data sources:
 - https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries
-- https://www.fema.gov/api/open/v2/FimaNfipClaims
 - https://www.fema.gov/api/open/v4/HazardMitigationAssistanceProjects
 """
 
@@ -157,82 +159,6 @@ def fetch_disaster_declarations_wi() -> Dict[str, Any]:
     return {"county_data": county_data, "total_records": len(all_records), "fetch_duration": fetch_duration}
 
 
-def fetch_nfip_claims_wi() -> Dict[str, Any]:
-    """
-    Fetch NFIP flood insurance claims for Wisconsin counties.
-    Returns aggregated data: claim count, total payouts, by year.
-    """
-    url = f"{OPENFEMA_BASE}/v2/FimaNfipClaims"
-    all_records = []
-    skip = 0
-    top = 10000
-
-    start_time = time.time()
-    logger.info("Fetching Wisconsin NFIP claims from OpenFEMA")
-
-    while True:
-        params = {
-            "$filter": f"state eq '{WI_STATE_CODE}'",
-            "$select": "countyCode,dateOfLoss,yearOfLoss,amountPaidOnBuildingClaim,"
-                       "amountPaidOnContentsClaim,occupancyType,ratedFloodZone",
-            "$top": str(top),
-            "$skip": str(skip)
-        }
-
-        data = _api_get(url, params)
-        if not data:
-            break
-
-        records = data.get("FimaNfipClaims", [])
-        if not records:
-            break
-
-        all_records.extend(records)
-        skip += top
-
-        if len(records) < top:
-            break
-
-    fetch_duration = time.time() - start_time
-    logger.info(f"Fetched {len(all_records)} NFIP claim records in {fetch_duration:.1f}s")
-
-    fips_to_county = {f"{WI_FIPS_STATE}{code}": name for name, code in WI_COUNTY_FIPS_3DIGIT.items()}
-
-    county_data = {}
-    for record in all_records:
-        county_code = str(record.get("countyCode", ""))
-        county_name = fips_to_county.get(county_code)
-        if not county_name:
-            continue
-
-        if county_name not in county_data:
-            county_data[county_name] = {
-                "total_claims": 0,
-                "total_building_payout": 0.0,
-                "total_contents_payout": 0.0,
-                "total_payout": 0.0,
-                "claims_by_year": {},
-                "claims_by_flood_zone": {}
-            }
-
-        cd = county_data[county_name]
-        cd["total_claims"] += 1
-
-        building = float(record.get("amountPaidOnBuildingClaim") or 0)
-        contents = float(record.get("amountPaidOnContentsClaim") or 0)
-        cd["total_building_payout"] += building
-        cd["total_contents_payout"] += contents
-        cd["total_payout"] += building + contents
-
-        year = str(record.get("yearOfLoss", "Unknown"))
-        cd["claims_by_year"][year] = cd["claims_by_year"].get(year, 0) + 1
-
-        zone = record.get("ratedFloodZone", "Unknown")
-        cd["claims_by_flood_zone"][zone] = cd["claims_by_flood_zone"].get(zone, 0) + 1
-
-    return {"county_data": county_data, "total_records": len(all_records), "fetch_duration": fetch_duration}
-
-
 def fetch_hma_projects_wi() -> Dict[str, Any]:
     """
     Fetch Hazard Mitigation Assistance projects for Wisconsin.
@@ -338,17 +264,12 @@ def get_county_openfema_summary(county_name: str) -> Dict[str, Any]:
 
         summary = {
             "disaster_declarations": None,
-            "nfip_claims": None,
             "hma_projects": None
         }
 
         decl_cache = get_cached_data("openfema_disaster_declarations", county_name=county_name)
         if decl_cache and decl_cache.get("data"):
             summary["disaster_declarations"] = decl_cache["data"]
-
-        claims_cache = get_cached_data("openfema_nfip_claims", county_name=county_name)
-        if claims_cache and claims_cache.get("data"):
-            summary["nfip_claims"] = claims_cache["data"]
 
         hma_cache = get_cached_data("openfema_hma_projects", county_name=county_name)
         if hma_cache and hma_cache.get("data"):
@@ -358,7 +279,7 @@ def get_county_openfema_summary(county_name: str) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting OpenFEMA summary for {county_name}: {e}")
-        return {"disaster_declarations": None, "nfip_claims": None, "hma_projects": None}
+        return {"disaster_declarations": None, "hma_projects": None}
 
 
 def format_currency(amount: float) -> str:

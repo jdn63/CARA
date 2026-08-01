@@ -519,59 +519,6 @@ def refresh_all_openfema_declarations() -> Dict[str, Any]:
         return results
 
 
-def refresh_all_openfema_nfip() -> Dict[str, Any]:
-    """
-    Refresh OpenFEMA NFIP Claims data for all Wisconsin counties.
-    Called weekly by scheduler. No API key required.
-    """
-    app = _get_app()
-    if not app:
-        return {'error': 'No Flask app available', 'success': 0, 'failed': 0}
-    
-    with app.app_context():
-        from utils.data_cache_manager import save_cached_data
-        from utils.openfema_data import fetch_nfip_claims_wi
-        
-        results = {
-            'source_type': 'openfema_nfip_claims',
-            'started_at': datetime.utcnow().isoformat(),
-            'success': 0,
-            'failed': 0,
-            'errors': []
-        }
-        
-        logger.info("Starting OpenFEMA NFIP claims refresh")
-        
-        try:
-            data = fetch_nfip_claims_wi()
-            county_data = data.get("county_data", {})
-            
-            for county_name, county_info in county_data.items():
-                try:
-                    success = save_cached_data(
-                        source_type='openfema_nfip_claims',
-                        data=county_info,
-                        county_name=county_name,
-                        api_source='OpenFEMA FimaNfipClaims v2 (ratedFloodZone)',
-                        fetch_duration=data.get("fetch_duration")
-                    )
-                    if success:
-                        results['success'] += 1
-                    else:
-                        results['failed'] += 1
-                except Exception as e:
-                    results['failed'] += 1
-                    results['errors'].append({'county': county_name, 'error': str(e)})
-                    
-        except Exception as e:
-            logger.error(f"Error fetching NFIP claims: {e}")
-            results['errors'].append({'error': str(e)})
-        
-        results['finished_at'] = datetime.utcnow().isoformat()
-        logger.info(f"OpenFEMA NFIP refresh: {results['success']} success, {results['failed']} failed")
-        return results
-
-
 def refresh_all_openfema_hma() -> Dict[str, Any]:
     """
     Refresh OpenFEMA Hazard Mitigation Projects data for all Wisconsin counties.
@@ -1109,7 +1056,6 @@ def run_all_refreshes() -> Dict[str, Any]:
     results['sources']['nws_forecast'] = refresh_all_nws_forecasts()
     results['sources']['fema_nri'] = refresh_all_fema_nri()
     results['sources']['openfema_declarations'] = refresh_all_openfema_declarations()
-    results['sources']['openfema_nfip'] = refresh_all_openfema_nfip()
     results['sources']['openfema_hma'] = refresh_all_openfema_hma()
     results['sources']['noaa_storm_events'] = refresh_all_noaa_storm_events()
     results['sources']['nid_dam_inventory'] = refresh_all_nid_dam_inventory()

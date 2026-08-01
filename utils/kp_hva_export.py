@@ -147,8 +147,8 @@ def _build_kp_hazard_data(risk_data: dict, county_name: str) -> Dict[str, Dict[s
     flood_storm = storm_raw.get('flood', {})
     flood_risk = risk_data.get('flood_risk', 0.0)
     flood_hif = get_health_impact_factor(county_name, 'flood')
-    nfip = openfema_raw.get('nfip_claims', {})
-    nfip_claims = nfip.get('total_claims', 0) if nfip else 0
+    decl = openfema_raw.get('disaster_declarations') or {}
+    flood_decls = decl.get('by_incident_type', {}).get('Flood', 0)
 
     flood_human = _injuries_fatalities_to_kp_scale(
         flood_storm.get('injuries', 0), flood_storm.get('fatalities', 0)
@@ -157,7 +157,11 @@ def _build_kp_hazard_data(risk_data: dict, county_name: str) -> Dict[str, Dict[s
         flood_human = _health_factor_to_kp_scale(flood_hif)
 
     flood_prop_raw = flood_storm.get('property_damage', 0)
-    if nfip_claims > 50:
+    # Federal flood declarations imply damage that met federal loss
+    # thresholds; floor the property input when NOAA tallies undercount.
+    # (Replaced the NFIP claims trigger in August 2026 - claim counts track
+    # insurance participation, not flood losses.)
+    if flood_decls >= 2:
         flood_prop_raw = max(flood_prop_raw, 500_000)
     flood_property = _damage_to_kp_scale(flood_prop_raw, 'flood')
 
@@ -333,27 +337,17 @@ def _aggregate_storm_data_for_counties(counties: list) -> Dict[str, Dict[str, An
 
 
 def _aggregate_openfema_data_for_counties(counties: list) -> Dict[str, Any]:
-    total_nfip_claims = 0
-    total_nfip_payout = 0
     total_flood_decl = 0
-    has_nfip = False
     has_decl = False
 
     for county in counties:
         fema = _get_openfema_raw_data(county)
-        nfip = fema.get('nfip_claims')
-        if nfip:
-            has_nfip = True
-            total_nfip_claims += nfip.get('total_claims', 0)
-            total_nfip_payout += nfip.get('total_payout', 0)
         decl = fema.get('disaster_declarations')
         if decl:
             has_decl = True
             total_flood_decl += decl.get('by_incident_type', {}).get('Flood', 0)
 
     result = {}
-    if has_nfip:
-        result['nfip_claims'] = {'total_claims': total_nfip_claims, 'total_payout': total_nfip_payout}
     if has_decl:
         result['disaster_declarations'] = {'by_incident_type': {'Flood': total_flood_decl}}
     return result
@@ -379,8 +373,8 @@ def _build_kp_hazard_data_herc(risk_data: dict, counties: list) -> Dict[str, Dic
     flood_storm = storm_raw.get('flood', {})
     flood_risk = risk_data.get('flood_risk', 0.0)
     flood_hif = _avg_health_impact_factor(counties, 'flood')
-    nfip = openfema_raw.get('nfip_claims', {})
-    nfip_claims = nfip.get('total_claims', 0) if nfip else 0
+    decl = openfema_raw.get('disaster_declarations') or {}
+    flood_decls = decl.get('by_incident_type', {}).get('Flood', 0)
 
     flood_human = _injuries_fatalities_to_kp_scale(
         flood_storm.get('injuries', 0), flood_storm.get('fatalities', 0)
@@ -389,7 +383,8 @@ def _build_kp_hazard_data_herc(risk_data: dict, counties: list) -> Dict[str, Dic
         flood_human = _health_factor_to_kp_scale(flood_hif)
 
     flood_prop_raw = flood_storm.get('property_damage', 0)
-    if nfip_claims > 50:
+    # Regional aggregate: same declaration-based floor as the county path.
+    if flood_decls >= 2:
         flood_prop_raw = max(flood_prop_raw, 500_000)
     flood_property = _damage_to_kp_scale(flood_prop_raw, 'flood')
 

@@ -45,6 +45,8 @@ flood:
           source_id: samhsa_dtac
         - text: "Coordinate with Wisconsin DHS regional preparedness staff to confirm mutual-aid pathways for environmental-health and epidemiology surge"
           source_id: wi_dhs_preparedness
+        - text: "Complete the health module of the Wisconsin Flood Resilience Scorecard (P-03396) with planning and environmental-health partners and carry priority gaps into the agency flood annex"
+          source_id: wi_dhs_frs
 
       multi_year:
         - text: "Build a standing community health worker program for flood-prone neighborhoods focused on chronic-disease continuity and wellness checks after events"
@@ -67,6 +69,8 @@ flood:
           source_id: noaa_wrn
         - text: "Confirm coordination roles with the local health department, public works, school districts, and Wisconsin Emergency Management regional staff before the spring flood season"
           source_id: wem_resources
+        - text: "Review county and municipal flood exposure in the Wisconsin DHS RAFT interactive flood mapping tool to ground-truth local risk areas before the spring flood season"
+          source_id: wi_dhs_raft
 
       this_year:
         - text: "Update the county risk assessment to include flood-exposed critical facilities, repetitive-loss properties, and downstream populations of high-hazard dams"
@@ -77,6 +81,8 @@ flood:
           source_id: nws_stormready
         - text: "Integrate flood-mitigation projects (acquisitions, elevations, drainage upgrades) into the HMA grant pipeline using the current HMA Program and Policy Guide"
           source_id: fema_hma_guide_v2_1
+        - text: "Convene zoning, public works, and health partners to complete the Wisconsin Flood Resilience Scorecard and integrate its priority actions into the next hazard mitigation plan update"
+          source_id: wi_dhs_frs
 
       multi_year:
         - text: "Develop a multi-year acquisition and elevation strategy for repetitive-loss and severe-repetitive-loss properties in coordination with the floodplain administrator"

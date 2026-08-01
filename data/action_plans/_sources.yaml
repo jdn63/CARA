@@ -586,3 +586,19 @@ sources:
     url: "https://www.fema.gov/sites/default/files/2020-07/fema_325_public-assistance-debris-mgmt-plan_Guide_6-1-2007.pdf"
     verified: "2026-07-24"
     notes: "FEMA Public Assistance program guide for debris management planning, contracting, monitoring, and reimbursement after declared disasters; the foundational reference for pre-staged debris-removal contracts and mutual-aid debris agreements. FEMA removed the 2021-dated PDF path; this is the FEMA-hosted FEMA 325 guide (June 2007), whose policy content is carried forward in the current Public Assistance Program and Policy Guide."
+
+  # ---- Flood NFIP-retirement additions (v30.0) ------------------------
+
+  wi_dhs_frs:
+    title: "Wisconsin Flood Resilience Scorecard (P-03396)"
+    org: "Wisconsin Department of Health Services"
+    url: "https://www.dhs.wisconsin.gov/flood/frs.htm"
+    verified: "2026-08-01"
+    notes: "Municipal self-assessment developed by WI DHS Climate and Health with UW Sea Grant; three modules covering planning, community, and health dimensions of flood vulnerability, producing prioritized local resilience actions suitable for hazard mitigation plan and flood annex integration."
+
+  wi_dhs_raft:
+    title: "RAFT: Mapping Flood Resilience in Wisconsin"
+    org: "Wisconsin Department of Health Services"
+    url: "https://dhsgis.wi.gov/dhs/raft/"
+    verified: "2026-08-01"
+    notes: "WI DHS interactive flood GIS pairing statewide flood exposure layers with health and social vulnerability indicators; companion tool to the Flood Resilience Scorecard for ground-truthing local flood risk areas."

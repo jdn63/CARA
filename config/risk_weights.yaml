@@ -178,16 +178,17 @@ natural_hazards_resilience_inputs:
     housing_inverse: 0.10          # (1.0 - housing_transportation_svi) × 0.10
     # Plus hazard-specific base resilience factors
 
-# Climate Change Projection Multipliers (applied to exposure component)
-# Source: NOAA, IPCC AR6, WICCI 2021, EPA
-# Period: 2030-2050, Baseline: 1986-2005, Scenario: RCP4.5/SSP2-4.5
-# Region-specific values stored in data/climate/natural_hazard_climate_projections.json
-climate_projection_ranges:
-  flood: [1.15, 1.25]        # Increased heavy precipitation events
-  tornado: [1.08, 1.15]      # Increased convective instability
-  winter_storm: [1.05, 1.12] # More intense storms, ice storm increase +25%
-  thunderstorm: [1.12, 1.22] # Increased severe storm environments (hail + lightning)
-  straight_line_wind: [1.18, 1.30] # EPA/NOAA: severe convective wind, derecho frequency increase
+# Climate Change Projection Multipliers - RETIRED August 2026
+# The static per-zone projection multipliers (flood 1.15-1.25, tornado
+# 1.08-1.15, winter storm 1.05-1.12, thunderstorm 1.12-1.22, straight-line
+# wind 1.18-1.30) were removed from all hazard exposure formulas: they
+# applied one literature constant to every county in a three-zone map,
+# creating score differences no local measurement supported.  Climate signal
+# now comes from OBSERVED NOAA nClimDiv county trends (utils/climate_trends.py):
+# flood carries a measured precipitation-trend percentile, extreme heat and
+# vector-borne disease use each county's measured warming.  The retired
+# weights moved onto each hazard's measured NOAA storm-events percentile.
+# See the methodology page climate section for the full disclosure.
 
 # Health Metrics Sub-domain Weights (within health_metrics domain)
 health_metrics_weights:

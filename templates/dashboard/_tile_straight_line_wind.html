@@ -16,12 +16,12 @@
 ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ') &times; (1.5 - ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ') &times; ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.straight_line_wind_risk) ~ '</div>'
 ~ '<ul class="component-list">'
-~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' (NOAA Storm Events wind bucket &times; ' ~ "%.2f"|format(risk_data.straight_line_wind_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.exposure) ~ ' (NOAA events 70%, derecho corridor 30%)</li>'
 ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.vulnerability) ~ ' (mobile-home stock dominant + tree-fall + SVI)</li>'
 ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
 ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.straight_line_wind_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
 ~ '</ul>'
-~ '<div class="data-source">Sources: NOAA Storm Events (Thunderstorm Wind / Strong Wind / High Wind / Funnel Cloud, trailing 20 years), NOAA SPC derecho climatology, FEMA NRI (tract table retrieved 2025), NOAA/WICCI projections, CDC SVI 2022, U.S. Census ACS 2022 (mobile-home stock)</div>'
+~ '<div class="data-source">Sources: NOAA Storm Events (Thunderstorm Wind / Strong Wind / High Wind / Funnel Cloud, trailing 20 years), NOAA SPC derecho climatology, FEMA NRI (tract table retrieved 2025), CDC SVI 2022, U.S. Census ACS 2022 (mobile-home stock)</div>'
 ) }}
 {% endif %}
 </h6>

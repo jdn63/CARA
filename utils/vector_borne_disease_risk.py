@@ -110,14 +110,31 @@ def _get_seasonal_factor() -> float:
     return max(0.15, min(1.0, combined))
 
 
-def _get_climate_multiplier(baseline: Dict[str, Any]) -> float:
-    climate = baseline.get('climate_impact', {})
-    tick_mult = climate.get('tick_range_expansion', {}).get('multiplier', 1.15)
-    season_mult = climate.get('extended_season', {}).get('multiplier', 1.10)
-    mosquito_mult = climate.get('mosquito_habitat', {}).get('multiplier', 1.12)
+def _get_climate_multiplier(county_name: str) -> float:
+    """Observed-warming amplifier for the climate_trend exposure component.
 
-    combined = (tick_mult * 0.50) + (season_mult * 0.30) + (mosquito_mult * 0.20)
-    return combined
+    August 2026: replaced static literature constants (tick-range 1.15,
+    extended-season 1.10, mosquito-habitat 1.12, blended to about 1.13 for
+    every county) with the county's own measured warming from the baked
+    NOAA nClimDiv snapshot.  Tick season length and habitat suitability
+    track temperature; 0.05 per degree F of observed warming is a
+    conservative linearization, capped at 1.20.
+
+    Neutral 1.0 when the snapshot is unavailable or the county shows no
+    warming - no fabricated boost.  The reliability gate downstream
+    (H9) still suppresses or halves this term when case counts are too
+    small to support a stable rate.
+    """
+    try:
+        from utils.climate_trends import get_tavg_trend_info
+        info = get_tavg_trend_info(county_name)
+        if not info:
+            return 1.0
+        delta = max(0.0, info['delta_f'])
+        return min(1.20, 1.0 + (delta * 0.05))
+    except Exception as e:
+        logger.debug(f"nClimDiv warming lookup failed for {county_name}: {e}")
+        return 1.0
 
 
 def get_all_svi_themes(county_name: str) -> Dict[str, float]:
@@ -176,7 +193,7 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
     seasonal_factor = _get_seasonal_factor()
-    climate_mult = _get_climate_multiplier(baseline)
+    climate_mult = _get_climate_multiplier(county_name)
 
     # Defaults for shrinkage / reliability metadata (overwritten when real
     # data is available; kept here so the metrics dict has a stable shape
@@ -450,7 +467,7 @@ def calculate_vector_borne_disease_risk(county_name: str, discipline: str = 'pub
         'CDC Social Vulnerability Index (SVI)',
         'FEMA NRI Community Resilience (HVRI BRIC index)',
         'U.S. Census Bureau ACS Demographics',
-        'NOAA/WICCI Climate Projections'
+        'NOAA nClimDiv Observed County Temperature Trend (climate amplifier)'
     ]
 
     return {

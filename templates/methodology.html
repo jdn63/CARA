@@ -124,9 +124,9 @@
                             <td>Federal disaster declarations for Wisconsin counties; flood, tornado, winter storm, thunderstorm declaration counts</td>
                         </tr>
                         <tr>
-                            <td><strong>OpenFEMA NFIP Redacted Claims v2</strong></td>
-                            <td><span class="badge bg-info text-dark">Weekly (scheduler cache)</span></td>
-                            <td>National Flood Insurance Program claims by county; total payments and claim counts for flood risk</td>
+                            <td><strong>NOAA nClimDiv County Climate Trends</strong></td>
+                            <td><span class="badge bg-secondary">Static (baked snapshot)</span></td>
+                            <td>Observed county precipitation and temperature: recent 15-year means (2011-2025) vs each county's own 1951-2000 baseline, from the NOAA Climate at a Glance county time series. Drives the flood precipitation-trend term, the extreme-heat trend, and the vector-borne climate amplifier</td>
                         </tr>
                         <tr>
                             <td><strong>OpenFEMA Hazard Mitigation Assistance Projects v4</strong></td>
@@ -139,9 +139,9 @@
                             <td>Population aged 65+ (%), mobile home %, population density for vulnerability calculations</td>
                         </tr>
                         <tr>
-                            <td><strong>Climate Projection Data</strong> (NOAA/IPCC AR6/WICCI/EPA)</td>
+                            <td><strong>NOAA Storm Events Thunderstorm Severity Index</strong></td>
                             <td><span class="badge bg-secondary">Static</span></td>
-                            <td>Climate zone multipliers in JSON data files for natural hazards and heat projections</td>
+                            <td>County thunderstorm severity index derived from 20 years of NOAA event records. Retained after the August 2026 retirement of the static climate-projection multipliers because it is measured, not projected</td>
                         </tr>
                         <tr>
                             <td><strong>Gun Violence Archive (GVA) Wisconsin export 2016-2026</strong></td>
@@ -286,7 +286,7 @@
                         <tr><td>Air Quality</td><td><strong>12%</strong></td><td class="small">Growing impact from increasing wildfire smoke episodes (EPA); geographically uneven across WI</td></tr>
                         <tr><td>Extreme Heat</td><td><strong>11%</strong></td><td class="small">Leading weather-related cause of death nationally (NOAA); tempered by WI's northern latitude</td></tr>
                         <tr><td>Dam Failure</td><td><strong>7%</strong></td><td class="small">Standalone EVR domain using WI DNR/USACE NID dam inventory; downstream population inundation exposure</td></tr>
-                        <tr><td>Vector-Borne Disease</td><td><strong>7%</strong></td><td class="small">Lyme disease and West Nile Virus; real county-level incidence rates from WI DHS EPHT with climate range expansion projections</td></tr>
+                        <tr><td>Vector-Borne Disease</td><td><strong>7%</strong></td><td class="small">Lyme disease and West Nile Virus; real county-level incidence rates from WI DHS EPHT with an observed county-warming amplifier (NOAA nClimDiv)</td></tr>
                     </tbody>
                     <tfoot>
                         <tr class="table-light"><td><strong>Total</strong></td><td><strong>100%</strong></td><td></td></tr>
@@ -384,12 +384,12 @@
 
             <h6>EVR Components by Hazard</h6>
             <ul>
-                <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and OpenFEMA NFIP claims. Climate change projection multipliers from <code>data/climate/natural_hazard_climate_projections.json</code> are applied per hazard type. Each exposure component is held on its native 0-1 scale with a single layer of documented weights (no hidden pre-scaling). NOAA event counts and NFIP claim counts are normalized to events-per-year and percentile-ranked across all 72 Wisconsin counties so large urban counties do not dominate by area alone. For flood: NRI 30%, NOAA storm-events percentile 20%, NFIP claims percentile 10%, water body proximity 15%, flat terrain 5%, precipitation 5%, climate trend 5%. Tornado, winter storm, and thunderstorm exposures use the same single-weight-layer pattern, each with a NOAA storm-events percentile term (tornado 25%, winter storm 15%, thunderstorm 20%).</li>
+                <li><strong>Exposure:</strong> FEMA NRI baseline scores supplemented by NOAA Storm Events historical counts and property damage. Each exposure component is held on its native 0-1 scale with a single layer of documented weights (no hidden pre-scaling). NOAA event counts and property-damage totals are normalized to per-year rates and percentile-ranked across all 72 Wisconsin counties so large urban counties do not dominate by area alone. For flood: NRI 30%, NOAA storm-events percentile 20%, NOAA flood property-damage percentile 10%, water body proximity 15%, flat terrain 5%, precipitation patterns 5%, observed precipitation trend 5% (NOAA nClimDiv county measurement). Tornado, winter storm, and thunderstorm exposures use the same single-weight-layer pattern, each with a NOAA storm-events percentile term (tornado 35%, winter storm 30%, thunderstorm 40%); straight-line wind weights NOAA events 70% and derecho-corridor climatology 30%. Static climate-projection multipliers were retired from every hazard formula in August 2026 (see the climate section below).</li>
                 <li><strong>Vulnerability:</strong> All 4 CDC SVI themes with hazard-specific calibrated weights, plus Census ACS demographics (population aged 65+ (%), mobile home %, population density)</li>
                 <li><strong>Resilience:</strong> FEMA National Risk Index Community Resilience score (University of South Carolina HVRI Baseline Resilience Indicators for Communities, BRIC), aggregated from census tracts to the county mean and mapped linearly onto the EVR range [0.1, 0.9]. The EVR formula uses a <code>(1.5 - Resilience)</code> bounded linear modifier rather than a divisor: it is neutral (1.0x) at average resilience, magnifies risk for below-average resilience, and genuinely attenuates risk below the exposure-times-vulnerability baseline for above-average resilience. Earlier versions of CARA derived Resilience from inverse SVI socioeconomic and housing scores; because those same SVI themes also raise the Vulnerability term, one signal amplified risk twice (an external review finding). Adopting FEMA's own published community-resilience measure eliminates the direct reuse of SVI on both sides of the formula and mirrors the FEMA NRI pairing of social vulnerability with community resilience. Note that BRIC includes some socioeconomic components by design; the fix removes direct SVI reuse, it does not claim a purely non-demographic index. Hard-coded county bonus lists remain removed; the only remaining additive credits are citable per-entity facts (dam Emergency Action Plans from the National Inventory of Dams, and the statutory regional hazmat team under Wis. Stat. 323.13).</li>
             </ul>
             <div class="alert alert-secondary mb-0 mt-2">
-                <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. An additive +0.10 urban stormwater boost (capped at the 1.0 exposure ceiling) is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. When the NFIP cross-county cache is empty, the NFIP weight is dropped and the remaining flood weights renormalize so missing data does not silently lower every county's flood score.
+                <strong>Flood Exposure: Urban Stormwater Adjustment.</strong> FEMA NRI is calibrated primarily on riverine and coastal flooding. Wisconsin's densely urbanized southeastern counties (Milwaukee, Racine, Kenosha, Waukesha, Ozaukee, Washington) experience significant stormwater runoff and aging combined sewer overflow flooding that NRI does not measure. An additive +0.10 urban stormwater boost (capped at the 1.0 exposure ceiling) is applied to these counties, reflecting high impervious surface coverage and documented sewer infrastructure limitations. When a cross-county input is unavailable (NOAA storm-event rates, flood property damage, or the nClimDiv precipitation-trend snapshot), that term is dropped and the remaining flood weights renormalize so missing data does not silently lower every county's flood score.
             </div>
 
             <h6 class="mt-3">SVI Vulnerability Weights by Hazard Type</h6>
@@ -486,22 +486,42 @@
                 </table>
             </div>
 
-            <h6 class="mt-3">Climate Change Projections</h6>
-            <p>Wisconsin is divided into <strong>3 climate zones</strong> (Southern, Central, Northern) with RCP4.5/SSP2-4.5 scenario projections applied as exposure multipliers:</p>
+            <h6 class="mt-3">Climate Signal: Observed County Trends (Projection Multipliers Retired)</h6>
+            <div class="alert alert-info p-2 mb-3">
+                <strong>Retired multipliers (August 2026):</strong> earlier versions of CARA applied static
+                climate-projection exposure multipliers (flood +15-25%, tornado +8-15%, winter storm +5-12%,
+                thunderstorm +12-22%, straight-line wind +18-30%) through a three-zone map of Wisconsin. Every
+                county in a zone received the same literature constant, so the multipliers created score
+                differences no local measurement supported; the straight-line wind term even added the same
+                capped boost to all 72 counties while presenting itself as county projection detail. All static
+                hazard multipliers were removed from the exposure formulas and their weight moved onto each
+                hazard's measured NOAA storm-events percentile.
+                In the same release, <strong>NFIP flood-insurance claims were retired</strong> from the flood
+                score, the flood trend, and the dam-failure flood proxy. NFIP claim counts measure insurance
+                participation, not flood hazard: per the Wisconsin Policy Forum (August 2025), participation
+                ranges from 60.3 policies per 10,000 residents in Door County to 6.5 in Taylor County and zero
+                in Menominee County, so counties where few residents can buy in were structurally scored as
+                low-risk regardless of their actual flood history. Replacements: NOAA storm-event flood property
+                damage (percentile), OpenFEMA federal flood-declaration history, and observed NOAA nClimDiv
+                precipitation trends.
+            </div>
+            <p>Climate signal now comes from <strong>observed NOAA nClimDiv county records</strong> (Climate at a
+            Glance county time series), baked as a versioned snapshot that compares each county's recent 15 years
+            (2011-2025) against its own 1951-2000 baseline:</p>
             <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                     <thead class="table-light">
                         <tr>
-                            <th>Hazard Type</th>
-                            <th>Projected Change Range</th>
-                            <th>Source</th>
+                            <th>Where used</th>
+                            <th>Observed input</th>
+                            <th>How it enters the score</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Flood</td><td>+15% to +25%</td><td>NOAA/WICCI</td></tr>
-                        <tr><td>Tornado</td><td>+8% to +15%</td><td>NOAA/IPCC AR6</td></tr>
-                        <tr><td>Winter Storm</td><td>+5% to +12%</td><td>NOAA/WICCI</td></tr>
-                        <tr><td>Thunderstorm</td><td>+12% to +22%</td><td>NOAA/WICCI</td></tr>
+                        <tr><td>Flood exposure</td><td>County precipitation change (statewide range roughly 0% to +21%)</td><td>Percentile-ranked across all 72 counties, 5% weight; dropped and renormalized when unavailable</td></tr>
+                        <tr><td>Extreme heat trend (BSTA)</td><td>County mean-temperature change (&deg;F)</td><td>0.5 neutral, +0.15 per &deg;F of observed warming, clamped to 0.35-0.85</td></tr>
+                        <tr><td>Vector-borne disease</td><td>County mean-temperature change (&deg;F)</td><td>Amplifier 1.0 + 0.05 per &deg;F of observed warming, capped at 1.20; neutral 1.0 when unavailable</td></tr>
+                        <tr><td>Tornado / winter storm / thunderstorm / straight-line wind</td><td>None</td><td>No county-level climate term: projection confidence at county scale is insufficient, so measured NOAA event history carries the weight instead</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -845,7 +865,7 @@
                             <td><strong>Trend</strong></td>
                             <td><strong>15%</strong></td>
                             <td>Not used</td>
-                            <td>Medium-term directional changes from NOAA Storm Events (10-20 year event-frequency trends), OpenFEMA NFIP claims, NOAA/WICCI/IPCC climate projections, and Census ACS demographic aging. Infectious disease replaces Trend with Acute (county-level multi-year ID trend signal is too noisy to be useful).</td>
+                            <td>Medium-term directional changes from NOAA Storm Events (10-20 year event-frequency trends), NOAA nClimDiv observed county climate trends (extreme heat), and Census ACS demographic aging. Infectious disease replaces Trend with Acute (county-level multi-year ID trend signal is too noisy to be useful).</td>
                         </tr>
                         <tr>
                             <td><strong>Acute</strong></td>

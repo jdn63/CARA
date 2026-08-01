@@ -77,33 +77,52 @@ def _get_nid_cached_data(county_name: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _get_nfip_flood_proxy(county_name: str) -> float:
+def _get_flood_declaration_factor(county_name: str) -> float:
+    """Flood-history factor from federal disaster declarations.
+
+    August 2026: replaced the NFIP claims proxy.  NFIP claim counts track
+    flood-insurance participation, not flood hazard - Menominee County has
+    zero possible claims (no NFIP policies in force) yet two federal flood
+    declarations on record.  Disaster declarations are recorded uniformly
+    for every county regardless of insurance uptake (OpenFEMA Disaster
+    Declarations Summaries, 1953-present).
+
+    Counts 'Flood' and 'Dam/Levee Break' incident types only ('Severe
+    Storm' is excluded as too broad).  Scale: 0.05 floor when the cache is
+    present but shows zero flood declarations (a true low signal), plus
+    0.05 per declaration, capped at 0.45 to preserve the old proxy's
+    output range so downstream weighting is unchanged.  Neutral 0.15 when
+    the cache is unavailable (missing data is not evidence of low risk).
+    """
     try:
         from flask import has_app_context
         if not has_app_context():
             return 0.15
         from utils.data_cache_manager import get_cached_data
-        cached = get_cached_data('openfema_nfip_claims', county_name=county_name)
+        cached = get_cached_data('openfema_disaster_declarations', county_name=county_name)
         if cached and cached.get('data'):
-            total_claims = cached['data'].get('total_claims', 0)
-            if total_claims > 0:
-                return min(0.45, max(0.05, total_claims / 500.0))
+            by_type = cached['data'].get('by_incident_type', {}) or {}
+            flood_decls = sum(
+                count for itype, count in by_type.items()
+                if itype in ('Flood', 'Dam/Levee Break')
+            )
+            return min(0.45, 0.05 + (flood_decls * 0.05))
     except Exception as e:
-        logger.debug(f"NFIP flood proxy lookup failed for {county_name}: {e}")
+        logger.debug(f"Flood declaration factor lookup failed for {county_name}: {e}")
     return 0.15
 
 
 def _get_county_dam_data(county_name: str) -> Dict[str, Any]:
     nid_data = _get_nid_cached_data(county_name)
     if nid_data:
-        flood_overlap = _get_nfip_flood_proxy(county_name)
+        flood_history = _get_flood_declaration_factor(county_name)
         return {
             'total_dams': nid_data.get('total_dams', 0),
             'high_hazard': nid_data.get('high_hazard', 0),
             'significant_hazard': nid_data.get('significant_hazard', 0),
             'low_hazard': nid_data.get('low_hazard', 0),
             'has_eap': nid_data.get('has_eap', False),
-            'flood_zone_overlap': flood_overlap,
+            'flood_history_factor': flood_history,
             'data_source': 'NID',
             'total_storage_acre_ft': nid_data.get('total_storage_acre_ft', 0),
             'max_dam_height_ft': nid_data.get('max_dam_height_ft', 0),
@@ -114,6 +133,8 @@ def _get_county_dam_data(county_name: str) -> Dict[str, Any]:
     county_data = inventory.get('county_dam_data', {}).get(county_name)
     if county_data:
         result = dict(county_data)
+        result.pop('flood_zone_overlap', None)  # retired key, if present
+        result['flood_history_factor'] = _get_flood_declaration_factor(county_name)
         result['data_source'] = 'static_json'
         return result
 
@@ -123,7 +144,7 @@ def _get_county_dam_data(county_name: str) -> Dict[str, Any]:
         'significant_hazard': 3,
         'low_hazard': 6,
         'has_eap': False,
-        'flood_zone_overlap': 0.15,
+        'flood_history_factor': 0.15,
         'data_source': 'fallback'
     }
 
@@ -383,18 +404,18 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
     significant_hazard_ratio = dam_data['significant_hazard'] / max(1, dam_data['total_dams'])
     hazard_severity = min(1.0, (high_hazard_ratio * 0.7) + (significant_hazard_ratio * 0.3))
 
-    flood_zone_overlap = dam_data.get('flood_zone_overlap', 0.15)
+    flood_history_factor = dam_data.get('flood_history_factor', 0.15)
 
     exposure_factors = {
         'dam_density': dam_density,
         'hazard_classification': hazard_severity,
-        'flood_zone_overlap': flood_zone_overlap
+        'flood_history_factor': flood_history_factor
     }
 
     exposure_score = min(1.0, (
         (dam_density * 0.35) +
         (hazard_severity * 0.40) +
-        (flood_zone_overlap * 0.25)
+        (flood_history_factor * 0.25)
     ))
 
     downstream_result = _compute_downstream_population_exposure(county_name, census, dam_data)
@@ -459,7 +480,7 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
         'significant_hazard_dams': dam_data['significant_hazard'],
         'low_hazard_dams': dam_data['low_hazard'],
         'has_emergency_action_plan': dam_data.get('has_eap', False),
-        'flood_zone_overlap_pct': round(flood_zone_overlap * 100, 1),
+        'flood_history_factor_pct': round(flood_history_factor * 100, 1),
         'downstream_population_exposure': round(downstream_pop_exposure, 2),
         'estimated_pct_population_exposed': round(downstream_pop_exposure * 100, 1),
         'elderly_vulnerability_pct': round(census['elderly_pct'], 1),
@@ -499,7 +520,7 @@ def calculate_dam_failure_risk(county_name: str, discipline: str = 'public_healt
     data_sources = [
         'WI DNR Dam Safety Database (primary, ~4,100 active dams, weekly cache)',
         'USACE National Inventory of Dams (fallback)',
-        'OpenFEMA NFIP Claims - Flood Zone Overlap Proxy',
+        'OpenFEMA Disaster Declarations - County Flood History Factor',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'FEMA NRI Community Resilience (HVRI BRIC index)',
         'U.S. Census Bureau ACS - Demographics',

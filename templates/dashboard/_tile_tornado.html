@@ -16,7 +16,7 @@
 ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.tornado_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.tornado_components.vulnerability) ~ ') × (1.5 - ' ~ "%.3f"|format(risk_data.tornado_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.tornado_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.tornado_risk) ~ '</div>'
 ~ '<ul class="component-list">'
-~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.tornado_components.exposure) ~ ' (FEMA NRI × ' ~ "%.2f"|format(risk_data.tornado_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.tornado_components.exposure) ~ ' (NRI 40%, NOAA events 35%, alley proximity 15%, terrain 10%)</li>'
 ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.tornado_components.vulnerability) ~ ' (4 SVI themes + Census demographics)</li>'
 ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.tornado_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
 ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.tornado_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'

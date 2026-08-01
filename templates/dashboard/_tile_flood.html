@@ -16,12 +16,12 @@
 ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.flood_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.flood_components.vulnerability) ~ ') × (1.5 - ' ~ "%.3f"|format(risk_data.flood_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.flood_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.flood_risk) ~ '</div>'
 ~ '<ul class="component-list">'
-~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.flood_components.exposure) ~ ' (FEMA NRI × ' ~ "%.2f"|format(risk_data.flood_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.flood_components.exposure) ~ ' (NRI 30%, NOAA events 20%, storm damage 10%, water proximity 15%, terrain 5%, precip 5%, observed precip trend 5%)</li>'
 ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.flood_components.vulnerability) ~ ' (4 SVI themes + Census demographics)</li>'
 ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.flood_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
 ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.flood_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
 ~ '</ul>'
-~ '<div class="data-source">Sources: FEMA NRI (tract table retrieved 2025), OpenFEMA NFIP Claims (weekly cache), NOAA Storm Events (trailing 20 years), CDC SVI 2022, U.S. Census ACS 2022</div>'
+~ '<div class="data-source">Sources: FEMA NRI (tract table retrieved 2025), NOAA Storm Events incl. property damage (trailing 20 years), NOAA nClimDiv county precipitation trends (1951-2025), OpenFEMA Disaster Declarations (weekly cache), CDC SVI 2022, U.S. Census ACS 2022</div>'
 ) }}
 {% endif %}
 </h6>
@@ -109,10 +109,10 @@
                                         <td>Property Damage</td>
                                         <td>{% if fm.flood_property_damage is not none %}{{ fm.flood_property_damage }}{% else %}Pending{% endif %}</td>
                                     </tr>
-                                    {% if fm.nfip_claims_total is not none %}
+                                    {% if fm.precip_trend_pct_change is not none %}
                                     <tr>
-                                        <td>NFIP Claims (FEMA)</td>
-                                        <td>{{ fm.nfip_claims_total }} ({{ fm.nfip_total_payout|default('$0', true) }})</td>
+                                        <td>Precipitation Trend (Observed)</td>
+                                        <td>{{ fm.precip_trend_pct_change }} <small class="text-muted">{{ fm.precip_trend_period|default('', true) }}</small></td>
                                     </tr>
                                     {% endif %}
                                     {% if fm.federal_flood_declarations is not none %}

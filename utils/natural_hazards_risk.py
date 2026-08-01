@@ -8,6 +8,8 @@ from utils.risk_calculation import (calculate_residual_risk,
                                     get_community_resilience,
                                     get_health_impact_factor)
 from utils.svi_data import get_svi_data
+from utils.climate_trends import (get_precip_trend_info,
+                                  get_precip_trend_percentile)
 
 logger = logging.getLogger(__name__)
 
@@ -16,29 +18,27 @@ _thunderstorm_severity_cache = None
 _real_data_cache = {}
 
 # Bulk-loaded cross-county rate caches.  Populated on first lookup; each entry
-# maps county_name -> events-per-year (NOAA) or claims-per-year (NFIP).
-# Used by the percentile-normalization helpers below so that raw NOAA/NFIP
+# maps county_name -> events-per-year or property-damage-per-year (NOAA).
+# Used by the percentile-normalization helpers below so that raw NOAA
 # counts contribute to exposure scores on a comparable 0-1 scale across the
 # 72 Wisconsin counties.  Without normalization, large urban counties would
 # dominate every hazard simply because more events occur in larger areas.
 # Time-stamped cross-county rate caches.  Each entry is (built_at_epoch, data)
 # so the caches can self-expire after _RATE_CACHE_TTL_SECONDS instead of
-# locking in process-lifetime stale data.  In particular, an empty NFIP cache
-# (when the underlying OpenFEMA cache has not yet been populated by the
-# scheduler) must not persist forever — once the scheduler refresh lands,
+# locking in process-lifetime stale data — once a scheduler refresh lands,
 # the next request after TTL expiry will rebuild and pick up the new data.
+# Event-count entries are keyed by the bare category name; property-damage
+# entries are keyed 'damage:<category>'.
 _RATE_CACHE_TTL_SECONDS = 3600  # 1 hour
 _storm_rate_cache: Dict[str, Tuple[float, Dict[str, float]]] = {}
-_nfip_rate_cache: Optional[Tuple[float, Dict[str, float]]] = None
 
 
 def reset_rate_caches() -> None:
-    """Clear cross-county NOAA/NFIP rate caches.  Call after the scheduler
-    refreshes underlying noaa_storm_events or openfema caches so dashboards
-    pick up the new data immediately rather than waiting out the TTL."""
-    global _nfip_rate_cache
+    """Clear cross-county NOAA rate caches (event counts and property
+    damage).  Call after the scheduler refreshes the underlying
+    noaa_storm_events cache so dashboards pick up the new data immediately
+    rather than waiting out the TTL."""
     _storm_rate_cache.clear()
-    _nfip_rate_cache = None
     logger.info("Natural-hazards cross-county rate caches reset")
 
 # Wisconsin county list (72 counties).  Mirrors WI_COUNTY_FIPS_3DIGIT in
@@ -153,85 +153,75 @@ def _get_storm_rate_percentile(county_name: str, category: str) -> Optional[floa
     return max(0.0, min(1.0, pct))
 
 
-def _build_nfip_rate_cache() -> Dict[str, float]:
-    """Build a {county -> NFIP-claims-per-year} map across all 72 counties.
-    Cached for _RATE_CACHE_TTL_SECONDS so empty-cache states don't lock in.
+def _build_storm_damage_rate_cache(category: str) -> Dict[str, float]:
+    """Build a {county -> property-damage-dollars-per-year} map for one NOAA
+    hazard category across all 72 counties.  Cached in _storm_rate_cache
+    under 'damage:<category>' for _RATE_CACHE_TTL_SECONDS.
 
-    Always returns an entry for every county in _WI_COUNTIES (0.0 when that
-    county has no NFIP claims) so the percentile denominator is the full
-    statewide distribution.  Returns {} only if the OpenFEMA cache is
-    completely unpopulated for every county."""
-    global _nfip_rate_cache
-    if _nfip_rate_cache is not None:
-        built_at, cached = _nfip_rate_cache
+    Replaced the NFIP claims-per-year cache in August 2026: NFIP claim
+    counts track flood INSURANCE PARTICIPATION, not flood hazard.  WI Policy
+    Forum (Aug 2025) documents Door County at 60.3 policies per 10k
+    residents vs Taylor County at 6.5 and Menominee County at zero — so the
+    old signal rewarded insurance uptake and structurally zeroed counties
+    where nobody can buy in.  NOAA storm-event property damage measures the
+    hazard itself, uniformly recorded for all counties.
+
+    Always returns an entry for every county (0.0 when no damage recorded)
+    so the percentile denominator is the full statewide distribution.
+    Returns {} only when the NOAA cache is unpopulated for every county."""
+    cache_key = f"damage:{category}"
+    entry = _storm_rate_cache.get(cache_key)
+    if entry is not None:
+        built_at, cached = entry
         if (time.time() - built_at) < _RATE_CACHE_TTL_SECONDS:
             return cached
 
     rates: Dict[str, float] = {county: 0.0 for county in _WI_COUNTIES}
     try:
-        from utils.openfema_data import get_county_openfema_summary
+        from utils.noaa_storm_events import get_county_storm_summary
     except Exception as e:
-        logger.warning(f"OpenFEMA module unavailable: {e}")
-        _nfip_rate_cache = (time.time(), {})
+        logger.warning(f"NOAA storm events module unavailable: {e}")
+        _storm_rate_cache[cache_key] = (time.time(), {})
         return {}
 
-    # NFIP claims data goes back to program inception (1978).  Use a
-    # conservative 30-year window to convert totals to a rate; the exact
-    # window matters less than the cross-county ordering for percentile rank.
-    NFIP_YEARS = 30
     any_data_found = False
-    any_nonzero = False
     for county in _WI_COUNTIES:
-        summary = get_county_openfema_summary(county)
-        if summary is None:
+        summary = get_county_storm_summary(county)
+        if not summary:
             continue
         any_data_found = True
-        nfip = summary.get('nfip_claims') or {}
-        total = nfip.get('total_claims', 0) or 0
-        if total > 0:
-            rates[county] = total / NFIP_YEARS
-            any_nonzero = True
+        years = _parse_years_covered(summary.get('years_covered'))
+        cat = summary.get('by_category', {}).get(category, {})
+        damage = cat.get('property_damage', 0) or 0
+        rates[county] = damage / max(1, years)
 
-    # If no county returned a summary at all, treat as unavailable so
-    # callers drop the NFIP term and renormalize.
     final = rates if any_data_found else {}
-    _nfip_rate_cache = (time.time(), final)
-    if any_nonzero:
+    _storm_rate_cache[cache_key] = (time.time(), final)
+    if final:
+        nonzero = sum(1 for v in final.values() if v > 0)
         logger.info(
-            f"Built NFIP rate cache: "
-            f"{sum(1 for v in final.values() if v > 0)} counties have claims"
-        )
-    elif any_data_found:
-        logger.info(
-            "NFIP rate cache built with all zeros (no claims data in cache "
-            "yet); flood exposure will renormalize remaining weights"
-        )
-    else:
-        logger.info(
-            "NFIP rate cache empty (OpenFEMA cache unpopulated); flood "
-            "exposure will renormalize remaining weights"
+            f"Built storm-damage rate cache for '{category}': "
+            f"{nonzero}/{len(final)} counties have recorded damage"
         )
     return final
 
 
-def _get_nfip_rate_percentile(county_name: str) -> Optional[float]:
-    """Return the percentile rank (0-1) of this county's NFIP claims-per-year
-    against all 72 Wisconsin counties.
+def _get_storm_damage_percentile(county_name: str, category: str) -> Optional[float]:
+    """Return the percentile rank (0-1) of this county's property-damage-per-
+    year for the given NOAA category, relative to all 72 Wisconsin counties.
 
-    Returns None when the cross-county cache is unavailable (OpenFEMA not
-    populated at all) OR when no county has any claims yet — in both cases
-    the NFIP signal carries no information and callers should drop the term
-    and renormalize the remaining flood-exposure weights.
+    Returns None when the cross-county data is unavailable (NOAA cache not
+    populated) OR when no county has any recorded damage in this category —
+    in both cases the damage signal carries no information and callers
+    should drop the term and renormalize the remaining exposure weights.
 
-    Returns 0.0 only when the cache contains real claim data for some
-    counties but this specific county has zero claims (true low signal).
+    Returns 0.0 only when other counties have real recorded damage but this
+    county has none (a true low-loss signal, not missing data).
     """
-    rates = _build_nfip_rate_cache()
+    rates = _build_storm_damage_rate_cache(category)
     if not rates:
         return None
 
-    # If the statewide distribution is all zeros, NFIP has no discriminating
-    # signal yet — treat as missing rather than slamming every county to 0.
     if not any(v > 0 for v in rates.values()):
         return None
 
@@ -256,7 +246,8 @@ def _weighted_exposure_with_optional(
     Components whose value is None are treated as missing data: their weight
     is removed and the remaining weights are renormalized pro-rata so they
     still sum to the original total.  This prevents missing data sources
-    (e.g. an empty NFIP cache) from silently dragging exposure scores down.
+    (e.g. an unpopulated NOAA cross-county cache or a missing nClimDiv
+    snapshot) from silently dragging exposure scores down.
 
     additive_boost is added after the weighted sum and clamped to [0,1].  Used
     by flood exposure for the urban-stormwater factor, which the methodology
@@ -332,7 +323,7 @@ def load_climate_projections() -> Dict[str, Any]:
         if os.path.exists(path):
             with open(path) as f:
                 _climate_projections_cache = json.load(f)
-            logger.info("Loaded climate projections for natural hazards")
+            logger.info("Loaded climate data file (thunderstorm severity index)")
             return _climate_projections_cache
     except Exception as e:
         logger.warning(f"Error loading climate projections: {e}")
@@ -341,25 +332,13 @@ def load_climate_projections() -> Dict[str, Any]:
     return _climate_projections_cache
 
 
-def get_climate_zone(county_name: str) -> str:
-    projections = load_climate_projections()
-    zones = projections.get('county_climate_zones', {})
-    for zone, counties in zones.items():
-        if county_name in counties:
-            return zone
-    return 'central_wisconsin'
-
-
-def get_climate_multiplier(county_name: str, hazard_type: str) -> float:
-    projections = load_climate_projections()
-    hazard_data = projections.get(hazard_type, {})
-
-    base_multiplier = hazard_data.get('exposure_multiplier', 1.0)
-    regional = hazard_data.get('regional_variation', {})
-    zone = get_climate_zone(county_name)
-    regional_multiplier = regional.get(zone, base_multiplier)
-
-    return regional_multiplier
+# get_climate_zone / get_climate_multiplier were removed in August 2026 when
+# the static climate-projection exposure multipliers were retired: they
+# applied one literature constant to every county in a three-zone map, which
+# created score differences no local measurement supported.  Observed NOAA
+# nClimDiv county trends (utils/climate_trends.py) now carry climate signal
+# where measurement supports it (flood precipitation trend, extreme-heat
+# temperature trend); the methodology page documents the retirement.
 
 
 def get_thunderstorm_severity(county_name: str) -> float:
@@ -408,7 +387,7 @@ def _get_real_openfema_data(county_name: str) -> Dict[str, Any]:
         return data
     except Exception as e:
         logger.debug(f"OpenFEMA data not available for {county_name}: {e}")
-        data = {"disaster_declarations": None, "nfip_claims": None, "hma_projects": None}
+        data = {"disaster_declarations": None, "hma_projects": None}
         _real_data_cache[cache_key] = data
         return data
 
@@ -462,7 +441,6 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
 
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
-    climate_mult = get_climate_multiplier(county_name, 'flood')
     health_factor = get_health_impact_factor(county_name, 'flood')
 
     river_counties = ['Buffalo', 'Crawford', 'Grant', 'La Crosse', 'Pepin', 'Pierce',
@@ -483,19 +461,29 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
     # Each component is on a native 0-1 scale.  Weights are applied exactly
     # once in _weighted_exposure_with_optional below, so there is no hidden
     # pre-scaling.  Components set to None are dropped and remaining weights
-    # renormalize (used when NFIP cross-county data is unavailable).
+    # renormalize (used when cross-county NOAA or nClimDiv data is
+    # unavailable).
+    #
+    # August 2026 replacements (see methodology page for the disclosure):
+    # - storm_damage (NOAA flood property damage per year, percentile)
+    #   replaced the NFIP claims percentile, which tracked flood-insurance
+    #   participation rather than flood hazard.
+    # - precip_trend_observed (nClimDiv measured county precipitation trend,
+    #   percentile) replaced the static projection multiplier, which applied
+    #   one constant to every county in a zone.
     storm_pct = _get_storm_rate_percentile(county_name, 'flood')
-    nfip_pct = _get_nfip_rate_percentile(county_name)
+    damage_pct = _get_storm_damage_percentile(county_name, 'flood')
+    precip_trend_pct = get_precip_trend_percentile(county_name)
 
     exposure_factors = {
         'historical_nri': base_flood_risk,
         'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
-        'nfip_claims': nfip_pct if nfip_pct is not None else 0.0,
+        'storm_damage': damage_pct if damage_pct is not None else 0.0,
         'proximity_to_water': 0.0,
         'terrain_risk': 0.15,
         'precipitation_patterns': 0.15,
         'urban_stormwater': 0.0,
-        'climate_trend': min(1.0, base_flood_risk * climate_mult) - base_flood_risk
+        'precip_trend_observed': precip_trend_pct if precip_trend_pct is not None else 0.0
     }
 
     if county_name in river_counties:
@@ -516,26 +504,26 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
         exposure_factors['urban_stormwater'] = 0.25
     urban_boost = 0.10 if county_name in urban_stormwater_counties else 0.0
 
-    # Documented weights.  NFIP is dropped and weights renormalized when the
-    # OpenFEMA NFIP cache is empty so that "no data" does not silently push
-    # every county's flood exposure downward.
+    # Documented weights.  Any percentile term whose cross-county data is
+    # unavailable is dropped and the remaining weights renormalize so that
+    # "no data" does not silently push every county's flood exposure down.
     components_for_weighting = {
         'historical_nri': exposure_factors['historical_nri'],
-        'noaa_storm_events': storm_pct,  # None if cross-county data missing
-        'nfip_claims': nfip_pct,         # None if cross-county data missing
+        'noaa_storm_events': storm_pct,      # None if cross-county data missing
+        'storm_damage': damage_pct,          # None if cross-county data missing
         'proximity_to_water': exposure_factors['proximity_to_water'],
         'terrain_risk': exposure_factors['terrain_risk'],
         'precipitation_patterns': exposure_factors['precipitation_patterns'],
-        'climate_trend': exposure_factors['climate_trend'],
+        'precip_trend_observed': precip_trend_pct,  # None if snapshot missing
     }
     weights = {
-        'historical_nri':         0.30,
-        'noaa_storm_events':      0.20,
-        'nfip_claims':            0.10,
-        'proximity_to_water':     0.15,
-        'terrain_risk':           0.05,
-        'precipitation_patterns': 0.05,
-        'climate_trend':          0.05,
+        'historical_nri':          0.30,
+        'noaa_storm_events':       0.20,
+        'storm_damage':            0.10,
+        'proximity_to_water':      0.15,
+        'terrain_risk':            0.05,
+        'precipitation_patterns':  0.05,
+        'precip_trend_observed':   0.05,
     }
     exposure_score = _weighted_exposure_with_optional(
         components_for_weighting, weights, additive_boost=urban_boost
@@ -586,7 +574,6 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
     openfema = _get_real_openfema_data(county_name)
 
     flood_storm = storm_data.get('by_category', {}).get('flood', {}) if storm_data else {}
-    nfip_data = openfema.get('nfip_claims')
     decl_data = openfema.get('disaster_declarations')
     hma_data = openfema.get('hma_projects')
 
@@ -595,31 +582,32 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
         for itype in ['Flood', 'Coastal', 'Severe Storm(s)']:
             flood_decl_count += decl_data.get('by_incident_type', {}).get(itype, 0)
 
+    precip_trend = get_precip_trend_info(county_name)
+
     metrics = {
         'historical_flood_events': flood_storm.get('event_count') if flood_storm.get('event_count') else None,
         'flood_property_damage': _format_damage(flood_storm.get('property_damage', 0)) if flood_storm.get('property_damage') else None,
         'flood_injuries': flood_storm.get('injuries', 0) if flood_storm else None,
-        'nfip_claims_total': nfip_data.get('total_claims') if nfip_data else None,
-        'nfip_total_payout': _format_damage(nfip_data.get('total_payout', 0)) if nfip_data else None,
+        'storm_damage_percentile': round(damage_pct * 100) if damage_pct is not None else None,
         'federal_flood_declarations': flood_decl_count if decl_data else None,
         'mitigation_projects': hma_data.get('total_projects') if hma_data else None,
         'mitigation_federal_funding': _format_damage(hma_data.get('total_federal_share', 0)) if hma_data else None,
-        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}%",
+        'precip_trend_pct_change': (f"{precip_trend['pct_change']:+.1f}%" if precip_trend and precip_trend.get('pct_change') is not None else None),
+        'precip_trend_period': (f"{precip_trend['recent_period']} vs {precip_trend['baseline_period']}" if precip_trend else None),
         'elderly_vulnerability_pct': round(census['elderly_pct'], 1),
         'mobile_home_vulnerability_pct': round(census['mobile_home_pct'], 1),
         'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
-        'has_real_data': bool(flood_storm.get('event_count') or nfip_data or decl_data)
+        'has_real_data': bool(flood_storm.get('event_count') or decl_data)
     }
 
     data_sources = [
         'FEMA National Risk Index (NRI) - Census Tract Level',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics',
-        'NOAA/WICCI Climate Projections (2030-2050)',
+        'NOAA nClimDiv Observed County Precipitation Trends (1951-2025)',
         'FEMA NRI Health Impact Factor',
         'FEMA NRI Community Resilience (HVRI BRIC index)',
-        'NOAA NCEI Storm Events Database',
-        'OpenFEMA NFIP Redacted Claims',
+        'NOAA NCEI Storm Events Database (event counts and property damage)',
         'OpenFEMA Disaster Declarations Summaries'
     ]
 
@@ -630,7 +618,7 @@ def calculate_enhanced_flood_risk(county_name: str, discipline: str = 'public_he
             'vulnerability': vulnerability_score,
             'resilience': resilience_raw,
             'health_impact': health_factor,
-            'climate_multiplier': climate_mult
+            'precip_trend_ratio': precip_trend['ratio'] if precip_trend else None
         },
         'exposure_factors': exposure_factors,
         'vulnerability_breakdown': {
@@ -657,7 +645,6 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
 
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
-    climate_mult = get_climate_multiplier(county_name, 'tornado')
     health_factor = get_health_impact_factor(county_name, 'tornado')
 
     tornado_alley_counties = ['Grant', 'Iowa', 'Lafayette', 'Green', 'Rock', 'Walworth',
@@ -672,8 +659,7 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
         'historical_nri': base_tornado_risk,
         'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
         'tornado_alley_proximity': 0.2,
-        'terrain_factors': 0.1,
-        'climate_trend': min(1.0, base_tornado_risk * climate_mult) - base_tornado_risk
+        'terrain_factors': 0.1
     }
 
     if county_name in tornado_alley_counties:
@@ -681,19 +667,22 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
     if county_name in open_terrain_counties:
         exposure_factors['terrain_factors'] = 0.3
 
+    # Projection multiplier retired 2026-08: climate science does not
+    # support county-level tornado-frequency projections (low confidence in
+    # severe-convective trend attribution).  Its former 0.10 weight moved to
+    # the measured NOAA storm-events percentile (0.25 -> 0.35); trajectory
+    # is carried by the real NOAA event trend in the BSTA Trend component.
     weights = {
         'historical_nri':          0.40,
-        'noaa_storm_events':       0.25,
+        'noaa_storm_events':       0.35,
         'tornado_alley_proximity': 0.15,
         'terrain_factors':         0.10,
-        'climate_trend':           0.10,
     }
     components_for_weighting = {
         'historical_nri': exposure_factors['historical_nri'],
         'noaa_storm_events': storm_pct,
         'tornado_alley_proximity': exposure_factors['tornado_alley_proximity'],
         'terrain_factors': exposure_factors['terrain_factors'],
-        'climate_trend': exposure_factors['climate_trend'],
     }
     exposure_score = _weighted_exposure_with_optional(
         components_for_weighting, weights
@@ -766,7 +755,6 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
         'tornado_injuries': tornado_storm.get('injuries', 0) if tornado_storm else None,
         'tornado_fatalities': tornado_storm.get('fatalities', 0) if tornado_storm else None,
         'federal_tornado_declarations': tornado_decl_count if decl_data else None,
-        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}%",
         'mobile_home_vulnerability_pct': round(census['mobile_home_pct'], 1),
         'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
         'has_real_data': bool(tornado_storm.get('event_count') or decl_data)
@@ -776,7 +764,6 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
         'FEMA National Risk Index (NRI) - Census Tract Level',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics',
-        'NOAA/IPCC Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
         'FEMA NRI Community Resilience (HVRI BRIC index)',
         'NOAA NCEI Storm Events Database',
@@ -789,8 +776,7 @@ def calculate_enhanced_tornado_risk(county_name: str, discipline: str = 'public_
             'exposure': exposure_score,
             'vulnerability': vulnerability_score,
             'resilience': resilience_raw,
-            'health_impact': health_factor,
-            'climate_multiplier': climate_mult
+            'health_impact': health_factor
         },
         'exposure_factors': exposure_factors,
         'vulnerability_breakdown': {
@@ -818,7 +804,6 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
 
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
-    climate_mult = get_climate_multiplier(county_name, 'winter_storm')
     health_factor = get_health_impact_factor(county_name, 'winter_storm')
 
     northern_counties = ['Douglas', 'Bayfield', 'Ashland', 'Iron', 'Vilas', 'Forest',
@@ -836,8 +821,7 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
         'historical_nri': base_winter_risk,
         'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
         'northern_location': 0.2,
-        'lake_effect': 0.1,
-        'climate_trend': 0.0
+        'lake_effect': 0.1
     }
 
     if county_name in northern_counties:
@@ -848,25 +832,23 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
     if county_name in lake_effect_counties:
         exposure_factors['lake_effect'] = 0.5
 
-    climate_ice_storm_boost = 0.0
-    climate_data = load_climate_projections().get('winter_storm', {}).get('sub_factors', {})
-    ice_storm_mult = climate_data.get('ice_storm_frequency', 1.0)
-    climate_ice_storm_boost = max(0, (ice_storm_mult - 1.0) * 0.3)
-    exposure_factors['climate_trend'] = min(0.15, (climate_mult - 1.0) * base_winter_risk + climate_ice_storm_boost)
-
+    # Projection multiplier retired 2026-08: winter-storm climate signals
+    # point in conflicting directions for Wisconsin (fewer but sometimes
+    # stronger snowstorms, more mixed-precipitation events), so a single
+    # upward constant was not defensible.  Its former 0.15 weight moved to
+    # the measured NOAA storm-events percentile (0.15 -> 0.30); trajectory
+    # is carried by the real NOAA event trend in the BSTA Trend component.
     weights = {
         'historical_nri':    0.40,
-        'noaa_storm_events': 0.15,
+        'noaa_storm_events': 0.30,
         'northern_location': 0.20,
         'lake_effect':       0.10,
-        'climate_trend':     0.15,
     }
     components_for_weighting = {
         'historical_nri': exposure_factors['historical_nri'],
         'noaa_storm_events': storm_pct,
         'northern_location': exposure_factors['northern_location'],
         'lake_effect': exposure_factors['lake_effect'],
-        'climate_trend': exposure_factors['climate_trend'],
     }
     exposure_score = _weighted_exposure_with_optional(
         components_for_weighting, weights
@@ -955,7 +937,6 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
         'winter_fatalities': winter_storm.get('fatalities', 0) if winter_storm else None,
         'winter_event_breakdown': winter_event_breakdown if winter_event_breakdown else None,
         'federal_winter_declarations': winter_decl_count if decl_data else None,
-        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}% intensity, +{int((ice_storm_mult - 1.0) * 100)}% ice storms",
         'elderly_vulnerability_pct': round(census['elderly_pct'], 1),
         'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
         'has_real_data': bool(winter_storm.get('event_count') or decl_data)
@@ -965,7 +946,6 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
         'FEMA National Risk Index (NRI) - Census Tract Level',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics',
-        'NOAA/WICCI Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
         'FEMA NRI Community Resilience (HVRI BRIC index)',
         'NOAA NCEI Storm Events Database'
@@ -977,8 +957,7 @@ def calculate_enhanced_winter_storm_risk(county_name: str, discipline: str = 'pu
             'exposure': exposure_score,
             'vulnerability': vulnerability_score,
             'resilience': resilience_raw,
-            'health_impact': health_factor,
-            'climate_multiplier': climate_mult
+            'health_impact': health_factor
         },
         'exposure_factors': exposure_factors,
         'vulnerability_breakdown': {
@@ -1005,7 +984,6 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
 
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
-    climate_mult = get_climate_multiplier(county_name, 'thunderstorm')
     health_factor = get_health_impact_factor(county_name, 'thunderstorm')
 
     high_thunderstorm_counties = ['Milwaukee', 'Waukesha', 'Washington', 'Ozaukee', 'Racine',
@@ -1029,23 +1007,26 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         'noaa_severity_index': thunderstorm_severity,
         'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
         'lightning_density': lightning_density,
-        'heavy_rainfall_frequency': heavy_rainfall_freq,
-        'climate_trend': min(0.15, (climate_mult - 1.0) * thunderstorm_severity)
+        'heavy_rainfall_frequency': heavy_rainfall_freq
     }
 
+    # Projection multiplier retired 2026-08: severe-thunderstorm projection
+    # confidence is low at county scale (convective-environment studies are
+    # regional and disagree on realized storm counts).  Its former 0.20
+    # weight moved to the measured NOAA storm-events percentile
+    # (0.20 -> 0.40); trajectory is carried by the real NOAA event trend in
+    # the BSTA Trend component.
     weights = {
         'noaa_severity_index':      0.30,
-        'noaa_storm_events':        0.20,
+        'noaa_storm_events':        0.40,
         'lightning_density':        0.15,
         'heavy_rainfall_frequency': 0.15,
-        'climate_trend':            0.20,
     }
     components_for_weighting = {
         'noaa_severity_index': exposure_factors['noaa_severity_index'],
         'noaa_storm_events': storm_pct,
         'lightning_density': exposure_factors['lightning_density'],
         'heavy_rainfall_frequency': exposure_factors['heavy_rainfall_frequency'],
-        'climate_trend': exposure_factors['climate_trend'],
     }
     exposure_score = _weighted_exposure_with_optional(
         components_for_weighting, weights
@@ -1121,7 +1102,6 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         'thunderstorm_injuries': ts_storm.get('injuries', 0) if ts_storm else None,
         'thunderstorm_fatalities': ts_storm.get('fatalities', 0) if ts_storm else None,
         'thunderstorm_event_breakdown': ts_event_breakdown if ts_event_breakdown else None,
-        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}%",
         'noaa_severity_index': round(thunderstorm_severity, 2),
         'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
         'has_real_data': bool(ts_storm.get('event_count'))
@@ -1131,7 +1111,6 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
         'NOAA NCEI Storm Events Database',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics',
-        'NOAA/WICCI Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
         'FEMA NRI Community Resilience (HVRI BRIC index)'
     ]
@@ -1142,8 +1121,7 @@ def calculate_enhanced_thunderstorm_risk(county_name: str, discipline: str = 'pu
             'exposure': exposure_score,
             'vulnerability': vulnerability_score,
             'resilience': resilience_raw,
-            'health_impact': health_factor,
-            'climate_multiplier': climate_mult
+            'health_impact': health_factor
         },
         'exposure_factors': exposure_factors,
         'vulnerability_breakdown': {
@@ -1182,7 +1160,6 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
 
     svi = get_all_svi_themes(county_name)
     census = get_census_demographics(county_name)
-    climate_mult = get_climate_multiplier(county_name, 'straight_line_wind')
     health_factor = get_health_impact_factor(county_name, 'thunderstorm')
 
     # Wisconsin sits in the upper-Midwest derecho corridor; southern and
@@ -1210,18 +1187,22 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
     exposure_factors = {
         'noaa_storm_events': storm_pct if storm_pct is not None else 0.0,
         'derecho_corridor': derecho_corridor_factor,
-        'climate_trend': min(0.20, (climate_mult - 1.0) * 1.0),
     }
 
+    # Projection multiplier retired 2026-08: it added a near-constant
+    # +0.04 to every county (the 0.20-capped term saturated statewide), so
+    # it differentiated nothing while claiming projection precision.  Its
+    # former 0.20 weight moved to the measured NOAA storm-events percentile
+    # (0.55 -> 0.70) and the derecho-corridor climatology (0.25 -> 0.30);
+    # trajectory is carried by the real NOAA event trend in the BSTA Trend
+    # component.
     weights = {
-        'noaa_storm_events':  0.55,
-        'derecho_corridor':   0.25,
-        'climate_trend':      0.20,
+        'noaa_storm_events':  0.70,
+        'derecho_corridor':   0.30,
     }
     components_for_weighting = {
         'noaa_storm_events': storm_pct,
         'derecho_corridor': exposure_factors['derecho_corridor'],
-        'climate_trend': exposure_factors['climate_trend'],
     }
     exposure_score = _weighted_exposure_with_optional(
         components_for_weighting, weights
@@ -1297,7 +1278,6 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
             else 'Moderate' if county_name in moderate_wind_counties
             else 'Lower (northern WI)'
         ),
-        'climate_trend_impact': f"+{int((climate_mult - 1.0) * 100)}%",
         'data_period': storm_data.get('years_covered', 'N/A') if storm_data else None,
         'has_real_data': bool(slw_storm.get('event_count'))
     }
@@ -1307,7 +1287,6 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
         'NOAA Storm Prediction Center derecho climatology (qualitative reference)',
         'CDC Social Vulnerability Index (SVI) - All 4 Themes',
         'U.S. Census Bureau ACS - Housing & Demographics (mobile-home stock)',
-        'NOAA/WICCI Climate Projections (2030-2050)',
         'FEMA NRI Health Impact Factor',
         'FEMA NRI Community Resilience (HVRI BRIC index)'
     ]
@@ -1318,8 +1297,7 @@ def calculate_enhanced_straight_line_wind_risk(county_name: str,
             'exposure': exposure_score,
             'vulnerability': vulnerability_score,
             'resilience': resilience_raw,
-            'health_impact': health_factor,
-            'climate_multiplier': climate_mult
+            'health_impact': health_factor
         },
         'exposure_factors': exposure_factors,
         'vulnerability_breakdown': {

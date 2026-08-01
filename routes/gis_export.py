@@ -314,7 +314,7 @@ def get_export_fields():
             'utilities_risk': 'Critical infrastructure risk (supplementary — not in PHRAT)'
         },
         'natural_hazard_subtypes': {
-            'flood_risk': 'Flood EVR score — NRI 45%, storm events 25%, NFIP claims 10%, water proximity 20%; urban stormwater factor applied to SE WI counties',
+            'flood_risk': 'Flood EVR score — NRI 30%, storm events 20%, storm property damage 10%, water proximity 15%, terrain 5%, precipitation 5%, observed precip trend 5%; urban stormwater factor applied to SE WI counties',
             'tornado_risk': 'Tornado EVR score with mobile home density adjustment',
             'winter_storm_risk': 'Winter storm EVR score',
             'thunderstorm_risk': 'Thunderstorm risk from NOAA Storm Events county severity index'

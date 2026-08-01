@@ -16,12 +16,12 @@
 ~ '<div class="formula-line">= (' ~ "%.3f"|format(risk_data.thunderstorm_components.exposure) ~ ' × ' ~ "%.3f"|format(risk_data.thunderstorm_components.vulnerability) ~ ') × (1.5 - ' ~ "%.3f"|format(risk_data.thunderstorm_components.resilience) ~ ') × ' ~ "%.3f"|format(risk_data.thunderstorm_components.health_impact) ~ '</div>'
 ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.thunderstorm_risk) ~ '</div>'
 ~ '<ul class="component-list">'
-~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.thunderstorm_components.exposure) ~ ' (NOAA Storm Events × ' ~ "%.2f"|format(risk_data.thunderstorm_components.climate_multiplier) ~ ' climate adj.)</li>'
+~ '<li>Exposure: ' ~ "%.3f"|format(risk_data.thunderstorm_components.exposure) ~ ' (severity index 30%, NOAA events 40%, lightning 15%, heavy rainfall 15%)</li>'
 ~ '<li>Vulnerability: ' ~ "%.3f"|format(risk_data.thunderstorm_components.vulnerability) ~ ' (4 SVI themes + Census demographics)</li>'
 ~ '<li>Resilience: ' ~ "%.3f"|format(risk_data.thunderstorm_components.resilience) ~ ' (FEMA NRI Community Resilience, HVRI BRIC index)</li>'
 ~ '<li>Health Impact Factor: ' ~ "%.3f"|format(risk_data.thunderstorm_components.health_impact) ~ ' (FEMA NRI population loss data)</li>'
 ~ '</ul>'
-~ '<div class="data-source">Sources: NOAA Storm Events (NCEI, trailing 20 years), FEMA NRI (health impact factor; tract table retrieved 2025), NOAA/WICCI climate projections, CDC SVI 2022, U.S. Census ACS 2022</div>'
+~ '<div class="data-source">Sources: NOAA Storm Events (NCEI, trailing 20 years), FEMA NRI (health impact factor; tract table retrieved 2025), CDC SVI 2022, U.S. Census ACS 2022</div>'
 ) }}
 {% endif %}
 </h6>
