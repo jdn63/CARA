@@ -1,9 +1,39 @@
 CARA - Comprehensive Automated Risk Assessment
-Version: 3.0
+Version: 3.1
 Release date: 2026-08-01
-Push: v30.0
+Push: v30.1
 
 Changelog summary:
+- v30.1: EM strategic reweight and top-risk exclusion. CARA's Emergency
+  Management view is a long-term strategic planning lens, not an acute
+  disease surveillance tracker, so per EM SME direction the EM weight
+  set deemphasizes the disease and health family from 20 percent
+  combined to 8 (health metrics 9 to 4, disease awareness 5 to 2,
+  vector-borne disease 6 to 2). The freed weight, plus one point from
+  extreme heat (11 to 10), moved onto core EM infrastructure domains:
+  natural hazards 28 to 32, utilities 9 to 12, dam failure 7 to 10,
+  and each hazmat domain 3 to 4.5. Active shooter (11) and air quality
+  (8) are unchanged. Public Health weights and HERC composites are
+  untouched.
+
+  Because the Summary top-5 risk cards rank domains by their own
+  scores, not by weight, no reweight alone could keep acute disease
+  out of the top risks. The EM discipline therefore now explicitly
+  excludes infectious disease and vector-borne disease from the ranked
+  top-risk cards on county and WEM regional Summary pages. Their
+  dashboard tiles, detail panels, and action-plan rows remain fully
+  visible, and Public Health ranking is unchanged.
+
+  The methodology page now shows both discipline weight tables and
+  disclosures for the exclusion, and every domain section header shows
+  both discipline weights (this also fixed three headers that had been
+  stale since before this release: active shooter 18 to 17, extreme
+  heat 11 to 10, air quality 12 to 11 under Public Health). A new
+  regression test derives the expected methodology labels from the
+  weight config itself so future retunes cannot silently drift from
+  the page copy. Dashboard cache key bumped to dashboard_full_v20.
+  Test suite: 269 passed.
+
 - v30.0: NFIP retirement and observed-climate replacement. Two input
   families retired in one release because both created score
   differences no county-level measurement supported.

@@ -55,21 +55,21 @@
    config/risk_weights.yaml; the Public Health and Emergency Management
    weight sets each total 100%). The Infectious Disease tile reflects the
    acute infectious-disease composite; under EM that signal carries the
-   health_metrics weight (9%) plus the EM disease-awareness weight (5%),
-   shown combined as 14%, matching the WEM regional aggregator and the
-   published PH vs EM comparison. --- #}
+   health_metrics weight (4%) plus the EM disease-awareness weight (2%),
+   shown combined as 6%, matching the WEM regional aggregator and the
+   published PH vs EM comparison (v30.1 EM strategic reweight). --- #}
 {% set is_em = (discipline_label|default('Public Health')) == 'Emergency Management' %}
-{% set w_infectious = '14%' if is_em else '16%' %}
-{% set w_vbd = '6%' if is_em else '7%' %}
-{% set band_disease = '20%' if is_em else '23%' %}
-{% set band_hazards = '28%' if is_em else '26%' %}
-{% set nh_part = 'Part of 28%' if is_em else 'Part of 26%' %}
+{% set w_infectious = '6%' if is_em else '16%' %}
+{% set w_vbd = '2%' if is_em else '7%' %}
+{% set band_disease = '8%' if is_em else '23%' %}
+{% set band_hazards = '32%' if is_em else '26%' %}
+{% set nh_part = 'Part of 32%' if is_em else 'Part of 26%' %}
 {% set w_air = '8%' if is_em else '11%' %}
-{% set w_heat = '11%' if is_em else '10%' %}
-{% set w_dam = '7%' %}
-{% set band_environmental = '26%' if is_em else '28%' %}
+{% set w_heat = '10%' %}
+{% set w_dam = '10%' if is_em else '7%' %}
+{% set band_environmental = '28%' %}
 {% set w_shooter = '11%' if is_em else '17%' %}
-{% set w_utilities = '9%' if is_em else 'Supplementary' %}
+{% set w_utilities = '12%' if is_em else 'Supplementary' %}
 
 <div class="compact-overview">
     <div class="compact-dash-controls">
@@ -109,10 +109,10 @@
     </div>
 
     <div class="compact-band band-hazmat">
-        <div class="compact-band-header">Hazardous Materials (6% combined weight)</div>
+        <div class="compact-band-header">Hazardous Materials ({{ '9%' if is_em else '6%' }} combined weight)</div>
         <div class="compact-tile-grid">
-            {{ rt('hazmat_industrial', 'Hazmat &mdash; Industrial', s_hz_ind, '3%') }}
-            {{ rt('hazmat_agricultural', 'Hazmat &mdash; Agricultural', s_hz_ag, '3%') }}
+            {{ rt('hazmat_industrial', 'Hazmat &mdash; Industrial', s_hz_ind, '4.5%' if is_em else '3%') }}
+            {{ rt('hazmat_agricultural', 'Hazmat &mdash; Agricultural', s_hz_ag, '4.5%' if is_em else '3%') }}
         </div>
     </div>
 
@@ -124,7 +124,7 @@
     </div>
 
     <div class="compact-band band-community">
-        <div class="compact-band-header">{% if is_em %}Community Resources and Utilities (9% Emergency Management weight){% else %}Community Resources and Utilities (supplementary){% endif %}</div>
+        <div class="compact-band-header">{% if is_em %}Community Resources and Utilities (12% Emergency Management weight){% else %}Community Resources and Utilities (supplementary){% endif %}</div>
         <div class="compact-tile-grid">
             {{ rt('utilities', 'Utilities and Infrastructure', s_util, w_utilities) }}
         </div>

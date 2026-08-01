@@ -186,9 +186,84 @@ class TestSignalsReachRenderedPage:
             "jurisdiction summary rendered no derived local signal"
         )
 
-    def test_em_county_summary_has_local_signal(self, client):
-        body = client.get("/em-print-summary/adams").get_data(as_text=True)
-        assert _LOCAL_SIGNAL_RE.search(body)
+    # Minimal but internally consistent NOAA storm summary fixture,
+    # seeded per county as needed: per-category counts sum to
+    # total_events, which matches the yearly series (20 years at 6
+    # events/year).
+    _STORM_SUMMARY_FIXTURE = {
+        "events_by_year": {str(y): 6 for y in range(2006, 2026)},
+        "total_events": 120,
+        "years_covered": "2006-2025",
+        "total_property_damage": 25000000.0,
+        "total_crop_damage": 0,
+        "total_fatalities": 0,
+        "total_injuries": 0,
+        "tornado_magnitudes": {},
+        "by_category": {
+            "flood": {"event_count": 40, "property_damage": 12000000.0,
+                      "crop_damage": 0, "injuries": 0, "fatalities": 0,
+                      "event_types": {"Flood": 30, "Flash Flood": 10}},
+            "tornado": {"event_count": 8, "property_damage": 5000000.0,
+                        "crop_damage": 0, "injuries": 0, "fatalities": 0,
+                        "event_types": {"Tornado": 8}},
+            "winter": {"event_count": 30, "property_damage": 3000000.0,
+                       "crop_damage": 0, "injuries": 0, "fatalities": 0,
+                       "event_types": {"Winter Storm": 30}},
+            "thunderstorm": {"event_count": 22, "property_damage": 2000000.0,
+                             "crop_damage": 0, "injuries": 0, "fatalities": 0,
+                             "event_types": {"Thunderstorm Wind": 22}},
+            "straight_line_wind": {"event_count": 20,
+                                   "property_damage": 3000000.0,
+                                   "crop_damage": 0, "injuries": 0,
+                                   "fatalities": 0,
+                                   "event_types": {"High Wind": 20}},
+        },
+    }
+
+    @staticmethod
+    def _reset_hazard_module_caches():
+        """Clear utils.natural_hazards_risk module-level caches.
+
+        Earlier route renders in this process may have cached statewide
+        rates, per-county lookups (including None results), and WEM
+        regional aggregates from an empty test database; without a
+        reset, seeded cache rows are never re-read. Called again at
+        teardown so later tests start from a deterministic cold state.
+        """
+        import utils.natural_hazards_risk as nh
+        import utils.wem_risk_aggregator as wra
+        nh.reset_rate_caches()
+        nh._real_data_cache.clear()
+        wra._jurisdiction_cache.clear()
+        wra._wem_cache.clear()
+
+    def _seed_storm_cache(self, app, counties):
+        """Seed NOAA storm-events cache rows through the app's own cache
+        write path (mirroring the warm production cache), then reset the
+        hazard module caches so the seeded rows are actually read."""
+        with app.app_context():
+            from utils.data_cache_manager import save_cached_data
+            for county in counties:
+                assert save_cached_data(
+                    "noaa_storm_events",
+                    self._STORM_SUMMARY_FIXTURE,
+                    county_name=county,
+                    api_source="test-fixture",
+                ), f"failed to seed NOAA storm-events cache for {county}"
+        self._reset_hazard_module_caches()
+
+    def test_em_county_summary_has_local_signal(self, client, app):
+        # v30.1: the EM top-risk ranking excludes the acute disease domains
+        # ('health', 'vector_borne_disease'), whose drivers derive from
+        # bundled data files. The domains that rank under EM derive their
+        # drivers from cached NOAA data instead, so seed Adams storm data
+        # before rendering.
+        self._seed_storm_cache(app, ["Adams"])
+        try:
+            body = client.get("/em-print-summary/adams").get_data(as_text=True)
+            assert _LOCAL_SIGNAL_RE.search(body)
+        finally:
+            self._reset_hazard_module_caches()
 
     def test_herc_region_summary_has_local_signal(self, client):
         body = client.get("/herc-print-summary/1").get_data(as_text=True)
@@ -196,6 +271,25 @@ class TestSignalsReachRenderedPage:
             "HERC region summary rendered no derived local signal"
         )
 
-    def test_wem_region_summary_has_local_signal(self, client):
-        body = client.get("/wem-print-summary/southeast").get_data(as_text=True)
-        assert _LOCAL_SIGNAL_RE.search(body)
+    def test_wem_region_summary_has_local_signal(self, client, app):
+        # WEM regions render under the EM discipline, so the v30.1
+        # top-risk exclusion applies here too: seed storm data for every
+        # county in the southeast region so the hazard cards that now
+        # rank carry derivable local signals.
+        from utils.wem_data import get_all_wem_regions
+        region = next(
+            r for r in get_all_wem_regions() if r["id"] == "southeast"
+        )
+        counties = [
+            c["name"] if isinstance(c, dict) else c
+            for c in region.get("counties", [])
+        ]
+        assert counties, "southeast WEM region resolved no counties"
+        self._seed_storm_cache(app, counties)
+        try:
+            body = client.get(
+                "/wem-print-summary/southeast"
+            ).get_data(as_text=True)
+            assert _LOCAL_SIGNAL_RE.search(body)
+        finally:
+            self._reset_hazard_module_caches()

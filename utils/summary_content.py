@@ -144,6 +144,17 @@ def _level_for(score: float) -> Dict[str, str]:
     return {"level": "Low", "badge": "success"}
 
 
+# Domains excluded from the EM top-risk ranking (v30.1, August 2026).
+# CARA's EM view is a long-term strategic planning lens rather than an
+# acute surveillance tracker, so the acute disease domains never rank in
+# the EM top-risk cards regardless of score. Their dashboard tiles and
+# detail panels remain fully visible; this only affects the ranked
+# Summary cards. 'health' is the key both the county display-score map
+# and the regional score map use for the acute infectious-disease
+# composite signal.
+EM_TOP_RISK_EXCLUDED_DOMAINS = frozenset({"health", "vector_borne_disease"})
+
+
 def build_top_risk_cards(
     scores: Dict[str, Any],
     discipline: Optional[str],
@@ -156,7 +167,12 @@ def build_top_risk_cards(
         scores: mapping of domain_key -> numeric score (0-1). Non-numeric
             or null entries are ignored.
         discipline: 'public_health' or 'em' (anything else is treated as
-            public health).
+            public health). Under 'em', domains in
+            EM_TOP_RISK_EXCLUDED_DOMAINS (infectious disease and
+            vector-borne disease) are skipped from the ranking entirely:
+            no weight setting can guarantee a score-ranked list stays
+            free of them, so the strategic-planning exclusion is explicit
+            here.
         limit: how many top-ranked hazards to return.
         risk_data: optional full jurisdiction or aggregated region risk_data
             dict. When supplied, each card is enriched with locally derived
@@ -176,6 +192,8 @@ def build_top_risk_cards(
         if isinstance(raw, bool):
             continue
         if not isinstance(raw, (int, float)):
+            continue
+        if discipline == "em" and key in EM_TOP_RISK_EXCLUDED_DOMAINS:
             continue
         ranked.append((key, float(raw)))
 

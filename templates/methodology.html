@@ -270,6 +270,7 @@
                 <p class="font-monospace mb-2"><strong>Overall Risk = √(w₁ × Risk₁² + w₂ × Risk₂² + ... + w₅ × Risk₅²)</strong></p>
                 <p class="mb-0 small">Where w<sub>i</sub> are the domain weights and Risk<sub>i</sub> are individual domain scores (0.0 to 1.0).</p>
             </div>
+            <h6 class="fw-bold">Public Health weights (default view)</h6>
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead class="table-light">
@@ -280,13 +281,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Natural Hazards</td><td><strong>28%</strong></td><td class="small">Highest annualized expected losses in WI per FEMA NRI; covers 4 sub-types (flood, tornado, winter storm, thunderstorm)</td></tr>
-                        <tr><td>Active Shooter</td><td><strong>18%</strong></td><td class="small">CDC/ASPR identifies as high-consequence threat requiring dedicated PHEP planning</td></tr>
-                        <tr><td>Health Metrics (Infectious Disease)</td><td><strong>17%</strong></td><td class="small">Core CDC PHEP capability; respiratory disease surveillance and vaccination coverage</td></tr>
-                        <tr><td>Air Quality</td><td><strong>12%</strong></td><td class="small">Growing impact from increasing wildfire smoke episodes (EPA); geographically uneven across WI</td></tr>
-                        <tr><td>Extreme Heat</td><td><strong>11%</strong></td><td class="small">Leading weather-related cause of death nationally (NOAA); tempered by WI's northern latitude</td></tr>
+                        <tr><td>Natural Hazards</td><td><strong>26%</strong></td><td class="small">Highest annualized expected losses in WI per FEMA NRI; covers 5 sub-types (flood, tornado, winter storm, thunderstorm, straight-line wind)</td></tr>
+                        <tr><td>Active Shooter</td><td><strong>17%</strong></td><td class="small">CDC/ASPR identifies as high-consequence threat requiring dedicated PHEP planning</td></tr>
+                        <tr><td>Health Metrics (Infectious Disease)</td><td><strong>16%</strong></td><td class="small">Core CDC PHEP capability; respiratory disease surveillance and vaccination coverage</td></tr>
+                        <tr><td>Air Quality</td><td><strong>11%</strong></td><td class="small">Growing impact from increasing wildfire smoke episodes (EPA); geographically uneven across WI</td></tr>
+                        <tr><td>Extreme Heat</td><td><strong>10%</strong></td><td class="small">Leading weather-related cause of death nationally (NOAA); tempered by WI's northern latitude</td></tr>
                         <tr><td>Dam Failure</td><td><strong>7%</strong></td><td class="small">Standalone EVR domain using WI DNR/USACE NID dam inventory; downstream population inundation exposure</td></tr>
                         <tr><td>Vector-Borne Disease</td><td><strong>7%</strong></td><td class="small">Lyme disease and West Nile Virus; real county-level incidence rates from WI DHS EPHT with an observed county-warming amplifier (NOAA nClimDiv)</td></tr>
+                        <tr><td>Hazmat - Industrial</td><td><strong>3%</strong></td><td class="small">Fixed-site industrial chemical release planning (EPCRA Tier II facility density and proximity)</td></tr>
+                        <tr><td>Hazmat - Agricultural</td><td><strong>3%</strong></td><td class="small">Agricultural chemical release planning (anhydrous ammonia, pesticides, manure-gas incidents)</td></tr>
                     </tbody>
                     <tfoot>
                         <tr class="table-light"><td><strong>Total</strong></td><td><strong>100%</strong></td><td></td></tr>
@@ -296,8 +299,40 @@
             <div class="alert alert-info mt-2 mb-3">
                 <strong>Weight sources:</strong> Domain weights are informed by FEMA National Risk Index annualized expected loss data for Wisconsin, CDC PHEP capability priorities, Wisconsin DHS Hazard Vulnerability Assessment guidance, and historical disaster declaration frequency (FEMA, 2000-2024). These weights are configurable; jurisdictions may adjust them in <code>config/risk_weights.yaml</code> based on local hazard profiles and planning priorities.
             </div>
+            <h6 class="fw-bold mt-4">Emergency Management weights (EM toggle)</h6>
+            <p class="small">The Emergency Management view applies its own weight set to the same domain scores. Revised August 2026 (v30.1): because CARA's EM lens is a long-term strategic planning tool rather than an acute disease surveillance tracker, the disease and health family (health metrics, infectious disease awareness, vector-borne disease) was reduced to <strong>8% combined</strong> and the freed weight moved onto core infrastructure domains.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Risk Domain</th>
+                            <th>Weight</th>
+                            <th>EM Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Natural Hazards</td><td><strong>32%</strong></td><td class="small">Infrastructure damage from natural disasters is the core EM planning driver</td></tr>
+                        <tr><td>Utilities and Infrastructure</td><td><strong>12%</strong></td><td class="small">Critical infrastructure disruption; a scored primary domain under EM (supplementary under PH)</td></tr>
+                        <tr><td>Active Shooter</td><td><strong>11%</strong></td><td class="small">Mass casualty incident response</td></tr>
+                        <tr><td>Extreme Heat</td><td><strong>10%</strong></td><td class="small">Power grid stress and infrastructure degradation</td></tr>
+                        <tr><td>Dam Failure</td><td><strong>10%</strong></td><td class="small">Dam and levee failure infrastructure impact scenarios</td></tr>
+                        <tr><td>Air Quality</td><td><strong>8%</strong></td><td class="small">Shelter-in-place operations and HVAC system impacts</td></tr>
+                        <tr><td>Hazmat - Industrial</td><td><strong>4.5%</strong></td><td class="small">Fixed-site industrial hazmat response posture and mutual aid</td></tr>
+                        <tr><td>Hazmat - Agricultural</td><td><strong>4.5%</strong></td><td class="small">Rural fire and EMS response capability for agricultural chemical incidents</td></tr>
+                        <tr><td>Health Metrics</td><td><strong>4%</strong></td><td class="small">Healthcare system capacity and surge; deemphasized under the strategic planning lens</td></tr>
+                        <tr><td>Infectious Disease (disease awareness)</td><td><strong>2%</strong></td><td class="small">Mass-care screening and shelter operations awareness</td></tr>
+                        <tr><td>Vector-Borne Disease</td><td><strong>2%</strong></td><td class="small">Environmental health monitoring</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light"><td><strong>Total</strong></td><td><strong>100%</strong></td><td></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="alert alert-info mt-2 mb-3">
+                <strong>EM top-risk ranking:</strong> Under the Emergency Management view, infectious disease and vector-borne disease remain scored and fully visible on their dashboard tiles, but they are excluded from the ranked top-5 risk cards on the Summary page. The top-risk list ranks domains by their own 0-1 scores rather than by composite weight, so this exclusion is stated explicitly: CARA's EM view supports long-term strategic planning rather than acute disease surveillance.
+            </div>
             <div class="alert alert-secondary mt-3">
-                <strong>Supplementary Domain:</strong> Utilities is assessed separately as a supplementary domain modeled from proxy indicators. It is not included in the primary PHRAT score but is presented for comprehensive planning context.
+                <strong>Supplementary Domain:</strong> Utilities is assessed separately as a supplementary domain modeled from proxy indicators. It is not included in the primary Public Health PHRAT score but is presented for comprehensive planning context. Under the Emergency Management weight set, Utilities is a scored domain at 12%.
             </div>
             <p class="small mb-0"><strong>Why quadratic mean?</strong> Unlike a simple weighted average, the quadratic mean (root mean square) gives greater emphasis to higher-risk domains. A jurisdiction with one domain at 0.9 risk will score meaningfully higher than one where all domains sit at 0.4, even if the weighted averages would be similar.</p>
         </div>
@@ -357,7 +392,7 @@
 
     <div class="card mb-4" id="natural-hazards">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Natural Hazards Domain (28% of Overall)</h2>
+            <h2 class="h5 mb-0">Natural Hazards Domain (26% of Overall under Public Health; 32% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>The natural hazards score is the <strong>equal-weighted quadratic mean (RMS, p=2)</strong> of four hazard types, each calculated using the EVR framework described above. This is consistent with the outer PHRAT formula and ensures that a single high-severity hazard type elevates the domain score more than a simple average would.</p>
@@ -534,7 +569,7 @@
 
     <div class="card mb-4" id="health-metrics">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Health Metrics / Infectious Disease Domain (17% of Overall)</h2>
+            <h2 class="h5 mb-0">Health Metrics / Infectious Disease Domain (16% of Overall under Public Health; 6% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>Health metrics risk uses the EVR (Exposure-Vulnerability-Resilience) framework. Respiratory disease surveillance from Wisconsin DHS drives exposure; county-level COPD burden, MMR vaccination rates, and primary care access drive vulnerability and resilience.</p>
@@ -586,7 +621,7 @@
 
     <div class="card mb-4" id="vector-borne">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Vector-Borne Disease Domain (7% of Overall)</h2>
+            <h2 class="h5 mb-0">Vector-Borne Disease Domain (7% of Overall under Public Health; 2% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>Vector-borne disease risk covers Lyme disease and West Nile Virus (WNV) using real county-level incidence data from Wisconsin DHS, supplemented by environmental and climate range expansion factors.</p>
@@ -617,7 +652,7 @@
 
     <div class="card mb-4" id="active-shooter">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Active Shooter Domain (18% of Overall)</h2>
+            <h2 class="h5 mb-0">Active Shooter Domain (17% of Overall under Public Health; 11% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>The active shooter domain evaluates population-level environmental and social indicators correlated with elevated risk conditions. This framework is intended for public health preparedness planning, not individual threat assessment.</p>
@@ -652,7 +687,7 @@
 
     <div class="card mb-4" id="extreme-heat">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Extreme Heat Domain (11% of Overall)</h2>
+            <h2 class="h5 mb-0">Extreme Heat Domain (10% of Overall under both Public Health and Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>The Extreme Heat domain score is the <strong>Wisconsin DHS Heat Vulnerability Index (HVI)</strong> county score. HVI is a vetted, block-group-level composite published by the Wisconsin Department of Health Services that combines environmental, health, population, and socioeconomic indicators of heat vulnerability. CARA aggregates the 4,472 block-group HVI z-scores to a 72-county table (unweighted mean), normalizes to a 0-1 scale, and buckets to the DHS quintile categories. See the <a href="https://www.dhs.wisconsin.gov/climate/hvi.htm" target="_blank" rel="noopener">DHS HVI methodology page</a>.</p>
@@ -680,7 +715,7 @@
 
     <div class="card mb-4" id="utilities">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Utilities Domain (Supplementary Assessment)</h2>
+            <h2 class="h5 mb-0">Utilities Domain (Supplementary under Public Health; 12% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <div class="alert alert-warning">
@@ -739,7 +774,7 @@
 
     <div class="card mb-4" id="air-quality">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Air Quality Domain (12% of Overall)</h2>
+            <h2 class="h5 mb-0">Air Quality Domain (11% of Overall under Public Health; 8% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>Air quality risk combines current EPA AirNow data with strategic climate projections to assess long-term environmental health planning needs.</p>
@@ -760,7 +795,7 @@
 
     <div class="card mb-4" id="dam-failure">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Dam Failure Domain (7% of Overall)</h2>
+            <h2 class="h5 mb-0">Dam Failure Domain (7% of Overall under Public Health; 10% under Emergency Management)</h2>
         </div>
         <div class="card-body">
             <p>Dam failure risk is a standalone EVR domain assessing the probability and downstream consequence of dam failure for each Wisconsin county.</p>

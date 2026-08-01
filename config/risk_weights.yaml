@@ -267,29 +267,35 @@ contribution_logging:
 #
 # Key differences from Public Health weights:
 #   - Natural Hazards increased (32%): Infrastructure damage is the primary EM concern
-#   - Utilities elevated to primary (10%): Critical infrastructure disruption is core EM
-#   - Extreme Heat increased (13%): Infrastructure stress (power grid, roads)
-#   - Dam Failure increased (8%): EM prioritizes infrastructure failure scenarios
-#   - Health Metrics decreased (10%): Still relevant but secondary to infrastructure
-#   - Active Shooter decreased (13%): EM focuses on response, not prevention
-#   - Air Quality decreased (8%): Less direct infrastructure impact
-#   - Vector-Borne Disease (6%): Environmental health monitoring
+#   - Natural Hazards elevated (32%): Infrastructure damage from natural disasters is core EM
+#   - Utilities elevated (12%): Critical infrastructure disruption is core EM
+#   - Dam Failure elevated (10%): EM prioritizes infrastructure failure scenarios
+#   - Disease/health family reduced to 8% combined (v30.1): CARA's EM view is a
+#     long-term strategic planning lens, not an acute surveillance tracker.
+#     Infectious and vector-borne disease stay scored and visible on their
+#     tiles, but carry minimal composite weight and are excluded from the EM
+#     top-5 risk ranking (see utils/summary_content.py).
+#   - Active Shooter (11%): EM focuses on response, not prevention
+#   - Air Quality (8%): Less direct infrastructure impact
 
 em_overall_risk_weights:
-  natural_hazards: 0.28    # 28% - Infrastructure damage from natural disasters (was 30%; -2 for hazmat split)
-  health_metrics: 0.09     # 9% - Healthcare system capacity/surge
-  active_shooter: 0.11     # 11% - Mass casualty incident response (was 12%; -1)
-  extreme_heat: 0.11       # 11% - Power grid stress, infrastructure degradation (was 12%; -1)
+  natural_hazards: 0.32    # 32% - Infrastructure damage from natural disasters (was 28%; v30.1 EM strategic reweight)
+  health_metrics: 0.04     # 4% - Healthcare system capacity/surge (was 9%; v30.1 disease deemphasis)
+  active_shooter: 0.11     # 11% - Mass casualty incident response
+  extreme_heat: 0.10       # 10% - Power grid stress, infrastructure degradation (was 11%; v30.1)
   air_quality: 0.08        # 8% - Shelter-in-place, HVAC system impacts
-  utilities: 0.09          # 9% - Critical infrastructure disruption (was 10%; -1)
-  dam_failure: 0.07        # 7% - Dam/levee failure infrastructure impact (was 8%; -1)
-  vector_borne_disease: 0.06  # 6% - Environmental health monitoring
-  infectious_disease: 0.05  # 5% - EM-relevant disease awareness (mass-care screening, shelter ops)
-  hazmat_industrial: 0.03  # 3% - Fixed-site industrial hazmat (EPCRA Tier II, NFPA 470, DOT ERG, CISA Chemical Sector, WEM SERB Regional Hazmat Teams). EM voice emphasizes response posture, hazmat team mutual aid, and HMP integration.
-  hazmat_agricultural: 0.03  # 3% - Agricultural hazmat (anhydrous ammonia, pesticide retailers, manure-pit H2S, agricultural transportation incidents). EM voice emphasizes county fire/EMS rural response capability and WI DATCP coordination.
-  # Total = 1.00. EM hazmat weights match PH so the PH-vs-EM comparison
-  # surfaces the discipline-voice difference cleanly rather than a weight
-  # difference.
+  utilities: 0.12          # 12% - Critical infrastructure disruption (was 9%; v30.1)
+  dam_failure: 0.10        # 10% - Dam/levee failure infrastructure impact (was 7%; v30.1)
+  vector_borne_disease: 0.02  # 2% - Environmental health monitoring (was 6%; v30.1 disease deemphasis)
+  infectious_disease: 0.02  # 2% - EM-relevant disease awareness (mass-care screening, shelter ops; was 5%)
+  hazmat_industrial: 0.045  # 4.5% - Fixed-site industrial hazmat (EPCRA Tier II, NFPA 470, DOT ERG, CISA Chemical Sector, WEM SERB Regional Hazmat Teams). EM voice emphasizes response posture, hazmat team mutual aid, and HMP integration.
+  hazmat_agricultural: 0.045  # 4.5% - Agricultural hazmat (anhydrous ammonia, pesticide retailers, manure-pit H2S, agricultural transportation incidents). EM voice emphasizes county fire/EMS rural response capability and WI DATCP coordination.
+  # Total = 1.00. v30.1 EM strategic reweight (August 2026): the disease and
+  # health family (health_metrics + infectious_disease + vector_borne_disease)
+  # is cut to 8% combined and the freed weight moved onto core EM
+  # infrastructure domains, because CARA's EM view is a long-term strategic
+  # planning tool rather than an acute surveillance tracker. EM hazmat weights
+  # (4.5% each) now intentionally exceed the PH hazmat weights (3% each).
 
 # EM Vulnerability Weights within EVR Natural Hazards
 # Shifts emphasis from population health to critical infrastructure

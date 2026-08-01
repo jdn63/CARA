@@ -1496,12 +1496,12 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     _cfg = get_config_manager()
     if discipline == 'em':
         weights_full = _cfg.get_em_overall_weights(jurisdiction_id=jurisdiction_id) or {
-            'natural_hazards': 0.28, 'health_metrics': 0.09,
-            'active_shooter': 0.11, 'extreme_heat': 0.11,
-            'air_quality': 0.08, 'utilities': 0.09,
-            'dam_failure': 0.07, 'vector_borne_disease': 0.06,
-            'infectious_disease': 0.05,
-            'hazmat_industrial': 0.03, 'hazmat_agricultural': 0.03,
+            'natural_hazards': 0.32, 'health_metrics': 0.04,
+            'active_shooter': 0.11, 'extreme_heat': 0.10,
+            'air_quality': 0.08, 'utilities': 0.12,
+            'dam_failure': 0.10, 'vector_borne_disease': 0.02,
+            'infectious_disease': 0.02,
+            'hazmat_industrial': 0.045, 'hazmat_agricultural': 0.045,
         }
         raw_values = {
             'natural_hazards': natural_hazards_score,

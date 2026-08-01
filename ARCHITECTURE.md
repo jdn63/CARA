@@ -527,8 +527,9 @@ tick up, those below tick down); PH scores are unchanged. An
 `score_provenance.domains` in EM mode only, and the dashboard context
 cache key was bumped (`dashboard_full_v6` to `dashboard_full_v7`) so
 cached pre-fix EM dashboards are invalidated at deploy. The compact-grid
-EM disease tile label shows the combined 14% (9% health_metrics + 5%
-disease awareness) applied to that single signal.
+EM disease tile label shows the combined weight applied to that single
+signal (14% = 9% + 5% at the time of this fix; 6% = 4% + 2% since the
+v30.1 EM strategic reweight documented below).
 
 Streamlined EM biological panel
 (`templates/dashboard/_category_biological.html`). When the composite is
@@ -1351,3 +1352,36 @@ Cache invalidation: `dashboard_full_v18` -> `dashboard_full_v19` at
 all warm/read sites plus `HERC_METHODOLOGY_VERSION` 7 -> 8. The
 methodology page climate section carries the user-facing retirement
 disclosure, including the NFIP participation numbers.
+
+EM strategic reweight and top-risk exclusion (v30.1, 2026-08)
+
+CARA's Emergency Management view is a long-term strategic planning
+lens, not an acute surveillance tracker. Per EM SME direction, the EM
+overall weight set deemphasizes the disease and health family from 20%
+combined to 8%: health_metrics 9% -> 4%, infectious_disease (disease
+awareness) 5% -> 2%, vector_borne_disease 6% -> 2%. The freed weight
+(plus 1 point from extreme_heat 11% -> 10%) moved onto core EM
+infrastructure domains: natural_hazards 28% -> 32%, utilities 9% ->
+12%, dam_failure 7% -> 10%, hazmat_industrial and hazmat_agricultural
+3% -> 4.5% each. Active shooter (11%) and air quality (8%) are
+unchanged. EM hazmat weights now intentionally exceed the PH hazmat
+weights (3% each), retiring the earlier match-PH convention.
+
+Separately, the ranked top-5 risk cards (Summary pages) rank domains
+by their own 0-1 scores, not by composite weight, so no weight change
+can keep a domain out of the top 5. `utils/summary_content.py`
+therefore defines `EM_TOP_RISK_EXCLUDED_DOMAINS` ('health',
+'vector_borne_disease'): under the EM discipline these acute disease
+domains never rank in the top-risk cards, for county Summary pages and
+WEM regional summaries alike (HERC/PH ranking is unchanged). Their
+dashboard tiles, detail panels, and action-plan rows remain fully
+visible; the exclusion affects only the ranked cards.
+
+The county EM composite and the WEM regional aggregator both read
+`em_overall_risk_weights` from `config/risk_weights.yaml`, so regional
+scores follow automatically and WEM statistics self-heal on refresh.
+The methodology page now shows both discipline weight tables (the
+stale pre-hazmat-split PH table was corrected in the same pass) and
+discloses the EM top-risk exclusion. Cache invalidation:
+`dashboard_full_v19` -> `dashboard_full_v20` at all warm/read sites;
+HERC composites are untouched (PH weights).
