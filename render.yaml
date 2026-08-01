@@ -33,8 +33,6 @@ services:
         sync: false
       - key: AIRNOW_API_KEY
         sync: false
-      - key: OPENWEATHERMAP_API_KEY
-        sync: false
       - key: FEMA_RAPT_API_KEY
         sync: false
       - key: ENABLE_SCRAPERS
@@ -87,8 +85,6 @@ services:
       - key: CENSUS_API_KEY
         sync: false
       - key: AIRNOW_API_KEY
-        sync: false
-      - key: OPENWEATHERMAP_API_KEY
         sync: false
       - key: FEMA_RAPT_API_KEY
         sync: false

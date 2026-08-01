@@ -275,7 +275,6 @@ class ExportJobWorker:
                 'active_shooter': risk_data.get('active_shooter_risk', 0.0),
                 'extreme_heat': risk_data.get('extreme_heat_risk', 0.0),
                 'air_quality': risk_data.get('air_quality_risk', 0.0),
-                'cybersecurity': risk_data.get('cybersecurity_risk', 0.0),
                 'utilities': risk_data.get('utilities', {}).get('overall', 0.0),
                 'dam_failure': risk_data.get('dam_failure_risk', 0.0),
                 'vector_borne_disease': risk_data.get('vector_borne_disease_risk', 0.0),
@@ -345,18 +344,6 @@ class ExportJobWorker:
                 if extreme_heat_risk is None:
                     extreme_heat_risk = 0.3
             
-            # Cybersecurity - try risk_data fallback
-            cybersecurity_risk = domain_scores.get('cybersecurity', normalized_scores.get('cybersecurity'))
-            if cybersecurity_risk is None:
-                cybersecurity_risk = risk_data.get('cybersecurity_risk')
-                if cybersecurity_risk is None:
-                    cyber_data = risk_data.get('cybersecurity', {})
-                    if isinstance(cyber_data, dict):
-                        cybersecurity_risk = cyber_data.get('risk_score')
-                # Guaranteed fallback
-                if cybersecurity_risk is None:
-                    cybersecurity_risk = 0.25
-            
             # Log which scores came from primary vs fallback sources
             fallback_used = []
             if 'natural_hazards' not in domain_scores:
@@ -367,8 +354,6 @@ class ExportJobWorker:
                 fallback_used.append('active_shooter')
             if 'extreme_heat' not in domain_scores:
                 fallback_used.append('extreme_heat')
-            if 'cybersecurity' not in domain_scores:
-                fallback_used.append('cybersecurity')
                 
             if fallback_used:
                 logger.debug(f"Used fallback sources for {jurisdiction_id}: {fallback_used}")
@@ -376,7 +361,12 @@ class ExportJobWorker:
             # Calculate risk components from actual domain scores
             exposure = float(natural_hazards_risk)
             vulnerability = float(health_risk)
-            resilience = max(0.0, 1.0 - float(cybersecurity_risk))
+            # Community resilience from FEMA NRI (HVRI BRIC) — the same source
+            # the EVR domains use. Previously (retired 2026-08) this was derived
+            # from the proxy-modeled cybersecurity score, which was not a real
+            # resilience measurement.
+            from utils.risk_calculation import get_community_resilience
+            resilience = float(get_community_resilience(county_name))
             health_impact_factor = risk_data.get('health_impact_factor', 1.0)
             
             from utils.risk_calculation import calculate_residual_risk
@@ -409,7 +399,6 @@ class ExportJobWorker:
                 'active_shooter_risk': float(active_shooter_risk),
                 'extreme_heat_risk': float(extreme_heat_risk),
                 'air_quality_risk': float(air_quality_risk),
-                'cybersecurity_risk': float(cybersecurity_risk),
                 'utilities_risk': float(utilities_risk),
                 
                 # Specific hazard types (from natural_hazards sub-components)
@@ -423,7 +412,7 @@ class ExportJobWorker:
                 'vulnerability': float(vulnerability),
                 'resilience': float(resilience),
                 'residual_risk': float(residual_risk),
-                'total_risk_score': float(comprehensive_risk.get('total_risk_score', 0.0)),
+                'total_risk_score': float(risk_data.get('total_risk_score', 0.0)),
                 'health_impact_factor': float(health_impact_factor),
                 
                 # Geographic data
@@ -436,7 +425,7 @@ class ExportJobWorker:
                 'data_source': 'CARA Risk Assessment Platform'
             }
             
-            logger.debug(f"Processed {jurisdiction_id}: total_risk={comprehensive_risk.get('total_risk_score')}, domains={domain_scores}")
+            logger.debug(f"Processed {jurisdiction_id}: total_risk={risk_data.get('total_risk_score')}, domains={domain_scores}")
             
             return {
                 'data': data_record,

@@ -12,7 +12,7 @@ No external API calls occur during user assessments.
 Data sources:
 - https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries
 - https://www.fema.gov/api/open/v2/FimaNfipClaims
-- https://www.fema.gov/api/open/v1/HazardMitigationAssistanceProjects
+- https://www.fema.gov/api/open/v4/HazardMitigationAssistanceProjects
 """
 
 import logging

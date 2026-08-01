@@ -217,7 +217,7 @@ def build_top_risk_cards(
 REGION_DOMAINS = (
     "flood", "tornado", "winter_storm", "thunderstorm", "straight_line_wind",
     "extreme_heat", "air_quality", "dam_failure", "vector_borne_disease",
-    "health", "active_shooter", "cybersecurity",
+    "health", "active_shooter",
 )
 
 

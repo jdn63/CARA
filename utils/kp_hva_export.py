@@ -271,18 +271,6 @@ def _build_kp_hazard_data(risk_data: dict, county_name: str) -> Dict[str, Dict[s
         'property_impact': 1,
     }
 
-    cyber_risk = risk_data.get('cybersecurity_risk', 0.0)
-    hazard_data['IT System Outage'] = {
-        'probability': _score_to_kp_scale(cyber_risk),
-        'human_impact': 1,
-        'property_impact': _score_to_kp_scale(cyber_risk),
-    }
-    hazard_data['Communication / Telephony Failure'] = {
-        'probability': _score_to_kp_scale(cyber_risk * 0.7),
-        'human_impact': 1,
-        'property_impact': _score_to_kp_scale(cyber_risk * 0.5),
-    }
-
     utilities_data = risk_data.get('utilities', {})
     electrical_risk = utilities_data.get('electrical_outage', 0.5)
     utilities_overall = utilities_data.get('overall', 0.5)
@@ -510,18 +498,6 @@ def _build_kp_hazard_data_herc(risk_data: dict, counties: list) -> Dict[str, Dic
         'probability': _score_to_kp_scale(extreme_heat_risk),
         'human_impact': max(1, _health_factor_to_kp_scale(heat_hif)),
         'property_impact': 1,
-    }
-
-    cyber_risk = risk_data.get('cybersecurity_risk', 0.0)
-    hazard_data['IT System Outage'] = {
-        'probability': _score_to_kp_scale(cyber_risk),
-        'human_impact': 1,
-        'property_impact': _score_to_kp_scale(cyber_risk),
-    }
-    hazard_data['Communication / Telephony Failure'] = {
-        'probability': _score_to_kp_scale(cyber_risk * 0.7),
-        'human_impact': 1,
-        'property_impact': _score_to_kp_scale(cyber_risk * 0.5),
     }
 
     utilities_risk = risk_data.get('utilities_risk', 0.5)

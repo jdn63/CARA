@@ -155,7 +155,7 @@ def derive_posture_label(hazard_type: str,
         return f"Persistent {baseline_level} year-round risk, {trend_phrase}"
 
     if flat:
-        # No meaningful seasonality (e.g. active_shooter, cybersecurity)
+        # No meaningful seasonality (e.g. active_shooter)
         return f"{baseline_level.title()} baseline, year-round, {trend_phrase}"
 
     if in_peak:

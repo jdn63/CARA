@@ -1,4 +1,4 @@
-{# Active Surveillance Flags (v1: H5N1, mpox, enteric composite, legionella)
+{# Active Surveillance Flags (v1: enteric composite, legionella)
 
    Shape A: lightweight statewide outbreak flags that nudge the
    infectious_disease Acute signal. See utils/disease_surveillance.py for
@@ -16,7 +16,7 @@
 {% import "dashboard/_collapsible.html" as col %}
 {% set vra = risk_data.health_metrics.vaccination_risk_assessment if risk_data.health_metrics is mapping else None %}
 {% set oc = vra.outbreak_conditions if vra is mapping and vra.outbreak_conditions is mapping else None %}
-{% if oc and (oc.h5n1 is mapping or oc.mpox is mapping or oc.enteric is mapping or oc.legionella is mapping) %}
+{% if oc and (oc.enteric is mapping or oc.legionella is mapping) %}
 {% set surveillance_badge %}<span class="badge bg-secondary text-light ms-1" style="font-size: 0.65rem; font-weight: normal;" title="Lightweight statewide outbreak flags that contribute to the infectious-disease Acute signal. Isolated to infectious-disease only.">v1 prototype</span>{% endset %}
 {% call col.section('infectious-surveillance-flags', 'Active Surveillance Flags', badge_html=surveillance_badge, open=false) %}
     <div class="table-responsive">
@@ -30,46 +30,6 @@
                 </tr>
             </thead>
             <tbody>
-                {% if oc.h5n1 is mapping %}
-                {% set h = oc.h5n1 %}
-                <tr>
-                    <td>
-                        H5N1 avian influenza
-                        <br><small class="text-muted">{{ h.source_label|default('USDA APHIS HPAI') }}</small>
-                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
-                    </td>
-                    <td>
-                        {% set t = h.tier|default('none') %}
-                        <span class="badge bg-{{ 'danger' if t == 'local' else 'warning text-dark' if t == 'state' else 'info text-dark' if t == 'national_only' else 'success' }}">
-                            {{ t|replace('_', ' ')|title }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if h.boost and h.boost > 0 %}+{{ "%.2f"|format(h.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
-                    </td>
-                    <td><small>{{ h.detail|default('No detail') }}</small></td>
-                </tr>
-                {% endif %}
-                {% if oc.mpox is mapping %}
-                {% set m = oc.mpox %}
-                <tr>
-                    <td>
-                        Mpox
-                        <br><small class="text-muted">{{ m.source_label|default('CDC Mpox surveillance') }}</small>
-                        <span class="badge bg-secondary text-light" style="font-size: 0.6rem; font-weight: normal;">WI statewide</span>
-                    </td>
-                    <td>
-                        {% set t = m.tier|default('baseline') %}
-                        <span class="badge bg-{{ 'danger' if t == 'cluster' else 'warning text-dark' if t == 'elevated' else 'success' }}">
-                            {{ t|title }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if m.boost and m.boost > 0 %}+{{ "%.2f"|format(m.boost) }}{% else %}<span class="text-muted">none</span>{% endif %}
-                    </td>
-                    <td><small>{{ m.detail|default('No detail') }}</small></td>
-                </tr>
-                {% endif %}
                 {% if oc.enteric is mapping %}
                 {% set e = oc.enteric %}
                 <tr>

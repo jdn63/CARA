@@ -25,16 +25,8 @@ class TestCountyBaselineIntegrity:
     def test_baselines_file_loads(self):
         baselines = _load_county_baselines()
         assert baselines is not None
-        assert 'cybersecurity' in baselines
         assert 'extreme_heat' in baselines
         assert 'fallback_scores' in baselines
-
-    def test_cybersecurity_components_present(self):
-        baselines = _load_county_baselines()
-        cyber = baselines['cybersecurity']
-        assert 'threat' in cyber
-        assert 'vulnerability' in cyber
-        assert 'capability' in cyber
 
     def test_extreme_heat_components_present(self):
         baselines = _load_county_baselines()
@@ -45,7 +37,7 @@ class TestCountyBaselineIntegrity:
 
     def test_all_scores_in_valid_range(self):
         baselines = _load_county_baselines()
-        for domain in ['cybersecurity', 'extreme_heat']:
+        for domain in ['extreme_heat']:
             for component, values in baselines[domain].items():
                 for county, score in values.items():
                     assert 0.0 <= score <= 1.0, (
@@ -54,7 +46,7 @@ class TestCountyBaselineIntegrity:
 
     def test_all_components_have_defaults(self):
         baselines = _load_county_baselines()
-        for domain in ['cybersecurity', 'extreme_heat']:
+        for domain in ['extreme_heat']:
             for component, values in baselines[domain].items():
                 assert '_default' in values, (
                     f"{domain}.{component} is missing a _default value"
@@ -64,7 +56,7 @@ class TestCountyBaselineIntegrity:
         baselines = _load_county_baselines()
         expected_domains = [
             'natural_hazards', 'health_metrics', 'active_shooter',
-            'extreme_heat', 'air_quality', 'cybersecurity', 'utilities',
+            'extreme_heat', 'air_quality', 'utilities',
             'dam_failure', 'vector_borne_disease',
         ]
         for domain in expected_domains:
@@ -143,45 +135,6 @@ class TestPHRATFormulaReproducibility:
             f"Quadratic mean ({quadratic:.4f}) should exceed linear average ({linear:.4f}) "
             "when one domain is much higher than others"
         )
-
-
-class TestCybersecurityScoreReproducibility:
-    """Verify cybersecurity risk calculation with known inputs produces known outputs."""
-
-    def _calculate_cyber_risk(self, threat, vulnerability, capability, svi_socioeconomic=0.5):
-        """Reproduce the cybersecurity risk calculation independently."""
-        svi_adjustment = svi_socioeconomic * 0.25
-        adjusted_vulnerability = min(1.0, vulnerability + svi_adjustment)
-        capability_inverted = 1.0 - capability
-        traditional_risk = (
-            (threat * 0.35) +
-            (adjusted_vulnerability * 0.40) +
-            (capability_inverted * 0.25)
-        )
-        return round(traditional_risk, 4)
-
-    def test_milwaukee_cyber_baseline(self):
-        baselines = _load_county_baselines()
-        threat = baselines['cybersecurity']['threat']['Milwaukee']
-        vuln = baselines['cybersecurity']['vulnerability']['Milwaukee']
-        cap = baselines['cybersecurity']['capability']['Milwaukee']
-        assert threat == 0.72
-        assert vuln == 0.60
-        assert cap == 0.65
-
-    def test_cyber_risk_known_calculation(self):
-        """Milwaukee with SVI socioeconomic = 0.5:
-        threat=0.72, vuln=0.60+0.125=0.725, cap_inv=0.35
-        risk = 0.72*0.35 + 0.725*0.40 + 0.35*0.25 = 0.252 + 0.290 + 0.0875 = 0.6295"""
-        result = self._calculate_cyber_risk(0.72, 0.60, 0.65, svi_socioeconomic=0.5)
-        expected = round(0.72 * 0.35 + 0.725 * 0.40 + 0.35 * 0.25, 4)
-        assert abs(result - expected) < 0.001, f"Expected {expected}, got {result}"
-
-    def test_cyber_svi_disabled(self):
-        """With SVI=0.0, vulnerability should not be adjusted."""
-        result = self._calculate_cyber_risk(0.50, 0.50, 0.50, svi_socioeconomic=0.0)
-        expected = round(0.50 * 0.35 + 0.50 * 0.40 + 0.50 * 0.25, 4)
-        assert abs(result - expected) < 0.001
 
 
 class TestExtremeHeatScoreReproducibility:
@@ -272,40 +225,16 @@ class TestEndToEndPipeline:
         score2 = result2.get('overall', result2.get('risk_score'))
         assert score1 == score2, f"Non-deterministic: {score1} != {score2}"
 
-    def test_cybersecurity_pipeline_produces_valid_output(self):
-        """Call real get_cybersecurity_risk_data and verify structure."""
-        from utils.data_processor import get_cybersecurity_risk_data
-        result = get_cybersecurity_risk_data('50')
-        assert isinstance(result, dict)
-        assert 'risk_score' in result
-        assert 0.0 <= result['risk_score'] <= 1.0
-        assert 'components' in result
-        components = result['components']
-        assert 'threat' in components
-        assert 'vulnerability' in components
-        assert 'capability' in components
-
-    def test_cybersecurity_pipeline_deterministic(self):
-        """Two calls with same jurisdiction should produce identical scores."""
-        from utils.data_processor import get_cybersecurity_risk_data
-        result1 = get_cybersecurity_risk_data('50')
-        result2 = get_cybersecurity_risk_data('50')
-        assert result1['risk_score'] == result2['risk_score'], (
-            f"Non-deterministic: {result1['risk_score']} != {result2['risk_score']}"
-        )
-
     def test_fallback_function_returns_correct_values(self):
         """Verify _get_fallback returns values from the YAML config."""
         from utils.data_processor import _get_fallback
         assert _get_fallback('natural_hazards') == 0.5
         assert _get_fallback('health_metrics') == 0.5
-        assert _get_fallback('cybersecurity') == 0.5
         assert _get_fallback('nonexistent_domain') == 0.5
 
     def test_baseline_function_returns_correct_values(self):
         """Verify _get_baseline returns values from the YAML config for known counties."""
         from utils.data_processor import _get_baseline
-        assert _get_baseline('cybersecurity', 'threat', 'Milwaukee') == 0.72
         assert _get_baseline('extreme_heat', 'exposure', 'Milwaukee') == 0.62
         assert _get_baseline('extreme_heat', 'exposure', 'UnknownCounty') == 0.50
 
@@ -334,5 +263,5 @@ class TestWeightConfigIntegrity:
             config = yaml.safe_load(f)
         assert 'svi_adjustment_factors' in config
         svi = config['svi_adjustment_factors']
-        assert 'cybersecurity_socioeconomic' in svi
-        assert 0.0 <= svi['cybersecurity_socioeconomic'] <= 1.0
+        assert 'active_shooter_household' in svi
+        assert 0.0 <= svi['active_shooter_household'] <= 1.0

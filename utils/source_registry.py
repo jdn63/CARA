@@ -100,22 +100,6 @@ CANONICAL_SOURCES: Dict[str, SourceSpec] = {
         freshness_max_age_days=14,
         legacy_aliases=('cdc_nhsn_hospital',),
     ),
-    'h5n1': SourceSpec(
-        display_name='USDA APHIS H5N1 HPAI Detections',
-        description='Weekly H5N1 livestock + poultry detections (Wisconsin filter)',
-        module='utils.data_source_refresher',
-        function='refresh_all_h5n1',
-        refresh_interval_hours=168,
-        freshness_max_age_days=14,
-    ),
-    'mpox': SourceSpec(
-        display_name='CDC Mpox State Surveillance',
-        description='Weekly mpox state-level case counts',
-        module='utils.data_source_refresher',
-        function='refresh_all_mpox',
-        refresh_interval_hours=168,
-        freshness_max_age_days=14,
-    ),
     'nndss_enteric': SourceSpec(
         display_name='CDC NNDSS Enteric + Legionellosis (Wisconsin)',
         description='Weekly NNDSS counts for enteric/waterborne diseases + Legionellosis',

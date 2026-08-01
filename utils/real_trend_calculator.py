@@ -417,7 +417,7 @@ def get_trend_score(risk_type: str, county_name: str) -> Dict[str, Any]:
     elif risk_type == 'infectious_disease':
         return None
     
-    elif risk_type in ('active_shooter', 'cybersecurity', 'electrical_outage',
+    elif risk_type in ('active_shooter', 'electrical_outage',
                        'utilities_disruption', 'supply_chain', 'fuel_shortage'):
         return _neutral_trend(f'No reliable trend data source for {risk_type}')
     
@@ -433,7 +433,7 @@ def get_all_trend_scores(county_name: str) -> Dict[str, Dict[str, Any]]:
     risk_types = [
         'flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind',
         'extreme_heat', 'air_quality', 'infectious_disease',
-        'active_shooter', 'cybersecurity'
+        'active_shooter'
     ]
     
     results = {}

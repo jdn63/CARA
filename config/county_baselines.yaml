@@ -10,55 +10,6 @@
 
 # Cybersecurity Domain Baselines
 # Source citations for each component are documented in the comments.
-cybersecurity:
-  # THREAT LANDSCAPE COMPONENT
-  # Proxy: Population size (Census ACS 2022) and institutional presence (WI Blue Book)
-  # Higher population and more government/healthcare institutions = higher target visibility
-  threat:
-    Milwaukee: 0.72    # Pop 577k, major metro, healthcare/finance hub
-    Dane: 0.68         # Pop 561k, state capital, university, government systems
-    Waukesha: 0.58     # Pop 406k, suburban, healthcare facilities
-    Brown: 0.60        # Pop 268k, Green Bay metro, moderate institutional presence
-    Racine: 0.55       # Pop 197k, industrial base
-    Kenosha: 0.52      # Pop 169k, border county
-    Rock: 0.50         # Pop 163k, smaller metro
-    Walworth: 0.48     # Pop 103k, rural/resort
-    Bayfield: 0.42     # Pop 15k, rural northern
-    _default: 0.48     # Median of listed counties
-
-  # VULNERABILITY COMPONENT
-  # Proxy: County per-capita revenue (WI DOR 2022) and urban/rural classification (Census)
-  # Lower revenue and rural classification = less IT modernization budget
-  vulnerability:
-    Milwaukee: 0.60    # Mixed: large budget but aging legacy systems
-    Dane: 0.45         # Higher per-capita revenue, university tech resources
-    Waukesha: 0.52     # Moderate per-capita revenue, suburban infrastructure
-    Brown: 0.58        # Mid-range revenue, mixed infrastructure
-    Racine: 0.62       # Lower per-capita revenue, older systems
-    Kenosha: 0.60      # Mid-range revenue, mixed infrastructure quality
-    Rock: 0.65         # Lower revenue, budget constraints
-    Walworth: 0.68     # Rural, limited modernization budget
-    Bayfield: 0.72     # Rural, lowest per-capita IT resources
-    _default: 0.62     # Median of listed counties
-
-  # CAPABILITY COMPONENT (organizational readiness)
-  # Proxy: County government staffing levels (WI DOR 2022) and urban/rural classification
-  # Larger governments with urban access = more likely to have dedicated IT/security staff
-  # NOTE: Higher score = BETTER capability (inverted for risk calculation in code)
-  capability:
-    Milwaukee: 0.65    # Dedicated IT security staff, moderate maturity
-    Dane: 0.72         # Well-resourced, access to university expertise
-    Waukesha: 0.62     # Moderate staffing, suburban access to specialists
-    Brown: 0.60        # Moderate staffing, some gaps
-    Racine: 0.55       # Limited dedicated security staffing
-    Kenosha: 0.58      # Moderate staffing, resource constraints
-    Rock: 0.52         # Limited specialized IT staff
-    Walworth: 0.48     # Minimal dedicated security resources
-    Bayfield: 0.45     # Rural, minimal specialized staffing
-    _default: 0.55     # Median of listed counties
-
-# Extreme Heat Domain Baselines
-# All scores are on a 0.0-1.0 scale.
 extreme_heat:
   # EXPOSURE COMPONENT
   # Proxy: NOAA Climate Normals 1991-2020 average July maximum temperatures
@@ -143,6 +94,5 @@ fallback_scores:
   air_quality: 0.5         # No air quality data → assume median risk
   dam_failure: 0.5         # No dam data → assume median risk
   vector_borne_disease: 0.5  # No VBD surveillance data → assume median risk
-  cybersecurity: 0.5       # No cyber data → assume median risk
   utilities: 0.5           # No utilities data → assume median risk
   svi_theme: 0.5           # No SVI data → assume median vulnerability

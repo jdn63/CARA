@@ -160,7 +160,7 @@ class CARAGISExporter:
             'total_risk_score', 'residual_risk',
             'exposure', 'vulnerability', 'resilience', 'health_impact_factor',
             'natural_hazards_risk', 'health_risk', 'active_shooter_risk',
-            'extreme_heat_risk', 'air_quality_risk', 'cybersecurity_risk', 'utilities_risk',
+            'extreme_heat_risk', 'air_quality_risk', 'utilities_risk',
             'flood_risk', 'tornado_risk', 'winter_storm_risk', 'thunderstorm_risk',
             'lat', 'lon', 'calculation_timestamp', 'framework_version', 'data_source'
         ]

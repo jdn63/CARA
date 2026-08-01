@@ -76,8 +76,6 @@ _SUM_FIELDS = {
     # Dam failure
     'total_dams', 'high_hazard_dams', 'significant_hazard_dams',
     'low_hazard_dams', 'eap_count', 'modeled_population_at_risk',
-    # Cyber
-    'reported_breaches', 'cybercrime_reports', 'critical_vulnerabilities',
     # Hazmat
     'tri_facility_count',
     # Heat / health
@@ -266,7 +264,7 @@ def aggregate_detail_blocks(
 
     Discovers any top-level key ending in "_components" or "_metrics" plus the
     nested "utilities" block, so it adapts to the data layer's key naming
-    (for example cyber_components, vbd_metrics) without a hardcoded list.
+    (for example vbd_metrics) without a hardcoded list.
     """
     block_keys = set()
     for jurs in risk_by_county.values():
@@ -326,10 +324,6 @@ _DOMAIN_META = {
         'Air Quality',
         ['EPA AirNow', 'Census ACS', 'CDC SVI'],
     ),
-    'cybersecurity': (
-        'Cybersecurity',
-        ['Census ACS', 'WI DOR', 'CDC SVI'],
-    ),
     'dam_failure': (
         'Dam Failure',
         ['WI DNR Dam Safety', 'USACE NID', 'OpenFEMA NFIP', 'CDC SVI'],
@@ -360,12 +354,12 @@ _DOMAIN_META = {
 _DOMAIN_ORDER = [
     'natural_hazards', 'health_metrics', 'active_shooter', 'extreme_heat',
     'air_quality', 'dam_failure', 'vector_borne_disease', 'infectious_disease',
-    'hazmat_industrial', 'hazmat_agricultural', 'cybersecurity', 'utilities',
+    'hazmat_industrial', 'hazmat_agricultural', 'utilities',
 ]
 
 # Domains that are contextual and never part of the composite score in the
 # Public Health discipline.
-_SUPPLEMENTARY_KEYS = ('cybersecurity', 'utilities')
+_SUPPLEMENTARY_KEYS = ('utilities',)
 
 # Scalar utility sub-scores the data layer exposes at the top level of the
 # nested "utilities" block (alongside "overall" and a "components" dict). These

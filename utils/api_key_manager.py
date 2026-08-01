@@ -23,7 +23,6 @@ class APIKeyManager:
     def __init__(self):
         self.api_keys = {
             'CENSUS_API_KEY': os.environ.get('CENSUS_API_KEY'),
-            'OPENWEATHERMAP_API_KEY': os.environ.get('OPENWEATHERMAP_API_KEY'),
             'AIRNOW_API_KEY': os.environ.get('AIRNOW_API_KEY'),
         }
         self.validation_cache = {}
@@ -73,8 +72,6 @@ class APIKeyManager:
         try:
             if service == 'CENSUS_API_KEY':
                 result = self._validate_census_key(api_key)
-            elif service == 'OPENWEATHERMAP_API_KEY':
-                result = self._validate_openweather_key(api_key)
             elif service == 'AIRNOW_API_KEY':
                 result = self._validate_airnow_key(api_key)
             else:
@@ -107,22 +104,6 @@ class APIKeyManager:
                 
         except requests.RequestException as e:
             return (False, f"Census API connection error: {str(e)}")
-    
-    def _validate_openweather_key(self, api_key: str) -> Tuple[bool, str]:
-        """Validate OpenWeatherMap API key"""
-        try:
-            url = f"https://api.openweathermap.org/data/2.5/weather?q=Madison,WI,US&appid={api_key}"
-            response = requests.get(url, timeout=10)
-            
-            if response.status_code == 200:
-                return (True, "OpenWeatherMap API key valid")
-            elif response.status_code == 401:
-                return (False, "Invalid OpenWeatherMap API key")
-            else:
-                return (False, f"OpenWeatherMap API returned status {response.status_code}")
-                
-        except requests.RequestException as e:
-            return (False, f"OpenWeatherMap API connection error: {str(e)}")
     
     def _validate_airnow_key(self, api_key: str) -> Tuple[bool, str]:
         """Validate AirNow API key"""

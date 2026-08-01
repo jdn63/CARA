@@ -24,7 +24,7 @@
             <li class="breadcrumb-item"><a href="#air-quality">Air Quality</a></li>
             <li class="breadcrumb-item"><a href="#dam-failure">Dam Failure</a></li>
             <li class="breadcrumb-item"><a href="#utilities">Utilities</a></li>
-            <li class="breadcrumb-item"><a href="#cybersecurity">Cybersecurity</a></li>
+            <li class="breadcrumb-item"><a href="#cybersecurity">Cyber Preparedness</a></li>
             <li class="breadcrumb-item"><a href="#svi-integration">SVI Integration</a></li>
             <li class="breadcrumb-item"><a href="#temporal-framework">Temporal Framework</a></li>
             <li class="breadcrumb-item"><a href="#phep-integration">PHEP Integration</a></li>
@@ -53,7 +53,7 @@
                 </ul>
             </div>
         </div>
-        <p class="mt-2 mb-0 small">Each jurisdiction is assessed across 7 primary risk domains using the PHRAT quadratic mean formula to produce an overall risk score, with 2 supplementary domains (Utilities and Cybersecurity) presented for comprehensive planning context.</p>
+        <p class="mt-2 mb-0 small">Each jurisdiction is assessed across 7 primary risk domains using the PHRAT quadratic mean formula to produce an overall risk score, with the Utilities supplementary domain presented for comprehensive planning context.</p>
         <p class="mt-2 mb-0 small"><strong>HERC Region Boundaries:</strong> The geographic boundaries used for HERC region mapping and choropleth visualization are approximations based on the official DHS jurisdiction-to-HERC region assignments. HERC region assignments follow the Wisconsin DHS designation for each local health department jurisdiction. Boundary polygon files are not currently published by DHS; the mapped boundaries are derived from the county-level polygons of the member jurisdictions and should be interpreted as planning-level approximations rather than precise administrative boundaries.</p>
     </div>
 
@@ -187,7 +187,7 @@
                 </table>
             </div>
             <div class="alert alert-warning mb-0 mt-3">
-                <strong>Data Transparency:</strong> The Cybersecurity and Utilities risk domains are <strong>modeled from proxy indicators</strong> derived from county characteristics and SVI data, not real-time external APIs. These supplementary domains are not included in the primary PHRAT risk score. All proxy-indicator-based components are transparently labeled throughout this methodology.
+                <strong>Data Transparency:</strong> The Utilities risk domain is <strong>modeled from proxy indicators</strong> derived from county characteristics and SVI data, not real-time external APIs. This supplementary domain is not included in the primary PHRAT risk score. All proxy-indicator-based components are transparently labeled throughout this methodology.
             </div>
         </div>
     </div>
@@ -297,7 +297,7 @@
                 <strong>Weight sources:</strong> Domain weights are informed by FEMA National Risk Index annualized expected loss data for Wisconsin, CDC PHEP capability priorities, Wisconsin DHS Hazard Vulnerability Assessment guidance, and historical disaster declaration frequency (FEMA, 2000-2024). These weights are configurable; jurisdictions may adjust them in <code>config/risk_weights.yaml</code> based on local hazard profiles and planning priorities.
             </div>
             <div class="alert alert-secondary mt-3">
-                <strong>Supplementary Domains:</strong> Utilities and Cybersecurity are assessed separately as supplementary domains modeled from proxy indicators. They are not included in the primary PHRAT score but are presented for comprehensive planning context.
+                <strong>Supplementary Domain:</strong> Utilities is assessed separately as a supplementary domain modeled from proxy indicators. It is not included in the primary PHRAT score but is presented for comprehensive planning context.
             </div>
             <p class="small mb-0"><strong>Why quadratic mean?</strong> Unlike a simple weighted average, the quadratic mean (root mean square) gives greater emphasis to higher-risk domains. A jurisdiction with one domain at 0.9 risk will score meaningfully higher than one where all domains sit at 0.4, even if the weighted averages would be similar.</p>
         </div>
@@ -649,8 +649,8 @@
                 <li><strong>Resilience:</strong> FEMA NRI Community Resilience (HVRI BRIC index), county mean, shown for planning context only. An earlier display derived this from the inverse HVI socioeconomic sub-index, which relabeled a signal already inside the headline score; it now uses the independent FEMA measure. It is never composited into the heat score.</li>
             </ul>
 
-            <h6>Annual Heat Days (contextual metric)</h6>
-            <p class="small">The dashboard also displays an observed annual heat-day count per county. Source hierarchy (v28.9): CDC Environmental Public Health Tracking measure 421 (days at or above 90F per county per year, 12-24 month publication lag) as the canonical observed source, with the legacy NCEI Climate-at-a-Glance heuristic (cache-only) and a statewide constant as cascading fallbacks. The displayed caption reflects which level of the hierarchy was actually used. This metric is contextual and does not enter the HVI-based score.</p>
+            <h6>Heat-day and heat-illness observations</h6>
+            <p class="small">Extreme-heat-day counts and heat-related emergency-department visits are incorporated within the WI DHS HVI (through its environmental and health sub-indices) and are <strong>not</strong> surfaced as separate per-county figures. CARA does not run an independent per-county heat-day feed; the HVI is used as the single, externally vetted source for this domain.</p>
 
             <div class="alert alert-secondary mb-0">
                 <strong>History.</strong> Before v29 this domain used a CARA-specific EVR heat composite (heat-day exposure, wet-bulb baseline, SVI-derived vulnerability and resilience, climate-trend multipliers) with a separate 2050 trajectory panel added by the 2026-05-20 Q7 horizon-separation fix. That composite has been retired in favor of the DHS HVI: an externally authored, peer-reviewable index removes CARA-authored weights from this domain entirely. The 2050 trajectory panel was retired with it.
@@ -697,30 +697,23 @@
 
     <div class="card mb-4" id="cybersecurity">
         <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Cybersecurity Domain (Supplementary Assessment)</h2>
+            <h2 class="h5 mb-0">Cyber Preparedness (Unscored Planning Panel)</h2>
         </div>
         <div class="card-body">
-            <div class="alert alert-warning">
-                <strong>Transparency Note:</strong> This domain is <strong>modeled from proxy indicators</strong> derived from county characteristics and CDC SVI socioeconomic adjustments. It is <em>not</em> based on real-time threat intelligence, breach databases, or cybersecurity incident feeds.
-                <ul class="mb-0 mt-2 small">
-                    <li><strong>Threat proxies:</strong> Population size (Census ACS 2022) as proxy for target visibility; institutional presence from WI Blue Book (government, healthcare, finance)</li>
-                    <li><strong>Vulnerability proxies:</strong> County per-capita revenue (WI DOR 2022) as proxy for IT modernization budget; urban/rural classification (Census); CDC SVI socioeconomic theme</li>
-                    <li><strong>Capability proxies:</strong> County government staffing levels (WI DOR 2022) and urbanization as proxy for access to IT security specialists</li>
-                </ul>
+            <div class="alert alert-info p-2 mb-3">
+                <strong>Retired score (August 2026):</strong> earlier versions of CARA displayed a supplementary
+                cybersecurity risk score modeled from curated county baselines with a CDC SVI socioeconomic
+                adjustment. No authoritative county-level cybersecurity incident data exists for Wisconsin, so the
+                score could not be tied to real local measurements and was retired. No cybersecurity score is
+                calculated, displayed, or included in any composite.
             </div>
-            <div class="alert alert-secondary">
-                <strong>Supplementary Domain:</strong> Cybersecurity is not included in the primary PHRAT risk score. It is presented as a supplementary assessment for comprehensive planning context.
-            </div>
-            <p>The cybersecurity risk score models the relative exposure of public health infrastructure to cyber threats based on three components:</p>
-            <ul>
-                <li><strong>Threat Landscape (35%):</strong> County population size and institutional presence as proxy for target visibility</li>
-                <li><strong>Vulnerability (40%):</strong> County fiscal resources as proxy for IT infrastructure age, adjusted by CDC SVI socioeconomic factor (up to <strong>25%</strong> increase for more vulnerable jurisdictions)</li>
-                <li><strong>Capability (25%):</strong> County staffing and urbanization as proxy for organizational security readiness (inverted: higher capability = lower risk)</li>
-            </ul>
-            <div class="alert alert-danger mt-3">
-                <strong>Methodological Limitation: Potential Socioeconomic Bias.</strong> The CDC SVI socioeconomic adjustment (up to 25% increase) assumes that lower-income communities have fewer IT security resources. This is a <strong>proxy assumption without direct empirical validation</strong>; no published study links county-level SVI percentiles to cybersecurity breach rates. This adjustment may embed socioeconomic bias by systematically scoring lower-income jurisdictions as higher cybersecurity risk. Users should interpret cybersecurity scores with this limitation in mind. The SVI adjustment factor is configurable in <code>config/risk_weights.yaml</code> and can be set to 0.0 to disable SVI influence entirely.
-            </div>
-            <p class="small mb-0">This domain is included to support comprehensive preparedness planning. Jurisdictions seeking detailed cyber risk assessments should consult CISA resources and conduct dedicated cybersecurity evaluations.</p>
+            <p>The dashboard instead provides an unscored <strong>Cyber Preparedness panel</strong>: a practical
+            checklist for health departments (system-downtime procedures for WEDSS/WIR/EHR, offline contact
+            rosters, tested backups, incident response planning, annual tabletop exercises, free MS-ISAC
+            membership) with links to authoritative resources (CISA, HHS HC3, MS-ISAC, and the HHS OCR breach
+            portal).</p>
+            <p class="small mb-0">Jurisdictions seeking a cyber risk evaluation should engage CISA&rsquo;s regional
+            cybersecurity advisor or conduct a dedicated assessment.</p>
         </div>
     </div>
 

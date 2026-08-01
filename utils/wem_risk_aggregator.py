@@ -123,7 +123,7 @@ class WEMRiskAggregator:
 
             DOMAINS = (
                 'natural_hazards', 'health_metrics', 'active_shooter',
-                'extreme_heat', 'air_quality', 'cybersecurity',
+                'extreme_heat', 'air_quality',
                 'utilities', 'dam_failure', 'vector_borne_disease',
                 'infectious_disease',
                 'hazmat_industrial', 'hazmat_agricultural',
@@ -185,7 +185,6 @@ class WEMRiskAggregator:
                             'active_shooter': risk_data.get('active_shooter_risk'),
                             'extreme_heat': risk_data.get('extreme_heat_risk'),
                             'air_quality': risk_data.get('air_quality_risk'),
-                            'cybersecurity': risk_data.get('cybersecurity_risk'),
                             'utilities': (risk_data.get('utilities') or {}).get('overall'),
                             'dam_failure': risk_data.get('dam_failure_risk'),
                             'vector_borne_disease': risk_data.get('vector_borne_disease_risk'),
@@ -263,7 +262,6 @@ class WEMRiskAggregator:
             active_shooter_avg = _two_stage(domain_by_county, 'active_shooter')
             extreme_heat_avg = _two_stage(domain_by_county, 'extreme_heat')
             air_quality_avg = _two_stage(domain_by_county, 'air_quality')
-            cybersecurity_avg = _two_stage(domain_by_county, 'cybersecurity')
             utilities_avg = _two_stage(domain_by_county, 'utilities')
             dam_failure_avg = _two_stage(domain_by_county, 'dam_failure')
             vbd_avg = _two_stage(domain_by_county, 'vector_borne_disease')
@@ -360,7 +358,6 @@ class WEMRiskAggregator:
                 'active_shooter_risk': active_shooter_avg,
                 'extreme_heat_risk': extreme_heat_avg,
                 'air_quality_risk': air_quality_avg,
-                'cybersecurity_risk': cybersecurity_avg,
                 'utilities_risk': utilities_avg,
                 'dam_failure_risk': dam_failure_avg,
                 'vector_borne_disease_risk': vbd_avg,
@@ -435,7 +432,6 @@ class WEMRiskAggregator:
                         'active_shooter': active_shooter_avg,
                         'extreme_heat': extreme_heat_avg,
                         'air_quality': air_quality_avg,
-                        'cybersecurity': cybersecurity_avg,
                         'dam_failure': dam_failure_avg,
                         'vector_borne_disease': vbd_avg,
                         'infectious_disease': infectious_disease_avg,

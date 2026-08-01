@@ -18,7 +18,7 @@ Hard rules:
   constant defaults across counties (e.g. placeholder vulnerability factors)
   or that do not survive regional aggregation are deliberately skipped, so the
   page never dresses up generic prose as if it were local data. When a domain
-  has no real local signal (e.g. the proxy-modeled cybersecurity score), the
+  has no real local signal (e.g. the proxy-modeled utilities score), the
   derived lists come back empty and the card falls back to authored copy alone.
 - Defensive. Every lookup tolerates missing keys, None, booleans, and the
   "Varies across N counties" placeholder the regional aggregator writes into

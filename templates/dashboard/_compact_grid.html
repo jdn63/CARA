@@ -49,7 +49,6 @@
 {% set s_hz_ind = risk_data.hazmat_industrial_risk if risk_data.hazmat_industrial_risk is number else 0.30 %}
 {% set s_hz_ag = risk_data.hazmat_agricultural_risk if risk_data.hazmat_agricultural_risk is number else 0.30 %}
 {% set s_shooter = risk_data.active_shooter_risk if risk_data.active_shooter_risk is number else 0.32 %}
-{% set s_cyber = risk_data.cybersecurity_risk if risk_data.cybersecurity_risk is number else 0.35 %}
 {% set s_util = risk_data.utilities.overall if (risk_data.utilities is mapping and risk_data.utilities.overall is defined and risk_data.utilities.overall is number) else 0.30 %}
 
 {# --- Discipline-aware REAL weight labels (nominal design weights from
@@ -121,7 +120,6 @@
         <div class="compact-band-header">Public Safety ({{ w_shooter }} {{ discipline_label|default('Public Health') }} weight + supplementary)</div>
         <div class="compact-tile-grid">
             {{ rt('active_shooter', 'Active Shooter', s_shooter, w_shooter) }}
-            {{ rt('cybersecurity', 'Cybersecurity', s_cyber, 'Supplementary') }}
         </div>
     </div>
 

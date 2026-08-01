@@ -56,11 +56,15 @@ class RiskConfigManager:
         logger.warning("Loading fallback configuration")
         self.config = {
             'overall_risk_weights': {
-                'natural_hazards': 0.35,
-                'health_metrics': 0.20,
-                'active_shooter': 0.15,
-                'extreme_heat': 0.15,
-                'cybersecurity': 0.15
+                'natural_hazards': 0.26,
+                'health_metrics': 0.16,
+                'active_shooter': 0.17,
+                'extreme_heat': 0.10,
+                'air_quality': 0.11,
+                'dam_failure': 0.07,
+                'vector_borne_disease': 0.07,
+                'hazmat_industrial': 0.03,
+                'hazmat_agricultural': 0.03
             },
             'temporal_weights': {
                 'strategic_planning': {

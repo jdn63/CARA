@@ -27,7 +27,7 @@ def _load_county_baselines():
         logging.getLogger(__name__).info(f"Loaded county baselines from {baselines_path}")
     except Exception as e:
         logging.getLogger(__name__).warning(f"Could not load county baselines from {baselines_path}: {e}. Using built-in defaults.")
-        _county_baselines = {'fallback_scores': {}, 'cybersecurity': {}, 'extreme_heat': {}}
+        _county_baselines = {'fallback_scores': {}, 'extreme_heat': {}}
     return _county_baselines
 
 
@@ -807,7 +807,6 @@ def apply_percentile_ranking(risk_data, region_name: str = None) -> Dict:
         'straight_line_wind_risk',
         'extreme_heat_risk',
         'active_shooter_risk',
-        'cybersecurity_risk',
         'health_risk'
     ]
     
@@ -839,7 +838,7 @@ def apply_percentile_ranking(risk_data, region_name: str = None) -> Dict:
     # Extract individual component scores
     risk_types = [
         'natural_hazards_risk', 'health_risk', 'active_shooter_risk',
-        'cybersecurity_risk', 'extreme_heat_risk', 'flood_risk',
+        'extreme_heat_risk', 'flood_risk',
         'tornado_risk', 'winter_storm_risk', 'thunderstorm_risk',
         'straight_line_wind_risk'
     ]
@@ -1097,6 +1096,13 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
             'climate_trend_factor': _trend_block.get('final_trend_factor'),
             'risk_level': enhanced_heat_data.get('risk_level'),
             'data_sources': enhanced_heat_data.get('data_sources', []),
+            # Real WI DHS HVI metrics for the dashboard "Key Metrics" table
+            # (replaces prior hardcoded placeholder heat-day/ED-visit numbers).
+            'hvi_score': _heat_wrapper_metrics.get('hvi_score'),
+            'hvi_category': _heat_wrapper_metrics.get('hvi_category'),
+            'statewide_rank': _heat_wrapper_metrics.get('statewide_rank'),
+            'statewide_county_count': _heat_wrapper_metrics.get('statewide_county_count'),
+            'block_group_count': _heat_wrapper_metrics.get('block_group_count'),
             'heat_advisories': _heat_wrapper_metrics.get('heat_advisories'),
             'annual_heat_days': _heat_wrapper_metrics.get('annual_heat_days'),
             # v28.8: CDC EPHT provenance for the heat-days row. The
@@ -1116,9 +1122,6 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     if extreme_heat_risk is None:
         extreme_heat_risk = 0.0
     
-    # Calculate multi-dimensional cybersecurity risk
-    cybersecurity_data = get_cybersecurity_risk_data(jurisdiction_id)
-    cybersecurity_risk_base = cybersecurity_data['risk_score']
     
     # Apply SVI adjustments to all risk types with different weights
     # Get all SVI theme factors
@@ -1140,7 +1143,6 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     
     # Secondary SVI impact: Socioeconomic for ALL risk types (25% max increase)
     # This ensures poverty/socioeconomic factors influence all risk types
-    secondary_socioeconomic_multiplier = 1.0 + (socioeconomic_svi_factor * 0.25)
     
     # NOTE: SVI adjustments for natural hazards are now applied INSIDE the enhanced
     # natural hazards risk module (utils/natural_hazards_risk.py) using all 4 CDC SVI
@@ -1190,16 +1192,6 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         f"{active_shooter_risk_base:.2f} → {active_shooter_risk:.2f}"
     )
     
-    # 4. Apply SVI adjustment to cybersecurity risk
-    # Primary: Socioeconomic (resource access impacts cybersecurity capabilities)
-    # METHODOLOGICAL NOTE: This assumes lower SVI socioeconomic scores correlate
-    # with fewer IT security resources. This is a proxy assumption without direct
-    # empirical validation linking county SVI to cybersecurity breach rates.
-    # The adjustment factor (default 0.25 = 25% max increase) is configurable
-    # in config/risk_weights.yaml → svi_adjustment_factors.cybersecurity_socioeconomic.
-    # Set to 0.0 to disable SVI influence on cybersecurity scores entirely.
-    cybersecurity_risk = min(1.0, cybersecurity_risk_base * secondary_socioeconomic_multiplier)
-    logger.info(f"Adjusted cybersecurity risk with SVI socioeconomic factor: {cybersecurity_risk_base:.2f} → {cybersecurity_risk:.2f}")
     
     # Calculate overall risk score with data-backed domains only:
     # - Natural Hazards: 33%
@@ -1207,7 +1199,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
     # - Active Shooter: 20%
     # - Extreme Heat: 13%
     # - Air Quality: 14%
-    # Note: Cybersecurity and Utilities are supplementary (modeled from proxy indicators, not in PHRAT)
+    # Note: Utilities is supplementary (modeled from proxy indicators, not in PHRAT)
     
     # Calculate natural hazards combined score (numeric values only)
     numeric_hazards = {}
@@ -1391,10 +1383,6 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
         'extreme_heat_risk': float(extreme_heat_risk),
         'extreme_heat_components': extreme_heat_data['components'],
         'extreme_heat_metrics': extreme_heat_data['metrics'],
-        'cybersecurity_risk': float(cybersecurity_risk),
-        'cyber_components': cybersecurity_data['components'],
-        'cyber_metrics': cybersecurity_data['metrics'],
-        'cyber_incidents': cybersecurity_data.get('recent_incidents', []),
         'air_quality_risk': float(air_quality_risk),
         # Strategic assessment is the sole source for air quality
         # display. The prior 'air_quality_data', 'air_quality_aqi',
@@ -1817,20 +1805,11 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'final_score': round(float(vbd_risk), 4),
                 'weighted_contribution': round(weights.get('vector_borne_disease', 0.07) * (float(vbd_risk) ** p), 4),
                 'svi_adjustment': f'Multiplier: socioeconomic={round(vbd_svi_multiplier, 3)}',
-                'data_sources': ['WI DHS EPHT Lyme incidence rates (county-level, 2019-2024)', 'WI DHS Vectorborne Disease Program WNV (county-level, 2019-2024)', 'USDA NLCD 2021 forest cover (static)', 'WI DNR deer density (static)', 'WICCI/NOAA climate projections (static)'],
+                'data_sources': ['WI DHS EPHT Lyme incidence rates (county-level, 2019-2024)', 'WI DHS Vectorborne Disease Program WNV (county-level, 2019-2024)', 'USDA NLCD 2021 forest cover (static)', 'WI DNR deer density estimates based on deer-management unit and harvest totals (static)', 'WICCI/NOAA climate projections (static)'],
                 'aggregation': 'EVR framework (incidence rate × land cover × climate × seasonal)'
             }
         ],
         'supplementary_domains': [
-            {
-                'name': 'Cybersecurity',
-                'final_score': round(float(cybersecurity_risk), 4),
-                'pre_svi_score': round(float(cybersecurity_risk_base), 4),
-                'svi_adjustment': f'Multiplier: 1.0 + (SVI socioeconomic {round(socioeconomic_svi_factor, 3)} × 0.25) = {round(secondary_socioeconomic_multiplier, 3)}',
-                'svi_bias_warning': 'SVI socioeconomic adjustment is a proxy assumption without direct empirical validation',
-                'data_sources': ['Census ACS 2022 (population, static)', 'WI DOR 2022 (revenue/staffing, static)', 'CDC SVI socioeconomic theme (annual cache)'],
-                'not_in_phrat': True
-            },
             {
                 'name': 'Utilities',
                 'final_score': round(float(utilities_category_score), 4),
@@ -1943,137 +1922,10 @@ def get_historical_risk_data(jurisdiction_id: str, start_year: int = 2020, end_y
         'health_risk': round(float(current_risk.get('health_risk', 0.5)), 2),
         'active_shooter_risk': round(float(current_risk.get('active_shooter_risk', 0.5)), 2),
         'extreme_heat_risk': round(float(current_risk.get('extreme_heat_risk', 0.5)), 2),
-        'cybersecurity_risk': round(float(current_risk.get('cybersecurity_risk', 0.5)), 2),
         'utilities_risk': round(float(current_risk.get('utilities_risk', 0.5)), 2)
     }
     
     return [data_point]
-
-def get_cybersecurity_risk_data(jurisdiction_id: str) -> dict:
-    """
-    Calculate multi-dimensional cybersecurity risk with three components:
-    1. Threat Landscape: External threats and attack vectors
-    2. Vulnerability: System weaknesses and infrastructure gaps
-    3. Capability: Organizational readiness and response capacity
-    
-    PROXY INDICATOR BASIS: No authoritative county-level cybersecurity incident
-    database exists for Wisconsin. Baseline values are modeled from observable
-    county characteristics used as proxy indicators:
-      - Threat: Population size (Census ACS) as proxy for target visibility,
-        presence of government/healthcare systems (WI Blue Book)
-      - Vulnerability: CDC SVI socioeconomic theme as proxy for IT resource
-        availability; county budget data (WI DOR) as proxy for infrastructure age
-      - Capability: Population and budget size as proxy for security staffing;
-        urban/rural classification (Census) as proxy for access to specialists
-    
-    These are supplementary estimates — not included in the primary PHRAT score.
-    
-    Returns a dictionary with component scores and an overall risk score.
-    """
-    # Get jurisdiction information for context
-    jurisdictions = get_wi_jurisdictions()
-    jurisdiction = next((j for j in jurisdictions if j['id'] == jurisdiction_id), None)
-    
-    if not jurisdiction:
-        # Return default medium risk
-        return {
-            'risk_score': 0.5,
-            'components': {
-                'threat': 0.5,
-                'vulnerability': 0.5,
-                'capability': 0.5  # Raw score (not inverted)
-            },
-            'metrics': {
-                'reported_breaches': 10,      # Per 100k
-                'cybercrime_reports': 50,     # Per 100k
-                'critical_vulnerabilities': 7, # Count
-                'detection_time': 15          # Days
-            },
-            'recent_incidents': []
-        }
-    
-    county = jurisdiction.get('county', '')
-    
-    # THREAT LANDSCAPE COMPONENT (external threats)
-    # Loaded from config/county_baselines.yaml → cybersecurity.threat
-    # Proxy: Population size (Census ACS 2022) and institutional presence (WI Blue Book)
-    threat_base = _get_baseline('cybersecurity', 'threat', county)
-    
-    threat_score = threat_base
-    
-    # VULNERABILITY COMPONENT (system weaknesses)
-    # Loaded from config/county_baselines.yaml → cybersecurity.vulnerability
-    # Proxy: County per-capita revenue (WI DOR 2022) and urban/rural classification (Census)
-    vulnerability_base = _get_baseline('cybersecurity', 'vulnerability', county)
-    
-    # Factor in Social Vulnerability Index (SVI) socioeconomic component
-    # PROXY ASSUMPTION: Lower socioeconomic status → fewer IT security resources.
-    # This is not empirically validated against actual cybersecurity incident data.
-    # The 0.25 factor is configurable in config/risk_weights.yaml
-    # (svi_adjustment_factors.cybersecurity_socioeconomic). Set to 0.0 to disable.
-    svi_data = get_svi_data(county)
-    svi_socioeconomic = svi_data.get('socioeconomic', 0.5)
-    
-    # Higher SVI socioeconomic score increases vulnerability by up to 25%
-    svi_adjustment = svi_socioeconomic * 0.25
-    adjusted_vulnerability = vulnerability_base + svi_adjustment
-    
-    # Log the adjustment for debugging
-    logger.info(f"Adjusted cybersecurity risk with SVI socioeconomic factor: {vulnerability_base:.2f} → {adjusted_vulnerability:.2f}")
-    
-    vulnerability_score = max(0.0, min(1.0, adjusted_vulnerability))
-    
-    # CAPABILITY COMPONENT (organizational readiness)
-    # Loaded from config/county_baselines.yaml → cybersecurity.capability
-    # Proxy: County government staffing levels (WI DOR 2022) and urban/rural classification
-    capability_base = _get_baseline('cybersecurity', 'capability', county)
-    
-    capability_raw = capability_base
-    
-    # For capability, higher score is better for organization but we need to invert
-    # it for risk calculation (higher capability = lower risk)
-    capability_score = 1.0 - capability_raw
-    
-    # Calculate traditional weighted risk score (for comparison/backward compatibility)
-    traditional_risk = (
-        (threat_score * 0.35) +          # 35% threat landscape
-        (vulnerability_score * 0.40) +   # 40% vulnerability profile
-        (capability_score * 0.25)        # 25% capability (inverted scale)
-    )
-    
-    # Calculate the new residual risk using our formula
-    # For cybersecurity:
-    # - threat_score represents exposure (external threat likelihood)
-    # - vulnerability_score represents vulnerability (system weaknesses)
-    # - capability_raw represents resilience (higher = better response capacity)
-    residual_risk = calculate_residual_risk(
-        exposure=threat_score,
-        vulnerability=vulnerability_score,
-        resilience=capability_raw
-    )
-    
-    # Calculate metrics based on risk components
-    metrics = {
-        'reported_breaches': int(5 + (residual_risk * 15)),       # 5-20 per 100k 
-        'cybercrime_reports': int(25 + (threat_score * 75)),      # 25-100 per 100k
-        'critical_vulnerabilities': int(2 + (vulnerability_score * 10)), # 2-12 vulnerabilities
-        'detection_time': int(6 + (capability_score * 18))        # 6-24 days to detect breach
-    }
-    
-    incidents = []
-    
-    return {
-        'risk_score': float(residual_risk),  # Use the new residual risk score
-        'traditional_risk': float(traditional_risk),  # Keep the old calculation for reference
-        'components': {
-            'threat': float(threat_score),
-            'vulnerability': float(vulnerability_score),
-            'capability': float(capability_raw)  # Raw score (not inverted) for display
-        },
-        'metrics': metrics,
-        'recent_incidents': incidents,
-        'data_sources': ['HHS', 'FBI IC3', 'CISA KEV Database', 'MS-ISAC']
-    }
 
 def calculate_active_shooter_risk(county_name: str) -> dict:
     """

@@ -123,9 +123,12 @@ def dashboard(jurisdiction_id):
         # gained the infectious_disease 5% wiring, and to v8 when the
         # hazmat_industrial resilience signals changed (CHEMPACK removal,
         # statute-only team list) so pre-fix cached composites are
-        # invalidated cleanly at deploy.
+        # invalidated cleanly at deploy. Bumped to v13 when the
+        # infectious-disease portfolio was trimmed, lowering the
+        # strategic-baseline floor for counties sitting on it (kept in
+        # lockstep with utils/dashboard_warmer.py and routes/em.py).
         discipline = get_active_discipline()
-        full_cache_key = f"dashboard_full_v12_{discipline}_{jurisdiction_id}"
+        full_cache_key = f"dashboard_full_v14_{discipline}_{jurisdiction_id}"
         cached_context = get_from_persistent_cache(full_cache_key, max_age_days=1)
 
         if cached_context:

@@ -120,18 +120,6 @@
       "module": "utils.data_source_refresher",
       "function": "refresh_all_county_health_rankings"
     },
-    "h5n1": {
-      "description": "Weekly H5N1 livestock + poultry detections (Wisconsin filter)",
-      "refresh_interval_hours": 168,
-      "module": "utils.data_source_refresher",
-      "function": "refresh_all_h5n1"
-    },
-    "mpox": {
-      "description": "Weekly mpox state-level case counts",
-      "refresh_interval_hours": 168,
-      "module": "utils.data_source_refresher",
-      "function": "refresh_all_mpox"
-    },
     "nndss_enteric": {
       "description": "Weekly NNDSS counts for enteric/waterborne diseases + Legionellosis",
       "refresh_interval_hours": 168,

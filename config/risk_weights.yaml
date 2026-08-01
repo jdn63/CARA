@@ -52,27 +52,16 @@ overall_risk_weights:
 # Supplementary Domains (modeled from proxy indicators, NOT included in PHRAT score)
 # These are displayed separately on the dashboard for planning context
 supplementary_domains:
-  cybersecurity: supplementary   # Modeled from proxy indicators (county characteristics + SVI)
   utilities: supplementary       # Modeled from proxy indicators (county characteristics + SVI)
 
 # SVI Adjustment Factors
 # Controls how much CDC Social Vulnerability Index themes adjust risk scores.
 # Each value is a maximum multiplier increase (e.g., 0.25 = up to 25% increase).
 #
-# METHODOLOGICAL NOTE ON SVI-CYBERSECURITY LINKAGE:
-# Using SVI socioeconomic scores to adjust cybersecurity risk assumes that
-# lower-income communities have fewer IT security resources. This is a proxy
-# assumption — no direct empirical study links county SVI percentiles to
-# cybersecurity breach rates. Reviewers should be aware this could embed
-# socioeconomic bias by systematically scoring lower-income jurisdictions as
-# higher cybersecurity risk. The adjustment factor is configurable below;
-# set cybersecurity_socioeconomic to 0.0 to disable SVI influence entirely.
 svi_adjustment_factors:
   natural_hazards_housing: 0.50          # Housing/transportation SVI → natural hazard vulnerability
   extreme_heat_socioeconomic: 0.20       # Socioeconomic SVI → heat vulnerability
   active_shooter_household: 0.30         # Household composition SVI → active shooter vulnerability
-  cybersecurity_socioeconomic: 0.25      # Socioeconomic SVI → cybersecurity vulnerability (see note above)
-  secondary_socioeconomic_all: 0.25      # Socioeconomic SVI → cross-domain secondary adjustment
 
 # Temporal Risk Component Weights (must sum to 1.0)
 # These apply to all risk domains and determine time-based prioritization.
@@ -396,25 +385,6 @@ disease_alert_thresholds:
   # All thresholds below are CARA operational heuristics, not CSTE/CDC
   # published thresholds. Tune in this config; no code change required.
 
-  h5n1:
-    # Tier definitions in utils/h5n1_surveillance.py. Source: USDA APHIS
-    # HPAI Livestock + Poultry Detections (Wisconsin filter, last 90 days).
-    tier_boosts:
-      none: 0.00
-      national_only: 0.05   # US detections present, no WI detection in 90d
-      state: 0.15           # WI livestock or poultry detection in last 90d
-      local: 0.30           # reserved: county-level escalation (deferred in v1)
-
-  mpox:
-    # Source: CDC mpox state-of-residence Socrata dataset. WI 4-week
-    # rolling case count compared to threshold floors.
-    elevated_threshold_4wk_cases: 3
-    cluster_threshold_4wk_cases: 5
-    tier_boosts:
-      baseline: 0.00
-      elevated: 0.15
-      cluster: 0.30
-
   enteric:
     # Composite GI outbreak signal. NNDSS agents tracked: Salmonellosis,
     # STEC, Shigellosis, Campylobacteriosis, Cryptosporidiosis, Giardiasis.
@@ -515,26 +485,6 @@ disease_severity_profiles:
     vulnerable_population_description: 'Infants under 6 months, adults 65+, chronic lung disease'
     citation: 'CDC MMWR: RSV Disease in Older Adults (2023)'
     citation_url: 'https://www.cdc.gov/mmwr/volumes/72/rr/rr7203a1.htm'
-
-  h5n1_avian_influenza:
-    display_name: 'H5N1 highly pathogenic avian influenza'
-    case_fatality_rate: 0.52       # WHO cumulative human CFR since 2003 (clamped at 0.20 in normalization)
-    hospitalization_rate: 0.95     # nearly all confirmed human cases hospitalized
-    r0: 0.1                        # currently <1 in humans (no sustained transmission)
-    vulnerable_population_multiplier: 1.30
-    vulnerable_population_description: 'Dairy and poultry workers; pandemic potential if H5N1 adapts to efficient human-to-human spread'
-    citation: 'WHO Cumulative number of confirmed human cases of avian influenza A(H5N1) reported (2003-present)'
-    citation_url: 'https://www.who.int/publications/m/item/cumulative-number-of-confirmed-human-cases-for-avian-influenza-a(h5n1)-reported-to-who--2003-2024-1-may-2024'
-
-  mpox:
-    display_name: 'Mpox (monkeypox)'
-    case_fatality_rate: 0.003      # clade II ~0.1%; clade I 1-10% (using weighted current US mix)
-    hospitalization_rate: 0.12     # 10-15% in people with HIV
-    r0: 1.4                        # 1-2 in MSM sexual networks; <1 in general population
-    vulnerable_population_multiplier: 1.05
-    vulnerable_population_description: 'Men who have sex with men networks; people with advanced HIV at risk for severe disease'
-    citation: 'CDC Mpox Clinical Recognition and Treatment Guidance (2024)'
-    citation_url: 'https://www.cdc.gov/poxvirus/mpox/clinicians/clinical-recognition.html'
 
   legionellosis:
     display_name: 'Legionellosis (Legionnaires disease)'

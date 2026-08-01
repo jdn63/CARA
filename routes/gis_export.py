@@ -74,7 +74,6 @@ def export_all_data():
                 air_quality_risk = risk_data.get('air_quality_risk', 0.2)
                 dam_failure_risk = risk_data.get('dam_failure_risk', 0.1)
                 vbd_risk = risk_data.get('vector_borne_disease_risk', 0.1)
-                cybersecurity_risk = risk_data.get('cybersecurity_risk', 0.2)
                 utilities_risk = risk_data.get('utilities', {}).get('overall', 0.2)
 
                 total_score = float(risk_data.get('total_risk_score', 0))
@@ -94,7 +93,6 @@ def export_all_data():
                     'air_quality_risk': round(float(air_quality_risk or 0), 4),
                     'dam_failure_risk': round(float(dam_failure_risk or 0), 4),
                     'vector_borne_disease_risk': round(float(vbd_risk or 0), 4),
-                    'cybersecurity_risk': round(float(cybersecurity_risk or 0), 4),
                     'utilities_risk': round(float(utilities_risk or 0), 4),
                     'flood_risk': round(float(natural_hazards.get('flood', 0) if isinstance(natural_hazards, dict) else 0), 4),
                     'tornado_risk': round(float(natural_hazards.get('tornado', 0) if isinstance(natural_hazards, dict) else 0), 4),
@@ -313,7 +311,6 @@ def get_export_fields():
             'air_quality_risk': 'Air pollution and quality risk',
             'dam_failure_risk': 'Dam failure risk score (EVR framework, WI DNR / NID inventory)',
             'vector_borne_disease_risk': 'Vector-borne disease risk (Lyme + West Nile Virus, WI DHS surveillance)',
-            'cybersecurity_risk': 'Digital infrastructure vulnerability (supplementary — not in PHRAT)',
             'utilities_risk': 'Critical infrastructure risk (supplementary — not in PHRAT)'
         },
         'natural_hazard_subtypes': {

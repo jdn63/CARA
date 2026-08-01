@@ -34,8 +34,8 @@ Design notes
   carries a literature citation and source URL.
 - The aggregate baseline is a severity-weighted mean of per-disease
   baselines. This reflects the *portfolio* preparedness burden rather
-  than letting any single rare-but-severe disease (e.g., H5N1)
-  unilaterally dominate the floor.
+  than letting any single rare-but-severe disease (e.g., meningococcal
+  disease) unilaterally dominate the floor.
 - Upgrade path to Option 2: the per-disease scores are returned
   explicitly so a future "Two-Component Display" can render Current
   Activity vs Strategic Preparedness side by side without rewriting
@@ -188,7 +188,7 @@ def _normalize_severity(profile: Dict[str, Any]) -> float:
     severity index, then apply the vulnerable_population_multiplier.
     Normalization choices:
       - CFR: divide by 0.20 (any CFR at or above 20 percent saturates
-        the dimension; covers H5N1 historical at 0.52 clamped to 1.0).
+        the dimension at 1.0).
       - Hospitalization rate: divide by 0.50 (saturate at 50 percent).
       - R0: divide by 6.0 (covers seasonal influenza ~1.3 through
         measles ~15 mapped across the 0-1 range).

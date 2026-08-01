@@ -123,7 +123,6 @@ def get_health_impact_factor(county_name: str, hazard_type: str) -> float:
                         "utilities_disruption": 1.2,  # Sanitation and water impacts
                         "supply_chain": 1.1,  # Medical supply disruption
                         "fuel_shortage": 1.0,  # Less direct health impacts
-                        "cybersecurity": 1.1,  # Healthcare information systems impacts
                         "dam_failure": 1.3   # Drowning, displacement, water contamination
                     }
                 

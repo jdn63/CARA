@@ -171,6 +171,10 @@
                         </div>
                     </div>
 
+                    <p class="small text-muted mb-3">
+                        Exposure and Vulnerability are HVI sub-indices (environmental; health &amp; population). Resilience is an independent FEMA National Risk Index measure shown for context and <strong>not</strong> part of the HVI score.
+                    </p>
+
                     <!-- Key Metrics Table -->
                     <h6 class="text-muted mb-2">Key Metrics</h6>
                     <div class="table-responsive">
@@ -182,44 +186,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if risk_data.extreme_heat_metrics is defined %}
+                                {% set _hm = risk_data.extreme_heat_metrics if risk_data.extreme_heat_metrics is defined else none %}
+                                {% if _hm and _hm.hvi_score is defined and _hm.hvi_score is not none %}
                                 <tr>
-                                    <td>Annual Heat Days (>90°F)</td>
-                                    <td>
-                                        {{ risk_data.extreme_heat_metrics.annual_heat_days if risk_data.extreme_heat_metrics.annual_heat_days is defined and risk_data.extreme_heat_metrics.annual_heat_days is not none and risk_data.extreme_heat_metrics.annual_heat_days != "N/A" else "14" }}
-                                        {% if risk_data.extreme_heat_metrics.heat_days_source is defined and risk_data.extreme_heat_metrics.heat_days_source %}
-                                          <div class="small text-muted">Source: {{ risk_data.extreme_heat_metrics.heat_days_source }}</div>
-                                        {% endif %}
-                                    </td>
+                                    <td>Heat Vulnerability Index (HVI)</td>
+                                    <td>{{ "%.3f"|format(_hm.hvi_score) }}{% if _hm.hvi_category %} &mdash; {{ _hm.hvi_category }}{% endif %}</td>
                                 </tr>
+                                {% if _hm.statewide_rank is defined and _hm.statewide_rank is not none and _hm.statewide_county_count %}
                                 <tr>
-                                    <td>Annual Heat-Related ED Visits</td>
-                                    <td>{{ risk_data.extreme_heat_metrics.ed_visits if risk_data.extreme_heat_metrics.ed_visits is defined and risk_data.extreme_heat_metrics.ed_visits is not none and risk_data.extreme_heat_metrics.ed_visits != "N/A" else "45" }}</td>
+                                    <td>Statewide Rank</td>
+                                    <td>{{ _hm.statewide_rank }} of {{ _hm.statewide_county_count }} counties</td>
                                 </tr>
+                                {% endif %}
+                                {% if _hm.block_group_count is defined and _hm.block_group_count is not none %}
                                 <tr>
-                                    <td>Heat Advisories (Annual)</td>
-                                    <td>{{ risk_data.extreme_heat_metrics.heat_advisories if risk_data.extreme_heat_metrics.heat_advisories is defined and risk_data.extreme_heat_metrics.heat_advisories is not none and risk_data.extreme_heat_metrics.heat_advisories != "N/A" else "4" }}</td>
+                                    <td>Block Groups Assessed</td>
+                                    <td>{{ _hm.block_group_count }}</td>
                                 </tr>
-                                <tr>
-                                    <td>Population Aged 65+ (%)</td>
-                                    <td>{{ risk_data.extreme_heat_metrics.elderly_percentage if risk_data.extreme_heat_metrics.elderly_percentage is defined and risk_data.extreme_heat_metrics.elderly_percentage is not none and risk_data.extreme_heat_metrics.elderly_percentage != "N/A" else "13.8" }}%</td>
-                                </tr>
+                                {% endif %}
                                 {% else %}
                                 <tr>
-                                    <td>Annual Heat Days (>90°F)</td>
-                                    <td>24</td>
-                                </tr>
-                                <tr>
-                                    <td>Annual Heat-Related ED Visits</td>
-                                    <td>176</td>
-                                </tr>
-                                <tr>
-                                    <td>Heat Advisories (Annual)</td>
-                                    <td>4</td>
-                                </tr>
-                                <tr>
-                                    <td>Population Aged 65+ (%)</td>
-                                    <td>17.5%</td>
+                                    <td colspan="2" class="text-muted small">Heat Vulnerability Index data unavailable for this county.</td>
                                 </tr>
                                 {% endif %}
                             </tbody>
@@ -228,7 +215,7 @@
                     <div class="alert alert-info p-2 mt-3">
                         <small>
                             <strong>Note:</strong> 
-                            Risk increases with higher annual heat days, more heat advisories, and higher percentages of adults aged 65 and older.
+                            The WI DHS Heat Vulnerability Index composites block-group environmental, health, population, and socioeconomic sub-indices; a higher HVI reflects greater heat vulnerability.
                             Adults aged 65 and older, outdoor workers, and those without air conditioning are most vulnerable.
                         </small>
                     </div>

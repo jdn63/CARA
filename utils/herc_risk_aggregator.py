@@ -37,6 +37,16 @@ logger = logging.getLogger(__name__)
 _herc_cache: Dict[str, Dict[str, Any]] = {}
 _herc_cache_ttl = 3600  # 1 hour in seconds
 
+# Methodology version for persisted HERC composites (herc_risk_cache).
+# Bump whenever a scoring-methodology change alters HERC regional scores so
+# rows written under the old methodology are ignored on read and recomputed,
+# instead of serving pre-change numbers (the DB cache is keyed only by
+# herc_id with 4h freshness and has no other version discriminator). Bumped
+# to 2 when the infectious-disease portfolio was trimmed, lowering the
+# strategic-baseline floor that feeds the regional health_metrics domain
+# (parallels the dashboard_full v13 key bump in routes/dashboard.py).
+HERC_METHODOLOGY_VERSION = 4
+
 # Cache for individual jurisdiction risk data (TTL: 30 minutes)
 _jurisdiction_cache: Dict[str, Dict[str, Any]] = {}
 _jurisdiction_cache_ttl = 1800  # 30 minutes
@@ -160,7 +170,7 @@ class HERCRiskAggregator:
             # components use the same two-stage approach.
             DOMAINS = (
                 'natural_hazards', 'health_metrics', 'active_shooter',
-                'extreme_heat', 'air_quality', 'cybersecurity',
+                'extreme_heat', 'air_quality',
                 'utilities', 'dam_failure', 'vector_borne_disease',
             )
             NH_COMPONENTS = ('flood', 'tornado', 'winter_storm', 'thunderstorm', 'straight_line_wind')
@@ -228,7 +238,6 @@ class HERCRiskAggregator:
                             'active_shooter': risk_data.get('active_shooter_risk'),
                             'extreme_heat': risk_data.get('extreme_heat_risk'),
                             'air_quality': risk_data.get('air_quality_risk'),
-                            'cybersecurity': risk_data.get('cybersecurity_risk'),
                             'utilities': (risk_data.get('utilities') or {}).get('overall'),
                             'dam_failure': risk_data.get('dam_failure_risk'),
                             'vector_borne_disease': risk_data.get('vector_borne_disease_risk'),
@@ -303,7 +312,6 @@ class HERCRiskAggregator:
             active_shooter_avg = _two_stage_mean(domain_by_county, 'active_shooter')
             extreme_heat_avg = _two_stage_mean(domain_by_county, 'extreme_heat')
             air_quality_avg = _two_stage_mean(domain_by_county, 'air_quality')
-            cybersecurity_avg = _two_stage_mean(domain_by_county, 'cybersecurity')
             utilities_avg = _two_stage_mean(domain_by_county, 'utilities')
             dam_failure_avg = _two_stage_mean(domain_by_county, 'dam_failure')
             vector_borne_disease_avg = _two_stage_mean(domain_by_county, 'vector_borne_disease')
@@ -322,7 +330,7 @@ class HERCRiskAggregator:
             
             # Calculate regional total risk score from aggregated domain
             # scores. Only the configured Public Health composite domains are
-            # included (cybersecurity and utilities are supplementary and stay
+            # included (utilities is supplementary and stays
             # out of the composite). Weights are renormalized over the domains
             # that carry data so the total is a true weighted mean, matching
             # the per-jurisdiction PHRAT renormalization. This value is a
@@ -378,7 +386,6 @@ class HERCRiskAggregator:
                 'active_shooter_risk': active_shooter_avg,
                 'extreme_heat_risk': extreme_heat_avg,
                 'air_quality_risk': air_quality_avg,
-                'cybersecurity_risk': cybersecurity_avg,
                 'utilities_risk': utilities_avg,
                 'dam_failure_risk': dam_failure_avg,
                 'vector_borne_disease_risk': vector_borne_disease_avg,
@@ -461,7 +468,6 @@ class HERCRiskAggregator:
                         'active_shooter': active_shooter_avg,
                         'extreme_heat': extreme_heat_avg,
                         'air_quality': air_quality_avg,
-                        'cybersecurity': cybersecurity_avg,
                         'dam_failure': dam_failure_avg,
                         'vector_borne_disease': vector_borne_disease_avg,
                         'utilities': utilities_avg,
@@ -583,6 +589,13 @@ def get_cached_herc_risk(herc_id: str, max_age_hours: int = 4) -> Optional[Dict[
         if not cache_entry:
             logger.debug(f"No cache entry found for HERC region {herc_id}")
             return None
+
+        # Methodology-version guard: a row written under an older scoring
+        # methodology must not serve pre-change regional composites. Old
+        # rows lack the stamp (None) and are recomputed on demand.
+        if (cache_entry.risk_data or {}).get('methodology_version') != HERC_METHODOLOGY_VERSION:
+            logger.info(f"HERC cache region {herc_id}: older methodology version, ignoring")
+            return None
         
         # Check if cache is fresh enough
         age_hours = cache_entry.age_minutes / 60 if cache_entry.age_minutes else float('inf')
@@ -627,6 +640,10 @@ def save_herc_risk_to_cache(herc_id: str, risk_data: Dict[str, Any],
         # Clean up internal cache keys before saving
         clean_data = {k: v for k, v in risk_data.items() 
                      if not k.startswith('_')}
+        # Stamp the methodology version so a future scoring-methodology
+        # change can invalidate these rows on read (see
+        # HERC_METHODOLOGY_VERSION).
+        clean_data['methodology_version'] = HERC_METHODOLOGY_VERSION
         
         # Check if entry exists
         cache_entry = db.session.query(HERCRiskCache).filter_by(

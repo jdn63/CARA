@@ -1,0 +1,51 @@
+{% import "dashboard/_collapsible.html" as col %}
+        <!-- Cyber Preparedness: unscored planning panel. Replaced the retired
+             proxy-modeled Cybersecurity score (retired 2026-08: no authoritative
+             county-level cyber incident data exists; prior score was curated
+             baselines + an unvalidated SVI proxy adjustment). -->
+        <div class="col-md-6 compact-tile domain-detail" id="detail-cybersecurity" data-domain="cybersecurity">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        Cyber Preparedness
+                        <span class="badge bg-info text-dark ms-2">Planning Resource &mdash; Not Scored</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">
+                        <strong>Why there is no score:</strong> no authoritative county-level cybersecurity
+                        incident data exists for Wisconsin. CARA previously displayed a proxy-modeled score
+                        here; it was retired in August 2026 because it could not be tied to real local
+                        measurements. Cyber preparedness still matters &mdash; this panel provides actionable
+                        steps and authoritative resources instead of a number.
+                    </p>
+
+                    {% call col.section('cyber-prep-checklist', 'Preparedness Checklist for Health Departments') %}
+                    <ul class="small mb-2">
+                        <li><strong>Downtime procedures:</strong> documented manual workflows for WEDSS, WIR, and EHR outages (paper forms, offline lookups).</li>
+                        <li><strong>Offline contact roster:</strong> printed or off-network copies of staff, partner, and vendor emergency contacts.</li>
+                        <li><strong>Backups:</strong> critical data backed up, kept offline or immutable, and restoration tested at least annually.</li>
+                        <li><strong>Incident response plan:</strong> who isolates systems, who notifies whom (IT, leadership, insurers, reporting agencies), and in what order.</li>
+                        <li><strong>Exercise:</strong> run a cyber tabletop at least annually &mdash; CISA publishes free tabletop exercise packages.</li>
+                        <li><strong>MS-ISAC membership:</strong> free for local governments; provides alerts, advisories, and incident support.</li>
+                    </ul>
+                    {% endcall %}
+
+                    <h6 class="text-muted mt-3 mb-2">Authoritative Resources</h6>
+                    <ul class="small mb-3">
+                        <li><a href="https://www.cisa.gov/" target="_blank" rel="noopener">CISA</a> &mdash; alerts, healthcare-sector advisories, tabletop exercise packages, and free cyber hygiene services.</li>
+                        <li><a href="https://www.hhs.gov/about/agencies/asa/ocio/hc3/index.html" target="_blank" rel="noopener">HHS HC3</a> &mdash; Health Sector Cybersecurity Coordination Center threat briefs.</li>
+                        <li><a href="https://www.cisecurity.org/ms-isac" target="_blank" rel="noopener">MS-ISAC</a> &mdash; no-cost cyber threat intelligence and incident support for state and local government.</li>
+                        <li><a href="https://ocrportal.hhs.gov/ocr/breach/breach_report.jsf" target="_blank" rel="noopener">HHS OCR Breach Portal</a> &mdash; reported healthcare breaches affecting 500+ individuals (filterable to Wisconsin).</li>
+                    </ul>
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            This panel is guidance, not an assessment. Jurisdictions seeking a cyber risk
+                            evaluation should engage CISA&rsquo;s regional cybersecurity advisor or conduct a
+                            dedicated assessment.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>

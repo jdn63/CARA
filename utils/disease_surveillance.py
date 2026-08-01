@@ -428,7 +428,7 @@ def _calculate_strategic_vaccination_risk(
             outbreak_boost = 0.10   # year-level elevated incidence only
     outbreak_boost = min(0.30, outbreak_boost)
 
-    # === ADDITIONAL OUTBREAK FLAGS (v1 Shape A: H5N1, mpox, enteric, legionella)
+    # === ADDITIONAL OUTBREAK FLAGS (v1 Shape A: enteric, legionella)
     # Lightweight statewide outbreak flags that nudge the infectious_disease
     # Acute signal. Each flag fetcher is cache-only-safe (see
     # utils/request_context.py); live HTTP is performed exclusively by the
@@ -446,14 +446,10 @@ def _calculate_strategic_vaccination_risk(
     # #2). The dashboard partial templates/dashboard/_active_surveillance_flags.html
     # surfaces a "WI statewide" badge on every row.
     try:
-        from utils.h5n1_surveillance import get_h5n1_outbreak_flags
-        from utils.mpox_surveillance import get_mpox_outbreak_flags
         from utils.nndss_enteric import (
             get_enteric_outbreak_flags,
             get_legionella_outbreak_flags,
         )
-        h5n1_flags = get_h5n1_outbreak_flags()
-        mpox_flags = get_mpox_outbreak_flags()
         enteric_flags = get_enteric_outbreak_flags()
         legionella_flags = get_legionella_outbreak_flags()
     except Exception as exc:
@@ -466,14 +462,10 @@ def _calculate_strategic_vaccination_risk(
             'detail': 'Flag module unavailable', 'signal_scope': 'statewide_wisconsin',
             'last_updated': None,
         }
-        h5n1_flags = _empty('USDA APHIS HPAI')
-        mpox_flags = {**_empty('CDC Mpox surveillance'), 'tier': 'baseline'}
         enteric_flags = {**_empty('CDC NNDSS enteric subset'), 'agents_elevated': [], 'agents': {}}
         legionella_flags = _empty('CDC NNDSS Legionellosis')
 
     # Surface the new flags on outbreak_conditions for templates / downstream.
-    outbreak_conditions['h5n1'] = h5n1_flags
-    outbreak_conditions['mpox'] = mpox_flags
     outbreak_conditions['enteric'] = enteric_flags
     outbreak_conditions['legionella'] = legionella_flags
 
@@ -482,8 +474,6 @@ def _calculate_strategic_vaccination_risk(
     # stack as the measles contribution.
     _flag_boosts = [
         ('measles', outbreak_boost),
-        ('h5n1', float(h5n1_flags.get('boost', 0.0) or 0.0)),
-        ('mpox', float(mpox_flags.get('boost', 0.0) or 0.0)),
         ('enteric', float(enteric_flags.get('boost', 0.0) or 0.0)),
         ('legionella', float(legionella_flags.get('boost', 0.0) or 0.0)),
     ]
@@ -493,7 +483,7 @@ def _calculate_strategic_vaccination_risk(
         _others = len(_active) - 1
         # v28.7 review fix (Part 2 E3): raised stacking cap from 0.40 to
         # 0.60. Under the 0.40 cap, a single high-tier flag (e.g.
-        # mpox cluster at 0.30) plus several lower-tier active flags
+        # measles local spread at 0.30) plus several lower-tier active flags
         # was getting clipped before reaching its full simultaneous-
         # outbreak boost, which masked compound risk. 0.60 still bounds
         # the multiplier below pathological levels while letting two or

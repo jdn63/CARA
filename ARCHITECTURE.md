@@ -185,16 +185,6 @@ accepted by the admin refresh endpoint live in
   24-month olds by county (most recent year). Direct download from
   `dhs.wisconsin.gov/immunization/county-immunization-data.csv`. Annual
   update. Used in `utils/dhs_data.py`.
-- USDA APHIS HPAI H5N1 Detections (weekly): WI-filtered livestock and
-  commercial poultry detections from public CSV exports. Drives the H5N1
-  outbreak flag (`utils/h5n1_surveillance.py`). Scheduler job
-  `refresh_all_h5n1`. Registry ID `h5n1` (168h, max_age 14d). Tiers:
-  none / national_only / state / local (configurable boosts in
-  `config/risk_weights.yaml -> disease_alert_thresholds.h5n1`).
-- CDC Mpox State Surveillance Socrata (weekly): endpoint
-  `data.cdc.gov/resource/usqr-pmk5.json`. WI 4-week rolling case count
-  thresholded to baseline / elevated / cluster tiers. Used in
-  `utils/mpox_surveillance.py`. Scheduler job `refresh_all_mpox`.
 - CDC NNDSS Enteric and Legionellosis Subset (weekly): same Socrata
   endpoint as `nndss_communicable` (`data.cdc.gov/resource/x9gk-5huc.json`)
   filtered to Salmonellosis, STEC, Shigellosis, Campylobacteriosis,
@@ -218,8 +208,8 @@ displayed score.
   (1 - 0.5 * response_capacity), clamped to [0.10, 0.60]; aggregate =
   severity-weighted mean across the disease portfolio.
 - Severity inputs: `config/risk_weights.yaml -> disease_severity_profiles`,
-  14 diseases (measles, meningococcal, seasonal influenza, COVID-19,
-  RSV, H5N1, mpox, legionellosis, salmonellosis, STEC, shigellosis,
+  12 diseases (measles, meningococcal, seasonal influenza, COVID-19,
+  RSV, legionellosis, salmonellosis, STEC, shigellosis,
   campylobacteriosis, cryptosporidiosis, giardiasis). Pertussis was
   removed in v28.7 along with the CARA-specific pertussis_elevated
   heuristic. Each
@@ -254,9 +244,8 @@ immediately after the measles `outbreak_boost` calculation. Surfaced in
 `templates/dashboard/_active_surveillance_flags.html` (included by
 `_category_biological.html`).
 
-- Modules: `utils/h5n1_surveillance.py`, `utils/mpox_surveillance.py`,
-  `utils/nndss_enteric.py` (provides both `get_enteric_outbreak_flags()`
-  and `get_legionella_outbreak_flags()`).
+- Modules: `utils/nndss_enteric.py` (provides both
+  `get_enteric_outbreak_flags()` and `get_legionella_outbreak_flags()`).
 - Stacking rule: `stacked_boost = min(0.40, max_individual_boost + 0.05 *
   other_active_flag_count)`. Replaces the measles-only boost when any flag
   is active. Stored on `outbreak_conditions['stacked_outbreak_boost']`.
@@ -272,11 +261,11 @@ immediately after the measles `outbreak_boost` calculation. Surfaced in
 - Cache-only invariant: every fetcher calls `is_cache_only_mode()` after
   its persistent-cache lookup and short-circuits to a `_fallback()` payload
   on cache miss in request context. Live HTTP is performed exclusively by
-  the scheduler jobs (`refresh_all_h5n1`, `refresh_all_mpox`,
-  `refresh_all_nndss_enteric` in `utils/data_source_refresher.py`).
+  the scheduler job `refresh_all_nndss_enteric` in
+  `utils/data_source_refresher.py`.
 - Thresholds: all tunable in
-  `config/risk_weights.yaml -> disease_alert_thresholds` (h5n1, mpox,
-  enteric, legionella blocks). Marked as CARA operational heuristics, not
+  `config/risk_weights.yaml -> disease_alert_thresholds` (enteric,
+  legionella blocks). Marked as CARA operational heuristics, not
   CSTE/CDC published thresholds.
 
 ## Discipline toggle and WEM Regions (Phase 1, 2026-05-20)
@@ -539,8 +528,8 @@ Baseline panel include (per-disease P x C with severity citations) and
 the detailed per-disease activity breakdown table are both wrapped in
 `{% if active_discipline != 'em' %}` and therefore omitted. The
 infectious-disease composite score tile (with its show-work popover) and
-the active surveillance flags strip (H5N1, mpox, measles, enteric,
-legionella) remain visible in EM mode so EM users still get operational
+the active surveillance flags strip (enteric, legionella) remain
+visible in EM mode so EM users still get operational
 outbreak awareness for mass-care and shelter screening decisions. A
 short note inside the panel explains that the breakdown is streamlined
 in EM and that the full per-disease detail is available in PH mode. KP

@@ -175,15 +175,6 @@ def generate_kaiser_hva_export(risk_data: dict) -> str:
                 'business_impact': 4,
                 'preparedness': _score_to_preparedness(risk_data.get('utilities_risk', 0.0))
             },
-            {
-                'name': 'Cybersecurity Incident',
-                'cara_score': risk_data.get('cybersecurity_risk', 0.0),
-                'probability': _score_to_hva_scale(risk_data.get('cybersecurity_risk', 0.0)),
-                'human_impact': 2,
-                'property_impact': 1,
-                'business_impact': 4,
-                'preparedness': _score_to_preparedness(risk_data.get('cybersecurity_risk', 0.0))
-            }
         ]
         
         # Calculate risk scores and add data rows
