@@ -44,7 +44,7 @@
                             <td>Analyzes patterns of past incidents to identify areas with higher historical risk, focusing on both frequency and severity of incidents</td>
                             <td>
                                 <ul class="mb-0">
-                                    <li>Gun Violence Archive (GVA) 2023</li>
+                                    <li>Gun Violence Archive (GVA) Wisconsin export 2016-2026</li>
                                 </ul>
                             </td>
                         </tr>
@@ -89,9 +89,8 @@
                             <td>Assesses factors related to firearm availability and accessibility</td>
                             <td>
                                 <ul class="mb-0">
-                                    <li>Wisconsin state-level firearm laws</li>
-                                    <li>County-level firearm ownership estimates</li>
-                                    <li>Rural/urban firearm ownership patterns</li>
+                                    <li>Wisconsin state-level firearm laws (RAND 2022 categories, CARA translation)</li>
+                                    <li>USDA Rural-Urban Continuum Code county classification (2023)</li>
                                 </ul>
                             </td>
                         </tr>
@@ -181,7 +180,7 @@
                     <div class="list-group mb-3">
                         <div class="list-group-item">
                             <h6 class="mb-1">Gun Violence Archive (GVA)</h6>
-                            <p class="small mb-0">Primary source for historical incident data, including mass shootings, active shooter events, and gun violence incidents.</p>
+                            <p class="small mb-0">Primary source for historical incident data. Coverage: Wisconsin incidents matching GVA's Mass Shooting (4+ shot) or Mass Murder (4+ killed) definitions, January 2016 through the August 2026 query export. GVA records firearm incidents only; non-firearm mass attacks (for example, the 2021 Waukesha Christmas parade attack) are not captured. Refreshed by manual export from the GVA query tool; the pre-built GVA reports page lags years behind the query database.</p>
                         </div>
                         <div class="list-group-item">
                             <h6 class="mb-1">FBI CJIS / UCR / NIBRS (not used)</h6>
@@ -216,8 +215,8 @@
                             <p class="small mb-0">Information on state-level firearm laws and regulations.</p>
                         </div>
                         <div class="list-group-item">
-                            <h6 class="mb-1">CDC WISQARS (Web-based Injury Statistics Query and Reporting System)</h6>
-                            <p class="small mb-0">Provides proxy estimates for firearm ownership and related statistics.</p>
+                            <h6 class="mb-1">USDA ERS Rural-Urban Continuum Codes (2023)</h6>
+                            <p class="small mb-0">Official county-level urban/rural classification driving the lethal means county adjustment.</p>
                         </div>
                     </div>
                 </div>
@@ -228,7 +227,7 @@
                         <li><strong>Primary & Secondary Sources:</strong> Each domain uses both primary data sources and secondary sources for validation</li>
                         <li><strong>Fallback Mechanisms:</strong> When primary data sources are unavailable:
                             <ul>
-                                <li>GVA data → Wisconsin-average proxy score (when no county incidents recorded)</li>
+                                <li>GVA data → counties with no recorded incidents score 0 on this component (complete 2016-2026 coverage, disclosed on the dashboard tile)</li>
                                 <li>NCES SSOCS data → Wisconsin state averages → National averages</li>
                             </ul>
                         </li>
@@ -248,7 +247,7 @@
                 <h5 class="alert-heading">Data Limitations</h5>
                 <ul class="mb-0">
                     <li><strong>NCES SSOCS Limitations:</strong> School-level data is aggregated to county level; urban/rural adjustments are applied for county estimates</li>
-                    <li><strong>GVA Data Coverage:</strong> While comprehensive, GVA data may not capture all incidents; attribution to correct jurisdiction relies on city-county mapping</li>
+                    <li><strong>GVA Data Coverage:</strong> GVA records firearm incidents only, so non-firearm mass attacks (such as the 2021 Waukesha parade attack) are absent from the historical record; incident attribution to counties relies on city-county mapping; refreshes require a manual query export</li>
                     <li><strong>Temporal Limitations:</strong> Some datasets (like SSOCS) are updated on 2-4 year cycles rather than continuously</li>
                     <li><strong>Provider Shortage Data:</strong> Mental health provider metrics represent designated shortage areas, not actual provider counts</li>
                 </ul>
@@ -304,7 +303,7 @@
     </div>
     
     <div class="mt-3 border-top pt-3">
-        <p class="small mb-0 text-dark"><strong>Last updated:</strong> April 2026 | <strong>Data sources:</strong> Gun Violence Archive 2023 (historical incidents); NCES SSOCS 2019-2020 (school safety microdata); Census ACS (isolation, demographics); CDC SVI 2022 (social fragility); County Health Rankings 2025 (mental health providers/days); CDC PLACES MHLTH; RAND 2022 Wisconsin Firearm Law Score (static). FBI CJIS/UCR data not used.</p>
+        <p class="small mb-0 text-dark"><strong>Last updated:</strong> August 2026 | <strong>Data sources:</strong> Gun Violence Archive Wisconsin export 2016-2026 (mass shootings + mass murders; firearm incidents only); NCES SSOCS 2019-2020 (school safety microdata); Census ACS (isolation, demographics); CDC SVI 2022 (social fragility); County Health Rankings 2025 (mental health providers/days); CDC PLACES MHLTH; RAND 2022 Wisconsin Firearm Law Score (static). FBI CJIS/UCR data not used.</p>
     </div>
 </div>
 {% endblock %}

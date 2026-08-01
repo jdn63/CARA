@@ -1,25 +1,28 @@
 """
 Gun Violence Archive (GVA) Data Processor
 
-This module processes data from the Gun Violence Archive (gunviolencearchive.org/reports)
-to enhance the active shooter risk assessment with real-world incident data.
+Processes the bundled Wisconsin GVA query export (mass shootings + mass
+murders, GVA definitions) into county-level incident density signals for
+the active shooter risk model.
 
-The GVA provides comprehensive data on gun violence incidents that can be 
-downloaded as CSV files from their website.
+GVA has no public API. Refresh procedure (manual):
+1. Run a query at gunviolencearchive.org/query with rules
+   State = Wisconsin, Incident Characteristics = Mass Shooting OR
+   Mass Murder (set the form to match ANY rule, not ALL — the ALL
+   default returns only the intersection of the characteristics).
+2. Export as CSV and re-bake with process_gva_file().
+Do not use the pre-built gunviolencearchive.org/reports page: its yearly
+exports lag years behind the query database and truncate part-way (the
+legacy bundled file covered only Sep-Dec 2023 with 1 Wisconsin incident).
 """
 
 import os
 import json
 import logging
 import csv
+import math
 from datetime import datetime
 from typing import Dict, Any, List, Tuple, Optional
-import io
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
 
 # Import Wisconsin city-to-county mapping
 from utils.wisconsin_mapping import get_county_for_city
@@ -27,308 +30,379 @@ from utils.wisconsin_mapping import get_county_for_city
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# The GVA dataset shipped with this installation.
-# GVA does not provide a public API; data must be manually downloaded from
-# gunviolencearchive.org/reports and placed in data/gva_reports/.
-# Update annually or whenever a new full-year dataset is published.
-GVA_DATA_YEAR = 2023
-_GVA_STALENESS_THRESHOLD_MONTHS = 18
+DATA_DIR = 'data/gva_reports'
+_STALENESS_THRESHOLD_MONTHS = 18
 
-def _check_gva_data_currency() -> None:
-    months_elapsed = (datetime.now().year - GVA_DATA_YEAR) * 12 + datetime.now().month - 1
-    if months_elapsed > _GVA_STALENESS_THRESHOLD_MONTHS:
-        logger.warning(
-            f"GVA incident data is from {GVA_DATA_YEAR} ({months_elapsed} months ago). "
-            f"Active shooter historical incident density may not reflect recent patterns. "
-            f"Update data/gva_reports/ with a current export from gunviolencearchive.org/reports."
-        )
+# County populations come from the bundled USDA ERS RUCC snapshot
+# (Census 2020 counts) — the same provenance-tracked file used by the
+# lethal means component. No guessed populations.
+_POPULATION_SNAPSHOT = 'data/usda_rucc/wi_rucc_2023.json'
 
-_check_gva_data_currency()
+_population_cache: Optional[Dict[str, int]] = None
+_staleness_logged = False
+
+
+def _load_county_populations() -> Dict[str, int]:
+    """Load Census 2020 county populations (lowercase county name -> int)."""
+    global _population_cache
+    if _population_cache is None:
+        with open(_POPULATION_SNAPSHOT, 'r') as f:
+            snapshot = json.load(f)
+        counties = snapshot.get('counties', {})
+        populations = {}
+        for name, record in counties.items():
+            population = record.get('population_2020')
+            if not isinstance(population, int) or population <= 0:
+                raise ValueError(
+                    f"Invalid population_2020 for county '{name}' in {_POPULATION_SNAPSHOT}"
+                )
+            populations[name.strip().lower()] = population
+        if len(populations) != 72:
+            raise ValueError(
+                f"Expected 72 county populations in {_POPULATION_SNAPSHOT}, "
+                f"found {len(populations)}"
+            )
+        _population_cache = populations
+    return _population_cache
+
+
+def _parse_gva_date(raw: str) -> str:
+    """Normalize a GVA date string to ISO YYYY-MM-DD. Fails loudly."""
+    value = (raw or '').strip()
+    for fmt in ('%B %d, %Y', '%d-%b-%y', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(value, fmt).date().isoformat()
+        except ValueError:
+            continue
+    raise ValueError(f"Unrecognized GVA date format: {raw!r}")
 
 
 def ensure_data_directory():
     """Ensure the data directory exists"""
-    os.makedirs('data/gva_reports', exist_ok=True)
-    logger.info("Ensured data/gva_reports directory exists")
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+
+def _check_staleness(latest_incident_date: Optional[str]) -> None:
+    """Warn once per process if the newest incident is older than the threshold."""
+    global _staleness_logged
+    if _staleness_logged or not latest_incident_date:
+        return
+    _staleness_logged = True
+    try:
+        latest = datetime.strptime(latest_incident_date, '%Y-%m-%d')
+    except ValueError:
+        logger.warning(f"Could not parse latest GVA incident date: {latest_incident_date!r}")
+        return
+    now = datetime.now()
+    months_elapsed = (now.year - latest.year) * 12 + (now.month - latest.month)
+    if months_elapsed > _STALENESS_THRESHOLD_MONTHS:
+        logger.warning(
+            f"Newest bundled GVA incident is from {latest_incident_date} "
+            f"({months_elapsed} months ago). Refresh via the GVA query tool "
+            f"export procedure in utils/gva_data_processor.py."
+        )
+
+
+def _incident_county(incident: Dict[str, Any]) -> Optional[str]:
+    """Resolve an incident to a county name (no ' County' suffix)."""
+    county = incident.get('county') or incident.get('derived_county')
+    if county:
+        return county.replace(' County', '').strip()
+    city = incident.get('city') or ''
+    if city:
+        return get_county_for_city(city)
+    return None
+
 
 def get_incident_data_for_location(location: str) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Get gun violence incident data for a specific location
-    
+    Get gun violence incident data for a specific location.
+
     Args:
-        location: Location name (county or state)
-        
+        location: County name or 'Wisconsin' for state-level data
+
     Returns:
-        Tuple of (incidents, stats)
-        - incidents: List of incident dictionaries with details
-        - stats: Dictionary with summary statistics
+        Tuple of (incidents, stats). Stats include the coverage window of
+        the bundled dataset even when the location has zero incidents, so
+        callers can report honest denominators.
     """
     ensure_data_directory()
-    
-    # Check if we're looking for state-level data
+
     is_state = location.lower() == 'wisconsin'
-    
-    # Normalize county name (remove "County" suffix if present)
     if not is_state:
         location = location.replace(' County', '').strip()
-    
-    # Load incidents from all available files
-    all_incidents = []
-    
+
+    all_incidents: List[Dict[str, Any]] = []
+    coverage_start: Optional[str] = None
+    coverage_end: Optional[str] = None
+    latest_incident: Optional[str] = None
+    earliest_incident: Optional[str] = None
+    seen_ids: set = set()
+
     try:
-        for filename in os.listdir('data/gva_reports'):
+        for filename in sorted(os.listdir(DATA_DIR)):
             if not filename.endswith('.json'):
                 continue
-                
             try:
-                with open(f'data/gva_reports/{filename}', 'r') as f:
+                with open(os.path.join(DATA_DIR, filename), 'r') as f:
                     data = json.load(f)
-                    
+
+                file_coverage = data.get('coverage') or {}
+                if file_coverage.get('start'):
+                    coverage_start = min(filter(None, [coverage_start, file_coverage['start']]))
+                if file_coverage.get('end'):
+                    coverage_end = max(filter(None, [coverage_end, file_coverage['end']]))
+
                 for incident in data.get('incidents', []):
-                    # First check if this is a Wisconsin incident
                     if incident.get('state') != 'Wisconsin':
                         continue
-                        
-                    # For state-level data, include all Wisconsin incidents
+                    incident_id = incident.get('incident_id') or incident.get('id')
+                    if incident_id:
+                        if incident_id in seen_ids:
+                            # Same incident baked into more than one file —
+                            # count it once so rates are not silently inflated.
+                            continue
+                        seen_ids.add(incident_id)
+                    incident_date = incident.get('date')
+                    if incident_date:
+                        latest_incident = max(filter(None, [latest_incident, incident_date]))
+                        earliest_incident = min(filter(None, [earliest_incident, incident_date]))
                     if is_state:
                         all_incidents.append(incident)
                         continue
-                    
-                    # Check if county is directly specified
-                    if incident.get('county') and location.lower() in incident.get('county').lower():
+                    county = _incident_county(incident)
+                    if county and county.lower() == location.lower():
                         all_incidents.append(incident)
-                        continue
-                    
-                    # If we have a city but no county, derive county from city
-                    if incident.get('city') and not incident.get('county'):
-                        city_name = incident.get('city')
-                        derived_county = get_county_for_city(city_name)
-                        
-                        # Add derived county to incident data for future use
-                        if derived_county:
-                            incident['derived_county'] = derived_county
-                            
-                            # If derived county matches our target location, include incident
-                            if location.lower() == derived_county.lower():
-                                logger.info(f"Matched incident in {city_name} to {derived_county} County")
-                                all_incidents.append(incident)
-                                
             except Exception as e:
                 logger.error(f"Error processing {filename}: {str(e)}")
                 continue
     except Exception as e:
         logger.error(f"Error scanning data directory: {str(e)}")
-    
-    # Calculate statistics
+
+    # Fall back to observed incident dates if files carry no coverage block
+    if not coverage_start and earliest_incident:
+        coverage_start = earliest_incident
+    if not coverage_end and latest_incident:
+        coverage_end = latest_incident
+
+    _check_staleness(latest_incident)
+
+    coverage_years = None
+    if coverage_start and coverage_end:
+        try:
+            delta = (datetime.strptime(coverage_end, '%Y-%m-%d')
+                     - datetime.strptime(coverage_start, '%Y-%m-%d'))
+            coverage_years = max(round(delta.days / 365.25, 1), 0.1)
+        except ValueError:
+            coverage_years = None
+
     stats = {
         'total_incidents': len(all_incidents),
         'incidents_by_year': {},
         'fatalities': sum(incident.get('killed', 0) for incident in all_incidents),
         'injuries': sum(incident.get('injured', 0) for incident in all_incidents),
-        'data_sources': ['Gun Violence Archive']
+        'coverage_start': coverage_start,
+        'coverage_end': coverage_end,
+        'coverage_years': coverage_years,
+        'latest_incident_date': latest_incident,
+        'data_sources': ['Gun Violence Archive Wisconsin query export 2016-2026 '
+                         '(mass shootings + mass murders)'],
     }
-    
-    # Group by year
+
     for incident in all_incidents:
-        if 'date' in incident:
-            try:
-                year = incident['date'].split('-')[0] if '-' in incident['date'] else incident['date'][:4]
-                if year in stats['incidents_by_year']:
-                    stats['incidents_by_year'][year] += 1
-                else:
-                    stats['incidents_by_year'][year] = 1
-            except (ValueError, KeyError, IndexError, TypeError) as e:
-                logger.warning(f"Error parsing date from incident: {e}")
-                pass
-    
+        incident_date = incident.get('date') or ''
+        year = incident_date[:4]
+        if len(year) == 4 and year.isdigit():
+            stats['incidents_by_year'][year] = stats['incidents_by_year'].get(year, 0) + 1
+        else:
+            logger.warning(f"Incident with unparseable date skipped in year stats: {incident_date!r}")
+
     return all_incidents, stats
+
 
 def get_incident_density_score(location: str) -> Tuple[float, Dict[str, Any]]:
     """
-    Calculate an incident density score based on GVA data
-    
-    Args:
-        location: County name or 'Wisconsin'
-        
+    Calculate an incident density score from the bundled GVA export.
+
+    Score = tanh(cumulative_incidents_per_100k / 20), capped at 1.0.
+    The rate is cumulative over the dataset coverage window (~10.6 years),
+    per 100k residents (Census 2020). 0.5 is reached near 12 per 100k.
+
+    Raises ValueError for unknown counties (no silent default population).
+
     Returns:
         Tuple of (score, metrics_dict)
-        - score: Normalized score between 0.0 and 1.0
-        - metrics_dict: Dictionary with metrics used for calculation
     """
-    import math
-    
-    # Get incident data
     incidents, stats = get_incident_data_for_location(location)
-    
-    if not incidents:
-        logger.warning(f"No GVA incident data found for {location}")
-        return 0.0, {
-            "incidents_10yr": 0,
-            "incidents_per_100k": 0.0,
-            "data_sources": ["Gun Violence Archive - No Data"],
-            "trend": "insufficient data"
-        }
-    
-    # Get 10-year count
-    incidents_10yr = len(incidents)
-    
-    # Approximate population (would be better to get from Census)
-    # Using rough estimates for Wisconsin counties
+
+    populations = _load_county_populations()
     if location.lower() == 'wisconsin':
-        population = 5800000  # State population approximation
-    elif location.lower() == 'milwaukee':
-        population = 945000
-    elif location.lower() == 'dane':
-        population = 550000
-    elif location.lower() == 'waukesha':
-        population = 405000
-    elif location.lower() == 'brown':
-        population = 270000
+        population = sum(populations.values())
     else:
-        # Default to average Wisconsin county
-        population = 80000
-    
-    # Calculate per 100k rate
-    per_100k_rate = (incidents_10yr / population) * 100000
-    
-    # Calculate trend from yearly data
-    yearly_data = stats.get('incidents_by_year', {})
-    years = sorted(yearly_data.keys())
-    
-    if len(years) >= 3:
-        first_half = sum(yearly_data.get(year, 0) for year in years[:len(years)//2])
-        second_half = sum(yearly_data.get(year, 0) for year in years[len(years)//2:])
-        
-        if second_half > first_half * 1.2:
-            trend = "increasing"
-        elif second_half < first_half * 0.8:
-            trend = "decreasing"
-        else:
-            trend = "stable"
-    else:
-        trend = "insufficient data"
-    
-    # Calculate score using sigmoid-like function to normalize between 0 and 1
-    # Score of 0.5 around 12 incidents per 100k, 0.8 around 25 per 100k
-    score = min(1.0, math.tanh(per_100k_rate / 20))
-    
-    return score, {
-        "incidents_10yr": incidents_10yr,
-        "incidents_per_100k": round(per_100k_rate, 1),
-        "data_sources": ["Gun Violence Archive"],
-        "trend": trend,
-        "fatalities": stats.get('fatalities', 0),
-        "injuries": stats.get('injuries', 0)
+        key = location.replace(' County', '').strip().lower()
+        if key not in populations:
+            raise ValueError(
+                f"Unknown county '{location}': no Census 2020 population on record"
+            )
+        population = populations[key]
+
+    base_metrics = {
+        'coverage_start': stats.get('coverage_start'),
+        'coverage_end': stats.get('coverage_end'),
+        'coverage_years': stats.get('coverage_years'),
+        'county_population': population,
+        'population_source': 'Census 2020 (bundled USDA ERS RUCC 2023 snapshot)',
+        'data_sources': stats['data_sources'],
     }
 
-def process_gva_file(file_path_or_object) -> str:
+    if not incidents:
+        return 0.0, {
+            **base_metrics,
+            'incidents_total': 0,
+            'incidents_per_100k': 0.0,
+            'trend': 'no recorded incidents',
+            'fatalities': 0,
+            'injuries': 0,
+        }
+
+    incidents_total = len(incidents)
+    per_100k_rate = (incidents_total / population) * 100000
+
+    yearly_data = stats.get('incidents_by_year', {})
+    years = sorted(yearly_data.keys())
+    if len(years) >= 3:
+        first_half = sum(yearly_data.get(year, 0) for year in years[:len(years) // 2])
+        second_half = sum(yearly_data.get(year, 0) for year in years[len(years) // 2:])
+        if second_half > first_half * 1.2:
+            trend = 'increasing'
+        elif second_half < first_half * 0.8:
+            trend = 'decreasing'
+        else:
+            trend = 'stable'
+    else:
+        trend = 'insufficient data'
+
+    score = min(1.0, math.tanh(per_100k_rate / 20))
+
+    return score, {
+        **base_metrics,
+        'incidents_total': incidents_total,
+        'incidents_per_100k': round(per_100k_rate, 1),
+        'trend': trend,
+        'fatalities': stats.get('fatalities', 0),
+        'injuries': stats.get('injuries', 0),
+    }
+
+
+def process_gva_file(file_path_or_object, provenance_note: str = '',
+                     coverage_start: str = '2016-01-01',
+                     coverage_end: Optional[str] = None) -> str:
     """
-    Process a GVA CSV file and store it in the data directory
-    
+    Bake a GVA query-tool CSV export into the bundled JSON dataset.
+
+    Non-Wisconsin rows are dropped, duplicate incident IDs are merged,
+    dates are normalized to ISO, and counties are derived from cities at
+    bake time so runtime lookups are deterministic.
+
     Args:
         file_path_or_object: Path to the CSV file or file-like object
-        
+        provenance_note: Where the export came from (recorded in the JSON)
+        coverage_start: Start of the query window used for the export
+        coverage_end: End of coverage; defaults to the bake date
+
     Returns:
-        Path to the processed JSON file
+        Output filename within data/gva_reports/
     """
     ensure_data_directory()
-    
+
+    if isinstance(file_path_or_object, str):
+        file_obj = open(file_path_or_object, 'r', encoding='utf-8-sig')
+    else:
+        file_obj = file_path_or_object.stream if hasattr(file_path_or_object, 'stream') else file_path_or_object
+
+    field_mappings = {
+        'Incident ID': 'incident_id',
+        'Incident Date': 'date',
+        'State': 'state',
+        'City Or County': 'city_or_county',
+        'Address': 'address',
+        'Victims Killed': 'killed',
+        'Victims Injured': 'injured',
+        'Operations': 'operations',
+    }
+
+    incidents_by_id: Dict[str, Dict[str, Any]] = {}
+    dropped_non_wi = 0
+    unresolved_cities = set()
+
     try:
-        # Check if we have a path or file-like object
-        if isinstance(file_path_or_object, str):
-            filename = os.path.basename(file_path_or_object)
-            file_obj = open(file_path_or_object, 'r')
-        else:
-            # Assume it's a file-like object (e.g., from request.files)
-            filename = file_path_or_object.filename
-            file_obj = file_path_or_object.stream
-        
-        # Try to extract year from filename
-        year = None
-        for y in range(2014, 2025):
-            if str(y) in filename:
-                year = str(y)
-                break
-        
-        # Process incidents
-        processed_incidents = []
-        
-        # Using standard CSV module since we might not have pandas
-        csv_reader = csv.DictReader(file_obj)
-        
-        for incident in csv_reader:
-            # Clean up the data
-            processed_incident = {}
-            
-            # Map specific columns for the Gun Violence Archive data
-            field_mappings = {
-                'Incident ID': 'incident_id',
-                'Incident Date': 'date',
-                'State': 'state',
-                'City Or County': 'city_or_county',
-                'Address': 'address',
-                'Victims Killed': 'killed',
-                'Victims Injured': 'injured',
-                'Operations': 'operations'
-            }
-            
-            # Process fields based on mappings
-            for original_field, mapped_field in field_mappings.items():
-                if original_field in incident:
-                    processed_incident[mapped_field] = incident[original_field]
-            
-            # Determine if it's a city or county
-            if 'city_or_county' in processed_incident:
-                location = processed_incident['city_or_county']
-                if ' County' in location:
-                    processed_incident['county'] = location
+        for row in csv.DictReader(file_obj):
+            incident = {mapped: row[original]
+                        for original, mapped in field_mappings.items() if original in row}
+
+            if incident.get('state') != 'Wisconsin':
+                dropped_non_wi += 1
+                continue
+
+            incident['date'] = _parse_gva_date(incident.get('date', ''))
+
+            for num_field in ('killed', 'injured'):
+                try:
+                    incident[num_field] = int(incident.get(num_field, 0))
+                except (ValueError, TypeError):
+                    logger.warning(f"Non-numeric {num_field} in incident "
+                                   f"{incident.get('incident_id')!r}; recording 0")
+                    incident[num_field] = 0
+
+            location = incident.get('city_or_county', '')
+            if ' County' in location:
+                incident['county'] = location.replace(' County', '').strip()
+            elif location:
+                incident['city'] = location
+                county = get_county_for_city(location)
+                if county:
+                    incident['derived_county'] = county
                 else:
-                    processed_incident['city'] = location
-                    
-                    # If it's a city in Wisconsin, try to determine the county
-                    if processed_incident.get('state') == 'Wisconsin' and 'county' not in processed_incident:
-                        county = get_county_for_city(location)
-                        if county:
-                            processed_incident['derived_county'] = county
-                            logger.info(f"Derived county for {location}, WI: {county}")
-            
-            # Convert numeric fields
-            for num_field in ['killed', 'injured']:
-                if num_field in processed_incident:
-                    try:
-                        processed_incident[num_field] = int(processed_incident[num_field])
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"Error converting {num_field} to int: {e}")
-                        processed_incident[num_field] = 0
-            
-            # Additional metadata specifically for the incident
-            if 'incident_id' in processed_incident:
-                processed_incident['id'] = processed_incident['incident_id']
-            
-            # Only add incidents with valid data
-            if processed_incident:
-                processed_incidents.append(processed_incident)
-        
-        # Create output structure
-        output_data = {
-            'year': year,
-            'source': 'Gun Violence Archive',
-            'processed_date': datetime.now().isoformat(),
-            'incidents': processed_incidents,
-            'total_incidents': len(processed_incidents)
-        }
-        
-        # Determine output filename
-        output_filename = f"gva_data_{year or 'unknown'}.json"
-        output_path = f"data/gva_reports/{output_filename}"
-        
-        # Save to file
-        with open(output_path, 'w') as f:
-            json.dump(output_data, f, indent=2)
-            
-        logger.info(f"Processed {len(processed_incidents)} incidents from GVA data")
-        return output_filename
-        
-    except Exception as e:
-        logger.error(f"Error processing GVA file: {str(e)}")
-        raise
+                    unresolved_cities.add(location)
+
+            incident['id'] = incident.get('incident_id')
+            if incident.get('incident_id'):
+                incidents_by_id[incident['incident_id']] = incident
+    finally:
+        if isinstance(file_path_or_object, str):
+            file_obj.close()
+
+    if unresolved_cities:
+        logger.warning(
+            f"GVA bake: no county mapping for {sorted(unresolved_cities)} — "
+            f"add them to utils/wisconsin_mapping.py and re-bake"
+        )
+
+    incidents = sorted(incidents_by_id.values(), key=lambda i: i['date'])
+
+    output_data = {
+        'source': 'Gun Violence Archive',
+        'description': 'Wisconsin incidents matching GVA Mass Shooting (4+ shot) '
+                       'or Mass Murder (4+ killed) definitions',
+        'coverage': {
+            'start': coverage_start,
+            'end': coverage_end or datetime.now().date().isoformat(),
+        },
+        'provenance': {
+            'method': 'Manual export from gunviolencearchive.org/query '
+                      '(State = Wisconsin; Incident Characteristics = Mass Shooting OR Mass Murder)',
+            'note': provenance_note,
+            'dropped_non_wisconsin_rows': dropped_non_wi,
+        },
+        'processed_date': datetime.now().isoformat(),
+        'total_incidents': len(incidents),
+        'incidents': incidents,
+    }
+
+    output_filename = 'gva_data_wisconsin.json'
+    with open(os.path.join(DATA_DIR, output_filename), 'w') as f:
+        json.dump(output_data, f, indent=2)
+
+    logger.info(f"Baked {len(incidents)} Wisconsin GVA incidents to {output_filename} "
+                f"(dropped {dropped_non_wi} non-WI rows)")
+    return output_filename

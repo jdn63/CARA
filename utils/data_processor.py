@@ -1765,7 +1765,7 @@ def _process_risk_data_inner(jurisdiction_id: str, additional_data: Optional[Fil
                 'final_score': round(float(active_shooter_risk), 4),
                 'weighted_contribution': round(weights['active_shooter'] * (float(active_shooter_risk) ** p), 4),
                 'svi_adjustment': f'Weighted avg: 60% base + 40% SVI (household={round(household_svi_factor, 3)}, socioeconomic={round(socioeconomic_svi_factor, 3)})',
-                'data_sources': ['Gun Violence Archive 2023 (static)', 'NCES SSOCS 2019-2020 (static)', 'Census ACS demographics'],
+                'data_sources': ['Gun Violence Archive Wisconsin export 2016-2026 (manual query export)', 'NCES SSOCS 2019-2020 (static)', 'Census ACS demographics'],
                 'aggregation': '5-component weighted model (incident density, school vulnerability, social fragility, mental health, lethal means access)'
             },
             {

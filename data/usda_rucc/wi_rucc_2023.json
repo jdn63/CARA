@@ -1,0 +1,371 @@
+{
+  "source": {
+    "dataset": "USDA ERS Rural-Urban Continuum Codes, 2023 edition",
+    "file": "Ruralurbancontinuumcodes2023.csv",
+    "publisher_url": "https://www.ers.usda.gov/data-products/rural-urban-continuum-codes",
+    "retrieved": "2026-08-01",
+    "retrieval_note": "Official USDA ERS download supplied directly by the project owner on 2026-08-01; verified identical to an Internet Archive capture of the same ERS file."
+  },
+  "counties": {
+    "Adams": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 20654
+    },
+    "Ashland": {
+      "rucc_2023": 7,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, not adjacent to a metro area",
+      "population_2020": 16027
+    },
+    "Barron": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 46711
+    },
+    "Bayfield": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 16220
+    },
+    "Brown": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 268740
+    },
+    "Buffalo": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 13317
+    },
+    "Burnett": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 16526
+    },
+    "Calumet": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 52442
+    },
+    "Chippewa": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 66297
+    },
+    "Clark": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 34659
+    },
+    "Columbia": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 58490
+    },
+    "Crawford": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 16113
+    },
+    "Dane": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 561504
+    },
+    "Dodge": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 89396
+    },
+    "Door": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 30066
+    },
+    "Douglas": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 44295
+    },
+    "Dunn": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 45440
+    },
+    "Eau Claire": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 105710
+    },
+    "Florence": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 4558
+    },
+    "Fond du Lac": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 104154
+    },
+    "Forest": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 9179
+    },
+    "Grant": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 51938
+    },
+    "Green": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 37093
+    },
+    "Green Lake": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 19018
+    },
+    "Iowa": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 23709
+    },
+    "Iron": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 6137
+    },
+    "Jackson": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 21145
+    },
+    "Jefferson": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 84900
+    },
+    "Juneau": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 26718
+    },
+    "Kenosha": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 169151
+    },
+    "Kewaunee": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 20563
+    },
+    "La Crosse": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 120784
+    },
+    "Lafayette": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 16611
+    },
+    "Langlade": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 19491
+    },
+    "Lincoln": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 28415
+    },
+    "Manitowoc": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 81359
+    },
+    "Marathon": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 138013
+    },
+    "Marinette": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 41872
+    },
+    "Marquette": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 15592
+    },
+    "Menominee": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 4255
+    },
+    "Milwaukee": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 939489
+    },
+    "Monroe": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 46274
+    },
+    "Oconto": {
+      "rucc_2023": 2,
+      "description": "Metro - Counties in metro areas of 250,000 to 1 million population",
+      "population_2020": 38965
+    },
+    "Oneida": {
+      "rucc_2023": 7,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, not adjacent to a metro area",
+      "population_2020": 37845
+    },
+    "Outagamie": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 190705
+    },
+    "Ozaukee": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 91503
+    },
+    "Pepin": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 7318
+    },
+    "Pierce": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 42212
+    },
+    "Polk": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 44977
+    },
+    "Portage": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 70377
+    },
+    "Price": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 14054
+    },
+    "Racine": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 197727
+    },
+    "Richland": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 17304
+    },
+    "Rock": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 163687
+    },
+    "Rusk": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 14188
+    },
+    "Sauk": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 65763
+    },
+    "Sawyer": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 18074
+    },
+    "Shawano": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 40881
+    },
+    "Sheboygan": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 118034
+    },
+    "St. Croix": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 93536
+    },
+    "Taylor": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 19913
+    },
+    "Trempealeau": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 30760
+    },
+    "Vernon": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 30714
+    },
+    "Vilas": {
+      "rucc_2023": 9,
+      "description": "Nonmetro - Urban population of fewer than 5,000, not adjacent to a metro area",
+      "population_2020": 23047
+    },
+    "Walworth": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 106478
+    },
+    "Washburn": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 16623
+    },
+    "Washington": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 136761
+    },
+    "Waukesha": {
+      "rucc_2023": 1,
+      "description": "Metro - Counties in metro areas of 1 million population or more",
+      "population_2020": 406978
+    },
+    "Waupaca": {
+      "rucc_2023": 6,
+      "description": "Nonmetro - Urban population of 5,000 to 20,000, adjacent to a metro area",
+      "population_2020": 51812
+    },
+    "Waushara": {
+      "rucc_2023": 8,
+      "description": "Nonmetro - Urban population of fewer than 5,000, adjacent to a metro area",
+      "population_2020": 24520
+    },
+    "Winnebago": {
+      "rucc_2023": 3,
+      "description": "Metro - Counties in metro areas of fewer than 250,000 population",
+      "population_2020": 171730
+    },
+    "Wood": {
+      "rucc_2023": 4,
+      "description": "Nonmetro - Urban population of 20,000 or more, adjacent to a metro area",
+      "population_2020": 74207
+    }
+  }
+}

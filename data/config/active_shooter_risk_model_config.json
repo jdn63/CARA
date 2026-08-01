@@ -6,8 +6,8 @@
       "indicators": [
         {
           "name": "Active shooter or gun violence events per capita",
-          "source": "FBI Active Shooter Reports, Gun Violence Archive",
-          "notes": "Normalize per 100k population over 10 years"
+          "source": "Gun Violence Archive Wisconsin query export 2016-2026 (mass shootings + mass murders; firearm incidents only)",
+          "notes": "Cumulative incidents per 100k population (Census 2020) over the 2016-2026 coverage window; non-firearm mass attacks are outside GVA scope"
         }
       ]
     },
@@ -64,9 +64,9 @@
       "weight": 0.15,
       "indicators": [
         {
-          "name": "Firearm ownership and storage permissiveness",
-          "source": "RAND Firearm Law Database, CDC WISQARS",
-          "notes": "Use state-level estimates + law leniency scoring"
+          "name": "Firearm law permissiveness with USDA rural-urban county adjustment",
+          "source": "RAND State Firearm Law Database 2022 (CARA 0-1 translation); USDA ERS Rural-Urban Continuum Codes 2023",
+          "notes": "Fixed statewide law score; county adjustment by USDA RUCC class"
         }
       ]
     }

@@ -46,6 +46,22 @@ from utils.census_data_validation import validate_census_response, validate_perc
 # Setup logging
 logger = logging.getLogger(__name__)
 
+# USDA ERS Rural-Urban Continuum Codes (2023 edition), Wisconsin snapshot.
+# Built from the official USDA ERS download; see the 'source' block inside
+# the JSON file for provenance and retrieval date.
+_WI_RUCC_PATH = 'data/usda_rucc/wi_rucc_2023.json'
+_WI_RUCC_CACHE: Optional[Dict[str, Dict[str, Any]]] = None
+
+
+def _load_wi_rucc() -> Dict[str, Dict[str, Any]]:
+    """Load the bundled USDA RUCC 2023 lookup, keyed by lowercase county name."""
+    global _WI_RUCC_CACHE
+    if _WI_RUCC_CACHE is None:
+        with open(_WI_RUCC_PATH, 'r') as f:
+            payload = json.load(f)
+        _WI_RUCC_CACHE = {name.lower(): rec for name, rec in payload['counties'].items()}
+    return _WI_RUCC_CACHE
+
 # Load the active shooter risk model configuration
 try:
     with open('data/config/active_shooter_risk_model_config.json', 'r') as f:
@@ -62,8 +78,8 @@ except Exception as e:
                 "indicators": [
                     {
                         "name": "Active shooter or gun violence events per capita",
-                        "source": "Gun Violence Archive (GVA)",
-                        "notes": "Normalize per 100k population over 10 years"
+                        "source": "Gun Violence Archive Wisconsin query export 2016-2026 (mass shootings + mass murders; firearm incidents only)",
+                        "notes": "Cumulative incidents per 100k population (Census 2020) over the 2016-2026 coverage window"
                     }
                 ]
             },
@@ -115,9 +131,9 @@ except Exception as e:
                 "weight": 0.15,
                 "indicators": [
                     {
-                        "name": "Firearm ownership and storage permissiveness",
-                        "source": "CARA in-house translation of RAND Firearm Law Database categories; CDC WISQARS",
-                        "notes": "Use state-level estimates + law leniency scoring"
+                        "name": "Firearm law permissiveness with USDA rural-urban county adjustment",
+                        "source": "RAND State Firearm Law Database 2022 (CARA 0-1 translation); USDA ERS Rural-Urban Continuum Codes 2023",
+                        "notes": "Fixed statewide law score; county adjustment by USDA RUCC class"
                     }
                 ]
             }
@@ -157,8 +173,8 @@ class ActiveShooterRiskModel:
         """
         Calculate the historical incident density score based on GVA data.
 
-        When GVA has no incidents on record for a county, a Wisconsin-average
-        proxy score is returned so downstream calculations remain meaningful.
+        Counties with no incidents on record across the complete 2016-2026
+        coverage window score 0 on this component, disclosed in the metrics.
 
         Args:
             county_name: Name of the Wisconsin county
@@ -170,24 +186,24 @@ class ActiveShooterRiskModel:
             logger.info(f"Fetching gun violence data for {county_name} from GVA")
             gva_score, gva_metrics = get_incident_density_score(county_name)
 
-            if gva_metrics.get('incidents_10yr', 0) > 0:
-                logger.info(f"Using GVA data for {county_name}: {gva_metrics['incidents_10yr']} incidents")
+            if gva_metrics.get('incidents_total', 0) > 0:
+                logger.info(f"Using GVA data for {county_name}: {gva_metrics['incidents_total']} incidents")
                 gva_metrics['data_quality'] = 'high'
-                gva_metrics['data_notes'] = 'Using authentic Gun Violence Archive data'
+                gva_metrics['data_notes'] = ('Gun Violence Archive Wisconsin query export 2016-2026 '
+                                             '(mass shootings + mass murders)')
                 return gva_score, gva_metrics
 
-            # GVA has no incidents recorded for this county (typical for rural areas).
-            # Return a conservative Wisconsin-average proxy rather than zero.
+            # GVA has no qualifying incidents recorded for this county
+            # (true for most rural counties across the full 2016-2026 window).
+            # Coverage is complete, so zero is a real observation: score the
+            # formula honestly (tanh(0/20) = 0.0) and disclose it on the tile.
             logger.info(
-                f"No GVA incidents found for {county_name}; using Wisconsin-average proxy score"
+                f"No GVA incidents recorded for {county_name} in the 2016-2026 window; scoring 0"
             )
-            return 0.25, {
-                "incidents_10yr": 0,
-                "incidents_per_100k": 0.0,
-                "data_sources": ["Gun Violence Archive (GVA) — no incidents on record"],
-                "data_quality": "low",
-                "data_notes": "No GVA incidents recorded for this county; Wisconsin-average proxy applied"
-            }
+            gva_metrics['data_quality'] = 'high'
+            gva_metrics['data_notes'] = ('No qualifying GVA incidents recorded for this county across '
+                                         'the full 2016-2026 coverage window; this component scores 0')
+            return gva_score, gva_metrics
 
         except Exception as e:
             logger.error(f"Error calculating historical incident density: {str(e)}")
@@ -573,54 +589,56 @@ class ActiveShooterRiskModel:
           The Wisconsin statewide firearm law permissiveness score (0.65) is a CARA
           in-house translation of RAND State Firearm Law Database 2022 law categories
           into a 0-1 score; RAND does not publish this number. It is a fixed constant —
-          not fetched at runtime. A county-level adjustment is applied based on
-          USDA Rural-Urban Continuum Code classification (urban, suburban, rural).
-          Estimated firearm ownership rates are derived from the adjusted score using a
-          CDC WISQARS-calibrated linear proxy; they are not county-specific survey data.
+          not fetched at runtime. The county-level adjustment is driven by the county's
+          USDA ERS Rural-Urban Continuum Code (2023 edition, bundled snapshot in
+          data/usda_rucc/): RUCC 1 -> -0.15, RUCC 2-3 -> -0.05, RUCC 4-7 -> +0.05,
+          RUCC 8-9 -> +0.15. The adjustment magnitudes are CARA judgment values
+          (disclosed as such); the urban/rural classification itself is USDA data.
         """
         try:
             state_score = self.firearm_law_scores.get('WI', 0.65)
 
-            # County-level adjustment based on urban/rural classification
-            if county_name.lower() in ['milwaukee', 'dane', 'brown']:
-                county_adjustment = -0.15
-                county_class = "urban"
-            elif county_name.lower() in ['waukesha', 'racine', 'kenosha']:
-                county_adjustment = -0.05
-                county_class = "suburban"
-            elif county_name.lower() in ['bayfield', 'forest', 'florence', 'lincoln']:
-                county_adjustment = 0.15
-                county_class = "rural (northern)"
+            rucc_record = _load_wi_rucc().get(county_name.strip().lower())
+            if rucc_record is None:
+                raise ValueError(f"No USDA RUCC 2023 record for county '{county_name}'")
+            rucc = int(rucc_record['rucc_2023'])
+            if not 1 <= rucc <= 9:
+                raise ValueError(f"USDA RUCC value out of range for '{county_name}': {rucc}")
+
+            if rucc == 1:
+                county_adjustment, county_class = -0.15, f"metro, large (RUCC {rucc})"
+            elif rucc in (2, 3):
+                county_adjustment, county_class = -0.05, f"metro, small/mid (RUCC {rucc})"
+            elif 4 <= rucc <= 7:
+                county_adjustment, county_class = 0.05, f"nonmetro town (RUCC {rucc})"
             else:
-                county_adjustment = 0.05
-                county_class = "rural"
+                county_adjustment, county_class = 0.15, f"rural (RUCC {rucc})"
 
             adjusted_score = max(0.0, min(1.0, state_score + county_adjustment))
-            ownership_rate = 25 + (adjusted_score * 40)
 
             return adjusted_score, {
                 "firearm_law_permissiveness": round(state_score, 2),
-                "estimated_ownership_rate": round(ownership_rate, 1),
-                "storage_practices_index": round(adjusted_score - 0.1, 2),
+                "rucc_2023": rucc,
+                "rucc_description": rucc_record.get('description', ''),
                 "county_classification": county_class,
                 "data_sources": [
                     "CARA in-house 0-1 translation of RAND State Firearm Law Database 2022 categories (fixed WI score, not a published RAND figure)",
-                    "USDA Rural-Urban Continuum Code classification (county adjustment)",
-                    "CDC WISQARS-calibrated ownership proxy (estimated, not survey data)"
+                    "USDA ERS Rural-Urban Continuum Codes 2023 (county classification, bundled snapshot)"
                 ],
                 "data_quality": "medium",
-                "data_notes": "Statewide policy score is fixed; county variation is rule-based. "
-                              "No county-specific firearm survey data is available publicly."
+                "data_notes": "Statewide policy score is fixed; the county adjustment follows the "
+                              "county's USDA RUCC 2023 class. Adjustment magnitudes are CARA judgment "
+                              "values. No county-specific firearm survey data is available publicly."
             }
 
         except Exception as e:
             logger.error(f"Error calculating access to lethal means: {str(e)}")
             return 0.65, {
                 "firearm_law_permissiveness": 0.65,
-                "estimated_ownership_rate": 45.0,
-                "storage_practices_index": 0.55,
-                "data_sources": ["Estimated values (error)"],
-                "data_quality": "low"
+                "county_classification": "unknown (USDA RUCC lookup failed)",
+                "data_sources": ["Statewide constant only; county RUCC lookup failed"],
+                "data_quality": "low",
+                "data_notes": "County classification unavailable; no county adjustment applied."
             }
 
     def calculate_risk(self, county_name: str) -> Dict[str, Any]:
@@ -645,8 +663,8 @@ class ActiveShooterRiskModel:
                 'step_number': 1,
                 'step_name': 'Gather Historical Incident Data',
                 'description': 'Collect data on past active shooter and gun violence incidents in the area',
-                'data_sources': ['Gun Violence Archive (GVA)'],
-                'manual_process': 'Review GVA incident records and compile 10 years of gun violence incidents for the county',
+                'data_sources': ['Gun Violence Archive Wisconsin query export 2016-2026 (mass shootings + mass murders)'],
+                'manual_process': 'Run a GVA query-tool export (State = Wisconsin; Mass Shooting or Mass Murder characteristics; 2016 to present) and re-bake the bundled dataset',
                 'time_estimate': '3-4 hours'
             })
             time_estimates['historical_data'] = '3-4 hours'
@@ -663,26 +681,29 @@ class ActiveShooterRiskModel:
             
             # Add detailed breakdown of calculation
             raw_data = {
-                'gva_incidents': historical_metrics.get('incidents_count', 0),
+                'gva_incidents': historical_metrics.get('incidents_total', 0),
                 'gva_incidents_per_100k': historical_metrics.get('incidents_per_100k', 0),
-                'population': historical_metrics.get('population', 0),
-                'incident_trend': historical_metrics.get('incident_trend', 'stable')
+                'population': historical_metrics.get('county_population', 0),
+                'incident_trend': historical_metrics.get('trend', 'insufficient data'),
+                'coverage_window': f"{historical_metrics.get('coverage_start', 'unknown')} to "
+                                   f"{historical_metrics.get('coverage_end', 'unknown')}"
             }
 
             formula_details = {
-                'description': 'Historical Incident Density is derived from Gun Violence Archive data',
-                'incidents_weight': '85%',
-                'trend_weight': '15%',
-                'formula': 'Score = (0.85 * normalized_incidents) + (0.15 * trend_factor)',
-                'actual_calculation': f"({raw_data['gva_incidents_per_100k']/10:.3f} * 0.85) + (trend_factor * 0.15)",
-                'normalization': 'GVA incidents per 100k normalized by dividing by 10 (scale 0-1)',
-                'trend_factor': '1.2 for increasing, 1.0 for stable, 0.8 for decreasing trends'
+                'description': 'Historical Incident Density from the GVA Wisconsin query export '
+                               '2016-2026 (mass shootings + mass murders)',
+                'formula': 'Score = tanh(cumulative_incidents_per_100k / 20), capped at 1.0',
+                'actual_calculation': f"tanh({raw_data['gva_incidents_per_100k']} / 20)",
+                'normalization': 'Cumulative incidents per 100k residents (Census 2020) over the '
+                                 'coverage window; 0.5 is reached near 12 per 100k',
+                'trend_factor': 'Trend (first half vs second half of window) is reported for '
+                                'context and is not weighted into the score',
+                'zero_incident_handling': 'Counties with no recorded incidents score 0 on this '
+                                          'component (complete 2016-2026 coverage; disclosed on the tile)'
             }
-            
-            adjustments = {
-                'small_county_adjustment': historical_metrics.get('small_county_adjustment', 'None'),
-                'recent_incident_boost': historical_metrics.get('recent_incident_boost', 'None')
-            }
+
+            # No hidden adjustments are applied to this component.
+            adjustments = {}
             
             calculation_steps.append({
                 'step_type': 'calculation_result',
@@ -872,10 +893,9 @@ class ActiveShooterRiskModel:
                 ),
                 'data_sources': [
                     'CARA in-house translation of RAND State Firearm Law Database 2022 categories (fixed WI score, not a published RAND figure, not fetched at runtime)',
-                    'USDA Rural-Urban Continuum Code (county classification for adjustment)',
-                    'CDC WISQARS-calibrated linear proxy (estimated ownership rate, not survey data)'
+                    'USDA ERS Rural-Urban Continuum Codes 2023 (county classification for adjustment)'
                 ],
-                'manual_process': 'Review state firearm laws, research county-level ownership patterns, assess safe storage education programs',
+                'manual_process': 'Review state firearm laws and the county USDA RUCC classification, assess safe storage education programs',
                 'time_estimate': '3-4 hours'
             })
             time_estimates['lethal_means_assessment'] = '3-4 hours'
@@ -890,17 +910,17 @@ class ActiveShooterRiskModel:
 
             raw_data = {
                 'firearm_law_permissiveness': means_metrics.get('firearm_law_permissiveness', 0.65),
-                'estimated_ownership_rate': means_metrics.get('estimated_ownership_rate', 45.0),
-                'county_classification': means_metrics.get('county_classification', 'rural')
+                'county_classification': means_metrics.get('county_classification', 'unknown')
             }
 
             formula_details = {
                 'description': (
                     'Access to Lethal Means uses a fixed CARA-derived WI law score (0.65, '
-                    'in-house translation of RAND categories) adjusted by county urban/rural classification'
+                    'in-house translation of RAND categories) adjusted by the county USDA '
+                    'Rural-Urban Continuum Code (2023) class'
                 ),
                 'base_score': 'CARA-derived WI statewide score (from RAND categories): 0.65',
-                'county_adjustment': 'Urban: -0.15, Suburban: -0.05, Rural: +0.05, Rural northern: +0.15',
+                'county_adjustment': 'USDA RUCC 1: -0.15, RUCC 2-3: -0.05, RUCC 4-7: +0.05, RUCC 8-9: +0.15',
                 'formula': 'Score = clamp(rand_wi_score + county_adjustment, 0, 1)',
                 'actual_calculation': (
                     f"clamp({raw_data['firearm_law_permissiveness']:.2f} + county_adj, 0, 1) = {means_score:.3f}"

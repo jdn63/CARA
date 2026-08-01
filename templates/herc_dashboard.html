@@ -514,7 +514,7 @@
                         ~ '<li>Vulnerability: public venue density, large gathering capacity, SVI</li>'
                         ~ '<li>Resilience: law enforcement response time, trauma center access, preparedness training</li>'
                         ~ '</ul>'
-                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: GVA 2023, NCES SSOCS 2019-2020, Census ACS 2022, CDC SVI 2022, CHR 2025, CDC PLACES, RAND 2022</div>'
+                        ~ '<div class="data-source">County-balanced average across ' ~ (risk_data.unique_counties_count or (risk_data.counties|length)) ~ ' counties (' ~ risk_data.jurisdiction_count ~ ' jurisdictions). Sources: GVA Wisconsin export 2016-2026, NCES SSOCS 2019-2020, Census ACS 2022, CDC SVI 2022, CHR 2025, CDC PLACES, RAND 2022, USDA RUCC 2023</div>'
                         ) }}
                         </h3>
                         <span class="badge bg-{{ 'danger' if risk_data.active_shooter_risk|default(0) > 0.6 else 'warning' if risk_data.active_shooter_risk|default(0) > 0.3 else 'success' }}">
@@ -529,7 +529,7 @@
                              aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">Sources: Gun Violence Archive 2023, NCES SSOCS 2019-2020, Census ACS 2022, CDC SVI 2022, County Health Rankings 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
+                        <small class="text-muted">Sources: Gun Violence Archive Wisconsin export 2016-2026, NCES SSOCS 2019-2020, Census ACS 2022, CDC SVI 2022, County Health Rankings 2025, CDC PLACES MHLTH, RAND 2022 WI Firearm Law Score, USDA RUCC 2023. County-balanced regional average across {{ risk_data.unique_counties_count or (risk_data.counties|length) }} counties ({{ risk_data.jurisdiction_count }} jurisdictions).</small>
                     </div>
                     {{ rd.detail_section('active-shooter', risk_data.active_shooter_components, risk_data.active_shooter_metrics) }}
                 </div>

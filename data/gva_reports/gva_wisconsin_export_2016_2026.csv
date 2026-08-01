@@ -1,0 +1,72 @@
+"Incident ID","Incident Date",State,"City Or County",Address,"Victims Killed","Victims Injured","Suspects Killed","Suspects Injured","Suspects Arrested",Operations
+3492182,"June 19, 2026",Wisconsin,Milwaukee,"420 E Capitol Dr",0,4,0,0,0,N/A
+3434487,"March 21, 2026",Wisconsin,Milwaukee,"N 37th St and W Kiley Ave",1,4,0,0,1,N/A
+3261161,"July 12, 2025",Wisconsin,Milwaukee,"618 N Water St",2,3,0,1,1,N/A
+3242052,"June 20, 2025",Wisconsin,Milwaukee,"8300 block of W Brown Deer Rd",2,3,0,0,1,N/A
+3238923,"June 17, 2025",Wisconsin,Milwaukee,"1000 block of W Mineral St",0,4,0,0,0,N/A
+3228413,"June 8, 2025",Wisconsin,Milwaukee,"300 block of W McKinley Ave",0,4,0,0,0,N/A
+3094796,"December 16, 2024",Wisconsin,Madison,"4901 E Buckeye Rd",2,6,1,0,0,N/A
+3002869,"August 22, 2024",Wisconsin,Milwaukee,"4001 W North Ave",1,3,0,0,1,N/A
+2986051,"August 3, 2024",Wisconsin,Milwaukee,"3853 N Richards St",0,5,0,0,0,N/A
+2981150,"July 28, 2024",Wisconsin,Milwaukee,"9200 block of W Silver Spring Dr",0,5,0,0,0,N/A
+2974973,"July 22, 2024",Wisconsin,Milwaukee,"6901 W Vienna Ave",1,8,0,0,1,N/A
+2961005,"July 6, 2024",Wisconsin,Milwaukee,"Doctor Martin Luther King Jr Dr and 6th St",0,4,0,0,0,N/A
+2950871,"June 26, 2024",Wisconsin,Milwaukee,"5912 W Oklahoma Ave",0,4,0,0,2,N/A
+2935144,"June 9, 2024",Wisconsin,Madison,"433 W Johnson St",0,12,0,0,1,N/A
+2727876,"October 10, 2023",Wisconsin,Madison,"116 Milky Way",1,3,0,0,5,N/A
+2686454,"August 20, 2023",Wisconsin,Milwaukee,"S 12th St and W Mitchell St",0,4,0,0,1,N/A
+2686047,"August 19, 2023",Wisconsin,Milwaukee,"S 14th St and W Burnham St",0,9,0,0,1,N/A
+2629745,"June 19, 2023",Wisconsin,Milwaukee,"2947 N Doctor MLK Jr Dr",0,6,0,0,1,N/A
+2627193,"June 17, 2023",Wisconsin,"La Crosse","116 3rd St S",0,7,0,0,1,N/A
+2608422,"May 26, 2023",Wisconsin,Milwaukee,"N 38th St and W Walnut St",0,4,0,0,1,N/A
+2591449,"May 7, 2023",Wisconsin,"Fond Du Lac","912 Martin Ave",1,3,0,0,2,N/A
+2555326,"March 27, 2023",Wisconsin,Milwaukee,"7225 N 76th St",0,5,0,0,0,N/A
+2550749,"March 20, 2023",Wisconsin,Milwaukee,"N 14th St and W Concordia Ave",1,5,0,0,1,N/A
+2443276,"October 23, 2022",Wisconsin,Milwaukee,"N 34th St and W Wright St",0,4,0,0,0,N/A
+2442695,"October 22, 2022",Wisconsin,Milwaukee,"W Fond Du Lac and W Hoyt Pl",0,6,0,0,0,N/A
+2444683,"October 21, 2022",Wisconsin,Hartland,"700 Mansfield Court",4,0,2,0,0,N/A
+2417641,"September 18, 2022",Wisconsin,Kenosha,"2232 Roosevelt Rd",2,2,0,0,1,N/A
+2416625,"September 16, 2022",Wisconsin,Milwaukee,"4100 block of N 13th St",0,4,0,1,1,N/A
+2414276,"September 14, 2022",Wisconsin,Milwaukee,"1300 block of E Hamilton St",0,4,0,0,0,N/A
+2399774,"August 28, 2022",Wisconsin,Clinton,"9221 E Little Ln",0,4,0,0,0,N/A
+2397033,"August 24, 2022",Wisconsin,Milwaukee,"2622 N 22nd St",2,2,1,0,0,N/A
+2380017,"August 5, 2022",Wisconsin,Milwaukee,"N 91st St and W Allyn St",0,4,0,0,0,N/A
+2349746,"July 4, 2022",Wisconsin,Kenosha,"6321 25th Ave",1,4,0,0,3,N/A
+2301494,"May 13, 2022",Wisconsin,Milwaukee,"Water St and Juneau Ave",0,11,0,5,11,N/A
+2258324,"March 20, 2022",Wisconsin,Milwaukee,"2822 W Melvina St",0,4,0,0,0,N/A
+2232854,"February 13, 2022",Wisconsin,Racine,"7th St and Park Ave",0,5,1,0,0,N/A
+2224788,"February 1, 2022",Wisconsin,Milwaukee,"1801 W Olive St",0,5,0,0,1,N/A
+2218159,"January 23, 2022",Wisconsin,Milwaukee,"2505 N 21st St",6,0,0,0,1,N/A
+2201641,"January 1, 2022",Wisconsin,Kenosha,"1708 52nd St",1,3,0,0,0,N/A
+2186246,"December 9, 2021",Wisconsin,Beloit,"1900 block of Porter Ave",1,5,0,0,0,N/A
+2161323,"November 7, 2021",Wisconsin,Kenosha,"625 57th St",1,3,0,0,0,N/A
+2145931,"October 19, 2021",Wisconsin,Kenosha,"610 40th Pl",2,2,1,0,0,N/A
+2144160,"October 17, 2021",Wisconsin,Racine,"Yout St and Carter St",0,6,0,0,0,N/A
+2135508,"October 7, 2021",Wisconsin,Milwaukee,"W Cherry St and N 8th St",3,1,0,0,0,N/A
+2135498,"October 7, 2021",Wisconsin,Milwaukee,"2400 block of N 37th St",0,5,0,0,0,N/A
+2115522,"September 13, 2021",Wisconsin,Milwaukee,"3073 N Sherman Blvd",0,5,0,0,0,N/A
+2103311,"August 29, 2021",Wisconsin,Milwaukee,"N 41st St and W Lloyd St",0,4,0,0,0,N/A
+1998602,"May 8, 2021",Wisconsin,Milwaukee,"900 block of S 10th St",0,4,0,0,2,N/A
+1980689,"April 18, 2021",Wisconsin,Kenosha,"1548 Sheridan Rd",3,3,0,0,1,N/A
+1970937,"April 7, 2021",Wisconsin,Milwaukee,"2627 W Capitol Dr",2,2,0,1,1,N/A
+1857040,"November 20, 2020",Wisconsin,"Milwaukee (Wauwatosa)","2500 N Mayfair Rd",0,8,0,0,1,N/A
+1810358,"September 30, 2020",Wisconsin,Milwaukee,"4217 W Fond du Lac Ave",0,7,0,0,0,N/A
+1755566,"August 4, 2020",Wisconsin,Madison,"333 S Rosa Rd",0,4,0,0,2,N/A
+1749535,"July 28, 2020",Wisconsin,Milwaukee,"2600 block of W Atkinson Ave",0,4,0,0,0,N/A
+1725379,"July 5, 2020",Wisconsin,Milwaukee,"5800 block of W Hope Ave",0,4,0,0,0,N/A
+1711605,"June 21, 2020",Wisconsin,Milwaukee,"North 28th St and West Ruby Ave",0,5,0,0,0,N/A
+1710849,"June 20, 2020",Wisconsin,Janesville,"6530 S US-51",0,5,0,0,2,N/A
+1695586,"June 2, 2020",Wisconsin,Racine,"Kewaunee St and Michigan Blvd",0,5,0,0,5,N/A
+1666945,"April 27, 2020",Wisconsin,Milwaukee,"2800 block of N 12th St",5,0,0,0,1,N/A
+1629488,"February 26, 2020",Wisconsin,Milwaukee,"3939 W Highland Blvd",5,0,1,0,0,N/A
+1515242,"September 29, 2019",Wisconsin,Milwaukee,"1500 block of N 29th St",0,4,0,0,0,N/A
+1461352,"July 28, 2019",Wisconsin,"Chippewa Falls","16964 54th Ave",4,2,1,0,0,N/A
+1433857,"June 26, 2019",Wisconsin,Milwaukee,"2800 block of N 34th St",0,4,0,0,0,N/A
+1272855,"December 9, 2018",Wisconsin,Madison,"3554 E Washington Ave",0,4,0,0,2,N/A
+1213223,"September 19, 2018",Wisconsin,Middleton,"1850 Deming Way",0,4,1,0,0,N/A
+1210742,"September 15, 2018",Wisconsin,Milwaukee,"820 S 21st St",0,4,0,0,0,N/A
+1179589,"August 4, 2018",Wisconsin,Milwaukee,"40th St and Vliet St",0,4,0,0,0,N/A
+893726,"July 18, 2017",Wisconsin,Milwaukee,"3000 block of N 39th St",0,4,0,0,0,N/A
+800363,"March 22, 2017",Wisconsin,Rothschild,"1133 E Grand Ave",4,0,1,0,0,N/A
+628570,"August 13, 2016",Wisconsin,Milwaukee,"4001 West Fond Du Lac Ave",2,2,0,0,0,N/A
+537825,"April 10, 2016",Wisconsin,Milwaukee,"76th and Sheridan",1,3,0,0,0,N/A

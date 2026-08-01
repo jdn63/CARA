@@ -20,7 +20,7 @@
                             ~ '<li>Lethal Means Access (15%): ' ~ "%.3f"|format(risk_data.active_shooter_components.access_to_lethal_means) ~ '</li>'
                             ~ '</ul>'
                             ~ '<div class="formula-line">= ' ~ "%.3f"|format(risk_data.active_shooter_risk) ~ '</div>'
-                            ~ '<div class="data-source">Sources: GVA 2023 (historical incidents); NCES SSOCS 2019-2020 microdata (national urbanicity-class averages; county assignment is a CARA heuristic); Census ACS 2022; CDC SVI 2022; CHR 2025 (mental health providers/days); CDC PLACES MHLTH; CARA in-house WI firearm-law score derived from RAND 2022 categories (static)</div>'
+                            ~ '<div class="data-source">Sources: GVA Wisconsin export 2016-2026 (mass shootings + mass murders, firearm incidents only); NCES SSOCS 2019-2020 microdata (national urbanicity-class averages; county assignment is a CARA heuristic); Census ACS 2022; CDC SVI 2022; CHR 2025 (mental health providers/days); CDC PLACES MHLTH; CARA in-house WI firearm-law score derived from RAND 2022 categories (static); USDA ERS Rural-Urban Continuum Codes 2023 (county class)</div>'
                             ) }}
                             {% endif %}
                             </h3>
@@ -119,8 +119,8 @@
                                             <table class="table table-sm mb-0">
                                                 <tbody>
                                                     <tr>
-                                                        <td>Incidents (10 yr)</td>
-                                                        <td>{{ risk_data.metrics.historical.incidents_10yr|default(0) }}</td>
+                                                        <td>Incidents (2016-2026)</td>
+                                                        <td>{{ risk_data.metrics.historical.incidents_total|default(0) }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td>Per 100K Population</td>
@@ -132,6 +132,9 @@
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                            {% if (risk_data.metrics.historical.incidents_total|default(0)) == 0 %}
+                                            <div class="small text-muted mt-1">No qualifying incidents recorded for this county in the 2016-2026 window; this component scores 0.</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -235,12 +238,8 @@
                                                         <td>{{ risk_data.metrics.means.firearm_law_permissiveness|default(0) }}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Est. Ownership Rate (%)</td>
-                                                        <td>{{ risk_data.metrics.means.estimated_ownership_rate|default(0) }}%</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Storage Practices</td>
-                                                        <td>{{ risk_data.metrics.means.storage_practices_index|default(0) }}</td>
+                                                        <td>County Class (USDA RUCC 2023)</td>
+                                                        <td>{{ risk_data.metrics.means.county_classification|default('unavailable') }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -253,7 +252,7 @@
                     
                     <div class="mt-3">
                         <small class="text-muted">
-                            Sources: Gun Violence Archive 2023 (historical incident density, annual static download); NCES SSOCS 2019-2020 (school safety microdata, static); Census ACS 2022 (isolation, demographics); CDC SVI 2022 (social fragility); County Health Rankings 2025 (mental health providers per 100k and poor mental health days per month); CDC PLACES MHLTH crude prevalence; Wisconsin firearm-law score 0.65 (CARA in-house translation of RAND 2022 state firearm-law categories; RAND publishes no such numeric score). FBI CJIS/UCR crime data is not used (access restricted to authorized government endpoints).
+                            Sources: Gun Violence Archive Wisconsin query export 2016-2026 (mass shootings and mass murders per GVA definitions; firearm incidents only — non-firearm mass attacks such as the 2021 Waukesha parade attack are outside GVA's scope; refreshed by manual query export); NCES SSOCS 2019-2020 (school safety microdata, static); Census ACS 2022 (isolation, demographics); CDC SVI 2022 (social fragility); County Health Rankings 2025 (mental health providers per 100k and poor mental health days per month); CDC PLACES MHLTH crude prevalence; Wisconsin firearm-law score 0.65 (CARA in-house translation of RAND 2022 state firearm-law categories; RAND publishes no such numeric score); USDA ERS Rural-Urban Continuum Codes 2023 (county urban/rural classification). FBI CJIS/UCR crime data is not used (access restricted to authorized government endpoints).
                         </small>
                     </div>
                 </div>
